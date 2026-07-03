@@ -43,5 +43,6 @@ Do not paste database passwords, full connection strings, admin pins, session se
 - Public URL: `https://onecode-cngg.onrender.com`
 - Instance: Free
 - First deploy: live
-- Current blocker: production environment variables, Discord OAuth app, and production database password are still needed
+- Current blocker: production environment variables and production database password are still needed
+- Discord OAuth: Developer Portal showed `アクセスがありません` while creating the app. Beta launch now supports `DISCORD_LOGIN_ENABLED=false`; configure Discord later when the portal allows app creation.
 - Fill sheet: `dist/render-env-fill-sheet.md`
