@@ -40,6 +40,8 @@ services:
         value: production
       - key: COMMIT_SHA
         sync: false
+      - key: DISCORD_LOGIN_ENABLED
+        value: false
       - key: DISCORD_CLIENT_ID
         sync: false
       - key: DISCORD_CLIENT_SECRET

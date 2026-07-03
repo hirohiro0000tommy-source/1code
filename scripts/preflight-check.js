@@ -83,7 +83,7 @@ const operatorHandoff = fileText("docs/operator-handoff.md");
 const publicOperationsRunbook = fileText("docs/public-operations-runbook.md");
 const launchDayRunbook = fileText("docs/launch-day-runbook.md");
 const externalServiceWorkOrder = fileText("docs/external-service-work-order.md");
-const requiredEnvKeys = ["PORT", "NODE_ENV", "ADMIN_PIN", "ADMIN_ACCOUNT_IDS", "MODERATOR_ACCOUNT_IDS", "BETA_ACCESS_CODE", "BETA_WRITE_PAUSED", "PUBLIC_WRITE_PAUSED", "SESSION_SECRET", "STORAGE_DRIVER", "DATABASE_URL", "DATABASE_SSL", "PUBLIC_BASE_URL", "PUBLIC_SECURITY_CONTACT", "DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET"];
+const requiredEnvKeys = ["PORT", "NODE_ENV", "ADMIN_PIN", "ADMIN_ACCOUNT_IDS", "MODERATOR_ACCOUNT_IDS", "BETA_ACCESS_CODE", "BETA_WRITE_PAUSED", "PUBLIC_WRITE_PAUSED", "SESSION_SECRET", "STORAGE_DRIVER", "DATABASE_URL", "DATABASE_SSL", "PUBLIC_BASE_URL", "PUBLIC_SECURITY_CONTACT", "DISCORD_LOGIN_ENABLED", "DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET"];
 for (const key of requiredEnvKeys) {
   if (envExample.includes(`${key}=`)) pass(`env example: ${key}`);
   else fail(`env example: ${key}`, "missing");

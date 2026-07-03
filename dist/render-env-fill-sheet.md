@@ -28,6 +28,7 @@ PUBLIC_BASE_URL=<Render public https origin after first deploy>
 PUBLIC_SECURITY_CONTACT=<public mailto: or https contact>
 RELEASE_VERSION=beta
 COMMIT_SHA=
+DISCORD_LOGIN_ENABLED=false
 DISCORD_CLIENT_ID=<Discord application client ID after Discord setup>
 ```
 
@@ -42,6 +43,8 @@ SESSION_SECRET=<from .env.local>
 BETA_ACCESS_CODE=<from .env.local for closed beta, blank for public launch>
 DISCORD_CLIENT_SECRET=<Discord application secret after Discord setup>
 ```
+
+For the first beta, keep `DISCORD_LOGIN_ENABLED=false` if the Discord Developer Portal cannot create an application yet. Change it to `true` only after `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and the redirect URL are configured.
 
 ## Supabase DATABASE_URL Template
 

@@ -18,6 +18,7 @@ const betaAccessCode = cleanEnv(process.env.BETA_ACCESS_CODE || "");
 const betaWritePaused = envFlag(process.env.BETA_WRITE_PAUSED);
 const publicWritePaused = envFlag(process.env.PUBLIC_WRITE_PAUSED);
 const writePaused = betaWritePaused || publicWritePaused;
+const discordLoginEnabled = process.env.DISCORD_LOGIN_ENABLED ? envFlag(process.env.DISCORD_LOGIN_ENABLED) : true;
 const adminAccountIds = new Set(String(process.env.ADMIN_ACCOUNT_IDS || "").split(",").map(value => value.trim()).filter(Boolean));
 const moderatorAccountIds = new Set(String(process.env.MODERATOR_ACCOUNT_IDS || "").split(",").map(value => value.trim()).filter(Boolean));
 const rateWindowMs = 60 * 1000;
@@ -218,10 +219,10 @@ function validateRuntimeConfig() {
   if (production && !securityContact.ok) {
     throw new Error("PUBLIC_SECURITY_CONTACT must be a real public mailto: or https:// contact before production launch.");
   }
-  if (production && !discord.ok) {
+  if (production && discordLoginEnabled && !discord.ok) {
     throw new Error("Real Discord OAuth credentials are required before production launch.");
   }
-  if (production && !adminAccounts.ok) {
+  if (production && discordLoginEnabled && !adminAccounts.ok) {
     throw new Error("ADMIN_ACCOUNT_IDS must include at least one real Discord account ID before production launch.");
   }
   if (production && !moderatorAccounts.ok) {
@@ -2328,9 +2329,9 @@ function publicLaunchDecision(db) {
   addCheck("保存方式", !production || storageDriver === "postgres", storageDriver, production ? "blocker" : "warning");
   addCheck("データベースURL", !production || storageDriver !== "postgres" || databaseUrl.ok, storageDriver === "postgres" ? databaseUrl.ok ? databaseUrl.detail : databaseUrl.detail === "missing" ? "未設定" : "仮URLまたは不正なURL" : "Postgres未使用", production ? "blocker" : "warning");
   addCheck("DB SSL", !production || storageDriver !== "postgres" || databaseSslOk, storageDriver === "postgres" ? databaseSslOk ? "true" : process.env.DATABASE_SSL ? "true にしてください" : "未設定" : "Postgres未使用", production ? "blocker" : "warning");
-  addCheck("管理者ロール", !production || adminAccounts.ok, adminAccounts.detail, "blocker");
+  addCheck("管理者ロール", !production || !discordLoginEnabled || adminAccounts.ok, discordLoginEnabled ? adminAccounts.detail : "Discordログイン無効 / 管理PINで運用", discordLoginEnabled ? "blocker" : "warning");
   addCheck("モデレーターロール", !production || moderatorAccounts.ok, moderatorAccounts.count ? moderatorAccounts.detail : "任意 / 未設定", production && !moderatorAccounts.ok ? "blocker" : "warning");
-  addCheck("Discord連携", !production || discord.ok, discord.detail, "blocker");
+  addCheck("Discord連携", !production || !discordLoginEnabled || discord.ok, discordLoginEnabled ? discord.detail : "無効 / 後で設定", discordLoginEnabled ? "blocker" : "warning");
   addCheck("投稿停止", !writePaused, writePaused ? publicWritePaused ? "PUBLIC_WRITE_PAUSED=true" : "BETA_WRITE_PAUSED=true" : "通常", "blocker");
   addCheck("一般公開モード", !betaAccessCode, betaAccessCode ? "参加コードが有効です" : "誰でも投稿可能", "blocker");
   addCheck("シード投稿", seedPosts.length === 0 && !envFlag(process.env.ENABLE_SEED_DATA), seedPosts.length ? `サンプル投稿 ${seedPosts.length}件` : envFlag(process.env.ENABLE_SEED_DATA) ? "ENABLE_SEED_DATA=true" : "なし", "blocker");
@@ -3183,6 +3184,10 @@ function discordRedirectUri() {
 }
 
 function ensureDiscordConfig(res) {
+  if (!discordLoginEnabled) {
+    sendText(res, 503, "Discord OAuth is disabled for this beta.");
+    return false;
+  }
   if (discordConfigState().ok) return true;
   sendText(res, 500, "Discord OAuth is not configured.");
   return false;
@@ -3351,7 +3356,7 @@ async function handleApi(req, res, url) {
         reason: ban.reason || "moderation",
         expiresAt: ban.expiresAt || null
       } : { active: false },
-      discordConfigured: discordConfigState().ok,
+      discordConfigured: discordLoginEnabled && discordConfigState().ok,
       betaAccessRequired: Boolean(betaAccessCode),
       betaAccessGranted: betaAccessGranted(req),
       betaWritePaused: writePaused,

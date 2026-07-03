@@ -25,6 +25,7 @@ function nextActionFor(check) {
     PUBLIC_SECURITY_CONTACT: "Set PUBLIC_SECURITY_CONTACT to a real mailto: address or public https contact page.",
     ADMIN_PIN: "Run npm run secrets and paste the generated ADMIN_PIN into the hosting dashboard.",
     SESSION_SECRET: "Run npm run secrets and paste the generated SESSION_SECRET into the hosting dashboard.",
+    DISCORD_LOGIN_ENABLED: "Set DISCORD_LOGIN_ENABLED=false to publish a beta without Discord OAuth, or true after Discord setup is complete.",
     ADMIN_ACCOUNT_IDS: "Log in with Discord once, copy your Discord account id, and set ADMIN_ACCOUNT_IDS=discord:numeric-id.",
     DISCORD_CLIENT_ID: "Create the Discord application and paste its numeric client ID into DISCORD_CLIENT_ID.",
     DISCORD_CLIENT_SECRET: "Create or reset the Discord client secret and paste it only into the hosting dashboard.",
@@ -135,7 +136,8 @@ const sessionSecret = secretState("SESSION_SECRET", 32, ["local-session-secret",
 const database = databaseSummary();
 const publicUrl = publicUrlSummary();
 const publicSecurityContact = publicSecurityContactSummary();
-const adminAccounts = accountIdsState("ADMIN_ACCOUNT_IDS", true);
+const discordLoginEnabled = env("DISCORD_LOGIN_ENABLED") ? flag("DISCORD_LOGIN_ENABLED") : true;
+const adminAccounts = accountIdsState("ADMIN_ACCOUNT_IDS", discordLoginEnabled);
 const moderatorAccounts = accountIdsState("MODERATOR_ACCOUNT_IDS", false);
 const discordClientId = discordClientIdState();
 const discordClientSecret = discordClientSecretState();
@@ -150,9 +152,10 @@ add("PUBLIC_BASE_URL", publicUrl.ok, publicUrl.detail, strict ? "fail" : "warn")
 add("PUBLIC_SECURITY_CONTACT", publicSecurityContact.ok, publicSecurityContact.detail, strict ? "fail" : "warn");
 add("ADMIN_PIN", adminPin.ok, adminPin.detail, strict ? "fail" : "warn");
 add("SESSION_SECRET", sessionSecret.ok, sessionSecret.detail, strict ? "fail" : "warn");
-add("ADMIN_ACCOUNT_IDS", adminAccounts.ok, adminAccounts.detail, strict ? "fail" : "warn");
-add("DISCORD_CLIENT_ID", discordClientId.ok, discordClientId.detail, strict ? "fail" : "warn");
-add("DISCORD_CLIENT_SECRET", discordClientSecret.ok, discordClientSecret.detail, strict ? "fail" : "warn");
+add("DISCORD_LOGIN_ENABLED", true, discordLoginEnabled ? "true" : "false");
+add("ADMIN_ACCOUNT_IDS", adminAccounts.ok, discordLoginEnabled ? adminAccounts.detail : "optional while DISCORD_LOGIN_ENABLED=false", discordLoginEnabled && strict ? "fail" : "warn");
+add("DISCORD_CLIENT_ID", !discordLoginEnabled || discordClientId.ok, discordLoginEnabled ? discordClientId.detail : "optional while DISCORD_LOGIN_ENABLED=false", discordLoginEnabled && strict ? "fail" : "warn");
+add("DISCORD_CLIENT_SECRET", !discordLoginEnabled || discordClientSecret.ok, discordLoginEnabled ? discordClientSecret.detail : "optional while DISCORD_LOGIN_ENABLED=false", discordLoginEnabled && strict ? "fail" : "warn");
 add("ENABLE_SEED_DATA", !flag("ENABLE_SEED_DATA"), flag("ENABLE_SEED_DATA") ? "true" : "false", strict ? "fail" : "warn");
 add("BETA_WRITE_PAUSED", !flag("BETA_WRITE_PAUSED"), flag("BETA_WRITE_PAUSED") ? "true" : "false", "warn");
 add("PUBLIC_WRITE_PAUSED", !flag("PUBLIC_WRITE_PAUSED"), flag("PUBLIC_WRITE_PAUSED") ? "true" : "false", strict ? "fail" : "warn");

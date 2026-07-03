@@ -37,6 +37,11 @@ Do not paste database passwords, full connection strings, admin pins, session se
 ## Render
 
 - Dashboard: logged in
-- New Web Service screen: opened
-- Current blocker: GitHub provider connection or public repository URL is required
+- GitHub repository: `https://github.com/hirohiro0000tommy-source/1code`
+- Service: `1code`
+- Service ID: `srv-d941nv57vvec73e11ai0`
+- Public URL: `https://onecode-cngg.onrender.com`
+- Instance: Free
+- First deploy: live
+- Current blocker: production environment variables, Discord OAuth app, and production database password are still needed
 - Fill sheet: `dist/render-env-fill-sheet.md`

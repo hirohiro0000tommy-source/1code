@@ -40,6 +40,7 @@ BETA_WRITE_PAUSED=false
 PUBLIC_WRITE_PAUSED=false
 ENABLE_SEED_DATA=false
 SESSION_SECRET=generated-session-secret
+DISCORD_LOGIN_ENABLED=false
 DISCORD_CLIENT_ID=...
 DISCORD_CLIENT_SECRET=...
 RELEASE_VERSION=production
@@ -54,6 +55,7 @@ COMMIT_SHA=
 - `ADMIN_PIN` is generated, private, and at least 16 characters.
 - `SESSION_SECRET` is at least 32 characters.
 - `ADMIN_ACCOUNT_IDS` contains your own `discord:numeric-id` account ID, not `discord:your-discord-user-id` or another placeholder.
+- `DISCORD_LOGIN_ENABLED=false` is acceptable for the first beta when Discord Developer Portal setup is blocked. Set it to `true` only after Discord OAuth works.
 - `BETA_ACCESS_CODE` is shared only with invited testers.
 - `BETA_WRITE_PAUSED=false` before inviting testers. Set it to `true` only for an emergency pause.
 - `PUBLIC_WRITE_PAUSED=false` before public launch. Set it to `true` only when public posting must be paused.
