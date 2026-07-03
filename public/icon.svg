@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">1code corgi icon</title>
+  <desc id="desc">Flat pixel art corgi mascot on a black background.</desc>
+  <rect width="512" height="512" rx="96" fill="#08090b"/>
+
+  <!-- Pixel blocks use a 16px grid for a deliberately low-bit corgi look. -->
+  <g shape-rendering="crispEdges">
+    <rect x="128" y="112" width="64" height="64" fill="#8b5b2b"/>
+    <rect x="320" y="112" width="64" height="64" fill="#8b5b2b"/>
+    <rect x="112" y="176" width="80" height="64" fill="#b87732"/>
+    <rect x="320" y="176" width="80" height="64" fill="#b87732"/>
+    <rect x="144" y="176" width="224" height="176" fill="#c98235"/>
+    <rect x="176" y="160" width="160" height="32" fill="#d59142"/>
+    <rect x="128" y="224" width="256" height="96" fill="#d59142"/>
+    <rect x="160" y="320" width="192" height="48" fill="#a8662e"/>
+
+    <rect x="192" y="192" width="128" height="160" fill="#f4ead3"/>
+    <rect x="176" y="224" width="32" height="96" fill="#f4ead3"/>
+    <rect x="304" y="224" width="32" height="96" fill="#f4ead3"/>
+    <rect x="208" y="336" width="96" height="32" fill="#f4ead3"/>
+
+    <rect x="176" y="224" width="32" height="32" fill="#111"/>
+    <rect x="304" y="224" width="32" height="32" fill="#111"/>
+    <rect x="192" y="208" width="16" height="16" fill="#fff"/>
+    <rect x="320" y="208" width="16" height="16" fill="#fff"/>
+    <rect x="240" y="272" width="32" height="32" fill="#111"/>
+    <rect x="224" y="320" width="64" height="16" fill="#111"/>
+    <rect x="208" y="304" width="16" height="16" fill="#111"/>
+    <rect x="288" y="304" width="16" height="16" fill="#111"/>
+
+    <rect x="160" y="384" width="192" height="48" fill="#c98235"/>
+    <rect x="176" y="432" width="64" height="32" fill="#f4ead3"/>
+    <rect x="272" y="432" width="64" height="32" fill="#f4ead3"/>
+    <rect x="128" y="400" width="48" height="32" fill="#8b5b2b"/>
+    <rect x="336" y="400" width="48" height="32" fill="#8b5b2b"/>
+
+    <rect x="0" y="480" width="512" height="32" fill="#08090b"/>
+  </g>
+</svg>

@@ -1,0 +1,36 @@
+{
+  "name": "partyfinder-production",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Production-oriented 1code prototype",
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check public/app.js && node --check scripts/export-json-to-sql.js && node --check scripts/reset-local-data.js && node --check scripts/backup-json-data.js && node --check scripts/verify-backup.js && node --check scripts/backup-drill.js && node --check scripts/generate-secrets.js && node --check scripts/generate-admin-roles-sql.js && node --check scripts/deploy-env-plan.js && node --check scripts/deploy-verify.js && node --check scripts/production-config-check.js && node --check scripts/launch-today.js && node --check scripts/generate-launch-packet.js && node --check scripts/preflight-check.js && node --check scripts/postgres-readiness-check.js && node --check scripts/beta-readiness-check.js && node --check scripts/beta-prelaunch-check.js && node --check scripts/public-readiness-check.js && node --check scripts/public-prelaunch-check.js && node --check scripts/final-release-check.js && node --check scripts/live-smoke-check.js && node --check scripts/status-check.js && node --check scripts/smoke-test.js && node --check storage/postgres-store.js",
+    "admin:roles": "node scripts/generate-admin-roles-sql.js",
+    "admin:roles:write": "node scripts/generate-admin-roles-sql.js --write",
+    "config:check": "node scripts/production-config-check.js",
+    "deploy:plan": "node scripts/deploy-env-plan.js",
+    "deploy:verify": "node scripts/deploy-verify.js",
+    "export:sql": "node scripts/export-json-to-sql.js",
+    "backup": "node scripts/backup-json-data.js",
+    "backup:drill": "node scripts/backup-drill.js",
+    "backup:verify": "node scripts/verify-backup.js",
+    "beta:check": "node scripts/beta-readiness-check.js",
+    "beta:prelaunch": "node scripts/beta-prelaunch-check.js",
+    "live:check": "node scripts/live-smoke-check.js",
+    "launch:today": "node scripts/launch-today.js",
+    "launch:packet": "node scripts/generate-launch-packet.js",
+    "preflight": "node scripts/preflight-check.js",
+    "postgres:check": "node scripts/postgres-readiness-check.js",
+    "public:check": "node scripts/public-readiness-check.js",
+    "public:prelaunch": "node scripts/public-prelaunch-check.js",
+    "release:final": "node scripts/final-release-check.js",
+    "reset:data": "node scripts/reset-local-data.js",
+    "secrets": "node scripts/generate-secrets.js",
+    "smoke": "node scripts/smoke-test.js",
+    "status:check": "node scripts/status-check.js"
+  }
+}

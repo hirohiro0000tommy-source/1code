@@ -1,0 +1,7 @@
+data/
+backups/
+db/generated-admin-roles.sql
+db/import-from-json.sql
+.env
+.env.local
+node_modules/

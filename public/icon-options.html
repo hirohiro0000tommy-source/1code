@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>1code icon options</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #111;
+      --muted: #666;
+      --line: #202020;
+      --paper: #fff;
+      --bg: #f7f7f4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(17, 17, 17, .08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(17, 17, 17, .08) 1px, transparent 1px),
+        var(--bg);
+      background-size: 42px 42px;
+      color: var(--ink);
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+    main {
+      width: min(1040px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+    header {
+      margin-bottom: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #111;
+      color: #fff;
+    }
+    h1, p { margin: 0; }
+    h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1; }
+    p { margin-top: 8px; color: #d9d9d2; font-weight: 700; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      padding: 14px;
+      box-shadow: 6px 6px 0 rgba(17, 17, 17, .08);
+    }
+    .preview {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      border: 1px solid rgba(17, 17, 17, .12);
+      border-radius: 8px;
+      background: #eee;
+    }
+    .preview img {
+      width: min(78%, 220px);
+      height: min(78%, 220px);
+    }
+    .sizes {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      min-height: 48px;
+    }
+    .sizes img:nth-child(1) { width: 16px; height: 16px; }
+    .sizes img:nth-child(2) { width: 32px; height: 32px; }
+    .sizes img:nth-child(3) { width: 48px; height: 48px; }
+    h2 {
+      margin: 12px 0 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+    .note {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    code {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>1code icon options</h1>
+      <p>2番案を除いた、ドット絵コーギー候補です。</p>
+    </header>
+    <section class="grid">
+      <article class="card">
+        <div class="preview"><img src="/icon-corgi-face.svg" alt="黒背景のドット絵コーギー顔"></div>
+        <div class="sizes">
+          <img src="/icon-corgi-face.svg" alt="">
+          <img src="/icon-corgi-face.svg" alt="">
+          <img src="/icon-corgi-face.svg" alt="">
+        </div>
+        <h2>1. 顔アップ</h2>
+        <p class="note">一番favicon向き。小さくしても犬っぽさが残りやすい案です。</p>
+        <code>/icon-corgi-face.svg</code>
+      </article>
+      <article class="card">
+        <div class="preview"><img src="/icon-corgi-side.svg" alt="横顔のドット絵コーギー"></div>
+        <div class="sizes">
+          <img src="/icon-corgi-side.svg" alt="">
+          <img src="/icon-corgi-side.svg" alt="">
+          <img src="/icon-corgi-side.svg" alt="">
+        </div>
+        <h2>3. 横顔</h2>
+        <p class="note">ゲームのドットキャラ感が強い案。大きめの表示やSNS向きです。</p>
+        <code>/icon-corgi-side.svg</code>
+      </article>
+      <article class="card">
+        <div class="preview"><img src="/icon-corgi-peek.svg" alt="下から顔を出すドット絵コーギー"></div>
+        <div class="sizes">
+          <img src="/icon-corgi-peek.svg" alt="">
+          <img src="/icon-corgi-peek.svg" alt="">
+          <img src="/icon-corgi-peek.svg" alt="">
+        </div>
+        <h2>4. ひょっこり</h2>
+        <p class="note">親しみやすい案。前のロボット案の流れも少し残せます。</p>
+        <code>/icon-corgi-peek.svg</code>
+      </article>
+      <article class="card">
+        <div class="preview"><img src="/icon-corgi-silhouette.svg" alt="白黒のドット絵コーギーシルエット"></div>
+        <div class="sizes">
+          <img src="/icon-corgi-silhouette.svg" alt="">
+          <img src="/icon-corgi-silhouette.svg" alt="">
+          <img src="/icon-corgi-silhouette.svg" alt="">
+        </div>
+        <h2>5. 白黒シルエット</h2>
+        <p class="note">サイトの白黒基調に一番寄せた案。大人っぽく、少し硬めです。</p>
+        <code>/icon-corgi-silhouette.svg</code>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="1code（ワンコード）は、ゲーム仲間募集とフリートークを気軽に投稿できる掲示板です。募集、返信、いいね、リマインダーで一緒に遊ぶ相手を見つけやすくします。">
+  <meta name="theme-color" content="#111111">
+  <title>1code（ワンコード）</title>
+  <link rel="canonical" href="/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="1code（ワンコード）">
+  <meta property="og:title" content="1code（ワンコード） | ゲーム仲間募集掲示板">
+  <meta property="og:description" content="ゲーム仲間募集とフリートークを気軽に投稿できる掲示板。">
+  <meta property="og:image" content="/og-image.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="alternate" type="application/rss+xml" title="1code 新着投稿" href="/feed.xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "1code",
+    "alternateName": "1code（ワンコード）",
+    "description": "ゲーム仲間募集とフリートークを気軽に投稿できる掲示板です。",
+    "url": "/",
+    "inLanguage": "ja"
+  }
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo" aria-hidden="true"><span></span></div>
+      <div>
+        <h1>1code</h1>
+        <p>ゲーマーのための掲示板</p>
+      </div>
+      <nav class="utility-links" aria-label="サポートリンク">
+        <button class="utility-link" type="button" data-view="adminView">管理</button>
+        <button class="utility-link" type="button" data-view="contactView">お問い合わせ</button>
+        <a class="utility-link" href="/terms.html">利用規約</a>
+        <a class="utility-link" href="/privacy.html">プライバシー</a>
+      </nav>
+    </header>
+
+    <section class="box account" id="accountPanel">
+      <div>
+        <strong id="accountName">ログインしていません</strong>
+        <span id="accountStatus">表示名だけでも投稿できます。Discordログインは任意です。</span>
+        <form class="auth-form" id="loginForm">
+          <label>表示名<input id="loginNameInput" maxlength="24" placeholder="Player"></label>
+          <input id="loginDiscordInput" type="hidden" value="">
+          <button class="btn dark" type="submit">表示名を設定</button>
+          <button class="btn" type="button" id="discordLoginButton">Discordでログイン</button>
+        </form>
+      </div>
+      <div class="row">
+          <button class="btn dark" type="button" id="loginToggleButton">表示名設定</button>
+        <button class="btn" type="button" id="logoutButton">ログアウト</button>
+      </div>
+    </section>
+
+    <section class="announcement-list" id="announcementList" aria-live="polite"></section>
+
+    <section class="service-status" id="serviceStatus" aria-live="polite" hidden></section>
+
+    <section class="box beta-access" id="betaAccessPanel" hidden>
+      <div>
+        <strong>β版参加コード</strong>
+        <span id="betaAccessStatus">投稿には参加コードが必要です。</span>
+      </div>
+      <form class="beta-form" id="betaAccessForm">
+        <input id="betaAccessInput" maxlength="120" placeholder="参加コード">
+        <button class="btn dark" type="submit">保存</button>
+      </form>
+    </section>
+
+    <section class="beta-notice" id="betaNotice" hidden>
+      <strong>β版テスト中</strong>
+      <span>使いづらい点や分かりにくい点があれば、短い内容でも送ってください。</span>
+      <button class="utility-link" type="button" id="openBetaFeedbackButton">βフィードバックを送る</button>
+    </section>
+
+    <section class="beta-checklist" id="betaChecklist" hidden>
+      <div>
+        <strong>βテストで試してほしいこと</strong>
+        <span id="betaChecklistStatus">まずは3つだけ試してください。</span>
+      </div>
+      <div class="beta-task-list" id="betaTaskList" aria-live="polite"></div>
+    </section>
+
+    <section class="beta-quickstart" id="betaQuickStart" hidden>
+      <div>
+        <strong>βクイックスタート</strong>
+        <span>迷ったらここから。</span>
+      </div>
+      <div class="beta-quick-actions">
+        <button type="button" data-beta-jump="recruitment">募集を投稿</button>
+        <button type="button" data-beta-jump="thread">話題を書く</button>
+        <button type="button" data-beta-jump="feedback">感想を送る</button>
+      </div>
+    </section>
+
+    <section class="safety-strip" aria-label="安全に使うための案内">
+      <strong>安心して使うために</strong>
+      <span>外部IDや個人情報は必要な範囲だけでOKです。不安な投稿は通報できます。</span>
+      <a href="/terms.html">利用ルール</a>
+    </section>
+
+    <nav class="tabs" aria-label="ページ切り替え">
+      <button class="tab active" type="button" data-view="recruitmentView">募集</button>
+      <button class="tab" type="button" data-view="chatView">フリートーク</button>
+      <button class="tab" type="button" data-view="reminderView">リマインダー</button>
+      <button class="tab" type="button" data-view="myView">マイページ<span class="nav-badge" id="navMessageBadge" hidden>0</span></button>
+      <button class="tab create-tab" type="button" id="openRecruitFormButton">募集を投稿</button>
+    </nav>
+
+    <section class="toast" id="toast" aria-live="polite" hidden></section>
+
+    <aside class="ad-rail ad-left" data-ad-slot="left-rail"></aside>
+    <aside class="ad-rail ad-right" data-ad-slot="right-rail"></aside>
+
+    <section class="view active page-shell" id="recruitmentView">
+      <div class="layout" id="recruitmentLayout">
+        <aside>
+          <form class="panel" id="postForm">
+            <div class="panel-title"><span>募集を書く</span></div>
+            <div class="two">
+              <label>ゲーム
+                <select id="gameInput" required></select>
+              </label>
+              <label>ランク帯
+                <select id="rankInput"></select>
+              </label>
+            </div>
+            <div class="two">
+              <label>機種
+                <select id="platformInput">
+                  <option>PC</option>
+                  <option>PlayStation</option>
+                  <option>Switch</option>
+                  <option>モバイル</option>
+                  <option>クロスプレイ</option>
+                </select>
+              </label>
+              <label>VC
+                <select id="voiceInput">
+                  <option>あり</option>
+                  <option>なし</option>
+                  <option>どちらでも</option>
+                </select>
+              </label>
+            </div>
+            <label>募集人数<input id="capacityInput" type="number" min="1" max="99" value="4"></label>
+            <label>スタイル
+              <select id="styleInput">
+                <option>初心者</option>
+                <option>まったり</option>
+                <option>エンジョイ</option>
+                <option>ガチ</option>
+              </select>
+            </label>
+            <label>本文<textarea id="messageInput" required placeholder="雰囲気、目的、連絡方法など"></textarea></label>
+            <p class="form-note">外部IDや個人情報は必要な範囲だけでOKです。</p>
+            <button class="btn dark" type="submit">投稿</button>
+          </form>
+        </aside>
+        <main>
+          <div class="filters recruitment-filters">
+            <div class="filter-group">
+              <div class="filter-label">ゲームカテゴリ</div>
+              <div class="check-list" id="gameFilter" aria-label="ゲーム絞り込み"></div>
+            </div>
+            <div class="filter-group detail-filter">
+              <button class="detail-toggle" type="button" id="detailFilterToggle" aria-expanded="false">詳細情報</button>
+              <div class="detail-filter-body" id="detailFilterBody" hidden>
+                <div class="filter-tabs" aria-label="募集詳細検索">
+                  <button class="filter-tab active" type="button" data-filter-tab="keywordFilterPanel">キーワード</button>
+                  <button class="filter-tab" type="button" data-filter-tab="platformFilterPanel">機種</button>
+                  <button class="filter-tab" type="button" data-filter-tab="voiceFilterPanel">VC</button>
+                  <button class="filter-tab" type="button" data-filter-tab="rankFilterPanel">ランク帯</button>
+                  <button class="filter-tab" type="button" data-filter-tab="styleFilterPanel">スタイル</button>
+                </div>
+                <div class="filter-panel active" id="keywordFilterPanel">
+                  <input id="searchInput" type="search" placeholder="本文、ゲーム、ランクなど">
+                </div>
+                <div class="filter-panel" id="platformFilterPanel" hidden>
+                  <div class="check-list" id="platformFilter" aria-label="機種絞り込み">
+                    <label><input type="checkbox" value="PC">PC</label>
+                    <label><input type="checkbox" value="PlayStation">PlayStation</label>
+                    <label><input type="checkbox" value="Switch">Switch</label>
+                    <label><input type="checkbox" value="モバイル">モバイル</label>
+                    <label><input type="checkbox" value="クロスプレイ">クロスプレイ</label>
+                  </div>
+                </div>
+                <div class="filter-panel" id="voiceFilterPanel" hidden>
+                  <div class="check-list" id="voiceFilter" aria-label="VC絞り込み">
+                    <label><input type="checkbox" value="あり">あり</label>
+                    <label><input type="checkbox" value="なし">なし</label>
+                    <label><input type="checkbox" value="どちらでも">どちらでも</label>
+                  </div>
+                </div>
+                <div class="filter-panel" id="rankFilterPanel" hidden>
+                  <div class="check-list" id="rankFilter" aria-label="ランク帯絞り込み"></div>
+                </div>
+                <div class="filter-panel" id="styleFilterPanel" hidden>
+                  <div class="check-list" id="styleFilter" aria-label="スタイル絞り込み"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="topbar narrow">
+            <select id="sortInput">
+              <option value="active">最近動いた順</option>
+              <option value="new">新着順</option>
+              <option value="like">いいね順</option>
+              <option value="reply">返信数順</option>
+            </select>
+          </div>
+          <div class="summary"><strong>募集一覧</strong><span id="recruitmentCount">0件</span></div>
+          <section class="activity-strip" id="gameActivity" aria-label="ゲーム別の募集状況"></section>
+          <section class="feed" id="feed" aria-live="polite"></section>
+        </main>
+      </div>
+    </section>
+
+    <section class="view page-shell" id="chatView" hidden>
+      <div class="layout" id="chatLayout">
+        <aside>
+          <form class="panel" id="chatForm">
+            <div class="panel-title"><span>トークを書く</span><small>雑談 / 大会観戦 / 攻略相談</small></div>
+            <div class="template-row" aria-label="フリートークテンプレート">
+              <button class="template-button" type="button" data-template="thread:chat">雑談</button>
+              <button class="template-button" type="button" data-template="thread:event">大会観戦</button>
+              <button class="template-button" type="button" data-template="thread:strategy">攻略相談</button>
+            </div>
+            <label>タイトル<input id="chatTitleInput" maxlength="72" required placeholder="話題を入力"></label>
+            <label>カテゴリ
+              <select id="chatCategoryInput">
+                <option>雑談</option>
+                <option>大会観戦</option>
+                <option>攻略相談</option>
+              </select>
+            </label>
+            <label>本文<textarea id="chatBodyInput" required placeholder="本文を書く"></textarea></label>
+            <p class="form-note">ネタバレや強い表現は、タイトルでわかるようにすると安心です。</p>
+            <button class="btn dark" type="submit">投稿</button>
+          </form>
+        </aside>
+        <main>
+          <div class="topbar">
+            <input id="chatSearchInput" type="search" placeholder="フリートークを検索">
+          </div>
+          <div class="filters compact">
+            <div class="filter-group">
+              <div class="filter-label">カテゴリ</div>
+              <div class="check-list" id="chatCategoryFilter" aria-label="フリートークカテゴリ絞り込み">
+                <label><input type="checkbox" value="雑談">雑談</label>
+                <label><input type="checkbox" value="大会観戦">大会観戦</label>
+                <label><input type="checkbox" value="攻略相談">攻略相談</label>
+              </div>
+            </div>
+          </div>
+          <div class="topbar narrow">
+            <select id="chatSortInput">
+              <option value="active">最近動いた順</option>
+              <option value="new">新着順</option>
+              <option value="like">いいね順</option>
+              <option value="reply">返信数順</option>
+            </select>
+          </div>
+          <div class="summary"><strong>フリートーク一覧</strong><span id="chatCount">0件</span></div>
+          <section class="activity-strip" id="chatActivity" aria-label="カテゴリ別のフリートーク状況"></section>
+          <section class="feed" id="chatFeed" aria-live="polite"></section>
+        </main>
+      </div>
+    </section>
+
+    <section class="view" id="reminderView" hidden>
+      <div class="summary"><strong>リマインダー</strong><span id="reminderCount">0件</span></div>
+      <section class="feed" id="reminderFeed" aria-live="polite"></section>
+    </section>
+
+    <section class="view" id="myView" hidden>
+      <section class="profile-panel">
+        <div class="profile-card">
+          <div class="profile-avatar" aria-hidden="true">
+            <span></span>
+          </div>
+          <div>
+            <div class="meta">
+              <span class="badge light" id="profileStyleBadge">未設定</span>
+            </div>
+            <h2 id="profileDisplayName">Anonymous</h2>
+            <p id="profileBio">プロフィールを書くと、募集や返信の前に自分の遊び方を整理できます。</p>
+            <div class="profile-tags" id="profileGameTags"></div>
+          </div>
+        </div>
+        <form class="profile-form" id="profileForm">
+          <div class="two">
+            <label>表示名<input id="profileNameInput" maxlength="24" placeholder="Player"></label>
+            <label>プレイスタイル
+              <select id="profileStyleInput">
+                <option>未設定</option>
+                <option>初心者</option>
+                <option>まったり</option>
+                <option>エンジョイ</option>
+                <option>ガチ</option>
+              </select>
+            </label>
+          </div>
+          <div class="profile-field">
+            <span>よく遊ぶゲーム</span>
+            <div class="check-list profile-game-list" id="profileGamesInput" aria-label="よく遊ぶゲーム"></div>
+          </div>
+          <label>ひとこと<textarea id="profileBioInput" maxlength="160" placeholder="好きな遊び方や、募集で伝えたい雰囲気を書けます。"></textarea></label>
+          <div class="actions profile-actions">
+            <button class="btn dark" type="submit">プロフィールを保存</button>
+            <button class="btn" type="button" id="profileApplyNameButton">表示名を反映</button>
+          </div>
+        </form>
+      </section>
+      <div class="summary"><strong>データ確認</strong><span id="myDataStatus">未確認</span></div>
+      <section class="feed" id="myDataFeed" aria-live="polite"></section>
+      <div class="summary"><strong>メッセージ</strong><span id="messageCount">0件</span></div>
+      <section class="feed" id="messageFeed" aria-live="polite"></section>
+      <div class="summary"><strong>マイページ</strong><span id="myCount">0件</span></div>
+      <section class="feed" id="myFeed" aria-live="polite"></section>
+    </section>
+
+    <section class="view" id="contactView" hidden>
+      <div class="box">
+        <div class="panel-title"><span>お問い合わせ</span><small>不具合・要望・βフィードバック</small></div>
+        <form class="contact-form" id="inquiryForm">
+          <div class="two">
+            <label>お名前<input id="inquiryNameInput" maxlength="40" placeholder="Anonymous"></label>
+            <label>連絡先<input id="inquiryContactInput" maxlength="120" placeholder="返信が必要な場合のみ"></label>
+          </div>
+          <label>種類
+            <select id="inquiryCategoryInput">
+              <option>不具合</option>
+              <option>要望</option>
+              <option>βフィードバック</option>
+              <option>削除依頼</option>
+              <option>広告</option>
+              <option>その他</option>
+            </select>
+          </label>
+          <label>エラーID<input id="inquiryRequestIdInput" maxlength="80" placeholder="表示された場合のみ"></label>
+          <label>内容<textarea id="inquiryMessageInput" maxlength="1200" required placeholder="内容を入力してください"></textarea></label>
+          <button class="btn dark" type="submit">送信</button>
+          <p class="muted" id="inquiryStatus" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="view" id="adminView" hidden>
+      <div class="box">
+        <div class="panel-title"><span>管理</span><small>運用確認</small></div>
+        <div class="topbar admin-tools">
+          <input id="adminPinInput" type="password" placeholder="管理PIN">
+          <button class="btn dark" type="button" id="loadReportsButton">管理データを更新</button>
+          <button class="btn" type="button" id="exportBackupButton">バックアップ取得</button>
+        </div>
+        <p class="muted">ローカル初期PINは admin です。本番では環境変数で変更します。</p>
+      </div>
+      <div class="stats-grid" id="adminStats" aria-live="polite"></div>
+      <div class="summary"><strong>バックアップ状況</strong><span id="backupStatus">未確認</span></div>
+      <section class="feed" id="backupStatusFeed" aria-live="polite"></section>
+      <div class="summary"><strong>運用ダイジェスト</strong><span id="operatorDigestStatus">未確認</span></div>
+      <section class="feed" id="operatorDigestFeed" aria-live="polite"></section>
+      <div class="summary"><strong>インシデント共有</strong><span id="incidentBriefStatus">未確認</span></div>
+      <section class="feed" id="incidentBriefFeed" aria-live="polite"></section>
+      <div class="summary"><strong>公開運用レポート</strong><span id="publicReportStatus">未確認</span></div>
+      <section class="feed" id="publicReportFeed" aria-live="polite"></section>
+      <div class="summary"><strong>一般公開判定</strong><span id="publicLaunchStatus">未確認</span></div>
+      <section class="feed" id="publicLaunchFeed" aria-live="polite"></section>
+      <div class="summary"><strong>公開直前チェック</strong><span id="publicReleaseChecklistStatus">未確認</span></div>
+      <section class="feed" id="publicReleaseChecklistFeed" aria-live="polite"></section>
+      <div class="summary"><strong>公開設定ハンドオフ</strong><span id="deploymentHandoffStatus">未確認</span></div>
+      <section class="feed" id="deploymentHandoffFeed" aria-live="polite"></section>
+      <div class="summary"><strong>β公開判定</strong><span id="betaLaunchStatus">未確認</span></div>
+      <section class="feed" id="betaLaunchFeed" aria-live="polite"></section>
+      <div class="summary"><strong>β日次レポート</strong><span id="betaReportStatus">未確認</span></div>
+      <section class="feed" id="betaReportFeed" aria-live="polite"></section>
+      <div class="summary"><strong>β改善バックログ</strong><span id="betaBacklogStatus">未確認</span></div>
+      <section class="feed" id="betaBacklogFeed" aria-live="polite"></section>
+      <div class="summary"><strong>システム状況</strong><span id="systemStatus">未確認</span></div>
+      <section class="feed" id="systemFeed" aria-live="polite"></section>
+      <div class="summary"><strong>通報一覧</strong><span id="reportCount">0件</span></div>
+      <section class="feed" id="reportFeed" aria-live="polite"></section>
+      <div class="summary"><strong>お問い合わせ</strong><span id="inquiryCount">0件</span></div>
+      <div class="topbar narrow">
+        <input id="adminInquirySearchInput" type="search" placeholder="受付ID、名前、内容、分類で検索">
+        <label class="inline-check"><input id="adminInquiryResolvedInput" type="checkbox">対応済みも表示</label>
+      </div>
+      <section class="feed" id="inquiryFeed" aria-live="polite"></section>
+      <div class="summary"><strong>お知らせ</strong><span id="announcementCount">0件</span></div>
+      <section class="feed" id="announcementFeed" aria-live="polite"></section>
+      <div class="summary"><strong>停止ユーザー</strong><span id="banCount">0件</span></div>
+      <section class="feed" id="banFeed" aria-live="polite"></section>
+      <div class="summary"><strong>広告枠</strong><span id="adSlotCount">0件</span></div>
+      <section class="feed" id="adSlotFeed" aria-live="polite"></section>
+      <div class="summary"><strong>モデレーション履歴</strong><span id="moderationCount">0件</span></div>
+      <section class="feed" id="moderationFeed" aria-live="polite"></section>
+      <div class="summary"><strong>削除履歴</strong><span id="deletedCount">0件</span></div>
+      <section class="feed" id="deletedFeed" aria-live="polite"></section>
+      <div class="summary"><strong>監査ログ</strong><span id="auditCount">0件</span></div>
+      <section class="feed" id="auditFeed" aria-live="polite"></section>
+    </section>
+
+    <footer class="app-footer" aria-label="サイト情報">
+      <div>
+        <strong>1code</strong>
+        <span>ゲーマーのための掲示板</span>
+      </div>
+      <nav class="footer-links" aria-label="フッターリンク">
+        <a href="/terms.html">利用規約</a>
+        <a href="/privacy.html">プライバシー</a>
+        <a href="/guidelines.html">ガイドライン</a>
+        <a href="/status">ステータス</a>
+        <button type="button" data-view="contactView">お問い合わせ</button>
+        <button type="button" data-view="adminView">管理</button>
+        <a href="/feed.xml">RSS</a>
+      </nav>
+      <p>広告や外部リンクを開く場合は、リンク先の表示と規約を確認してください。</p>
+    </footer>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

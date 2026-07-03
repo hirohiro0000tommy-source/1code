@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: partyfinder
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: 8787
+      - key: NODE_ENV
+        value: production
+      - key: ADMIN_PIN
+        sync: false
+      - key: ADMIN_ACCOUNT_IDS
+        sync: false
+      - key: MODERATOR_ACCOUNT_IDS
+        sync: false
+      - key: BETA_ACCESS_CODE
+        sync: false
+      - key: BETA_WRITE_PAUSED
+        value: false
+      - key: PUBLIC_WRITE_PAUSED
+        value: false
+      - key: ENABLE_SEED_DATA
+        value: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: STORAGE_DRIVER
+        value: postgres
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: true
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: PUBLIC_SECURITY_CONTACT
+        sync: false
+      - key: RELEASE_VERSION
+        value: production
+      - key: COMMIT_SHA
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
