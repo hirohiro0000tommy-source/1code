@@ -1413,13 +1413,13 @@ function systemChecks() {
     },
     {
       label: "Discord連携",
-      ok: !production || discord.ok,
-      detail: discord.detail
+      ok: !production || !discordLoginEnabled || discord.ok,
+      detail: discordLoginEnabled ? discord.detail : "無効 / 後で設定"
     },
     {
       label: "管理者ロール",
-      ok: !production || adminAccounts.ok,
-      detail: adminAccounts.detail
+      ok: !production || !discordLoginEnabled || adminAccounts.ok,
+      detail: discordLoginEnabled ? adminAccounts.detail : "Discordログイン無効 / 管理PINで運用"
     },
     {
       label: "モデレーターロール",
