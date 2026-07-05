@@ -989,6 +989,19 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
 .profile-card h2 {
   margin-top: 6px;
 }
+.profile-card .profile-discord {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 6px;
+  border: 1px solid #d7d7cf;
+  border-radius: 8px;
+  background: #f7f7f4;
+  color: var(--ink);
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
 .profile-card p {
   margin: 8px 0 0;
   color: var(--muted);

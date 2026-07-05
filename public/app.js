@@ -120,6 +120,7 @@ function saveAccount(next) {
 function defaultProfile() {
   return {
     displayName: "",
+    discordHandle: "",
     games: "",
     playTime: "",
     style: "未設定",
@@ -378,6 +379,7 @@ function publicProfile(profile = profileValues()) {
   const normalized = { ...defaultProfile(), ...(profile || {}) };
   return {
     displayName: normalized.displayName || (account.name === "Anonymous" ? "Anonymous" : account.name),
+    discordHandle: normalized.discordHandle,
     games: normalized.games,
     playTime: "",
     style: normalized.style || "未設定",
@@ -401,11 +403,15 @@ function renderProfile() {
   $("#profileDisplayName").textContent = displayName;
   $("#profileStyleBadge").textContent = profile.style || "未設定";
   $("#profileBio").textContent = profile.bio || "プロフィールを書くと、募集や返信の前に自分の遊び方を整理できます。";
+  const discordHandle = (profile.discordHandle || "").trim();
+  $("#profileDiscord").textContent = discordHandle ? `Discord: ${discordHandle}` : "Discord未設定";
+  $("#profileDiscord").hidden = !discordHandle;
   const games = profileGames(profile);
   $("#profileGameTags").innerHTML = games.length
     ? games.map(game => `<span>${escapeHtml(game)}</span>`).join("")
     : `<span>ゲーム未設定</span>`;
   $("#profileNameInput").value = profile.displayName || (account.name === "Anonymous" ? "" : account.name);
+  $("#profileDiscordInput").value = profile.discordHandle || "";
   renderProfileGameOptions(games);
   $("#profileStyleInput").value = profile.style || "未設定";
   $("#profileBioInput").value = profile.bio;
@@ -736,6 +742,7 @@ function recruitmentProfileMarkup(post) {
   const displayName = profile.displayName || post.author || "Anonymous";
   const games = profileGames(profile);
   const style = profile.style || "未設定";
+  const discordHandle = (profile.discordHandle || "").trim();
   const bio = profile.bio || "プロフィールはまだ短めです。";
   return `
     <details class="poster-profile">
@@ -744,6 +751,7 @@ function recruitmentProfileMarkup(post) {
         <strong>${escapeHtml(displayName)}</strong>
         <div class="poster-profile-meta">
           <span>${escapeHtml(style)}</span>
+          ${discordHandle ? `<span>Discord: ${escapeHtml(discordHandle)}</span>` : ""}
         </div>
         ${games.length ? `<div class="profile-tags">${games.map(game => `<span>${escapeHtml(game)}</span>`).join("")}</div>` : ""}
         <p>${escapeHtml(bio)}</p>
@@ -3631,6 +3639,7 @@ $("#profileForm").addEventListener("submit", event => {
   event.preventDefault();
   const profile = {
     displayName: $("#profileNameInput").value.trim(),
+    discordHandle: $("#profileDiscordInput").value.trim(),
     games: checkedValues("#profileGamesInput").join(", "),
     playTime: "",
     style: $("#profileStyleInput").value,

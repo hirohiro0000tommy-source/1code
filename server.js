@@ -562,6 +562,7 @@ function cleanText(value, max = 280) {
 function sanitizeAuthorProfile(profile = {}, fallbackName = "") {
   return {
     displayName: cleanText(profile.displayName || fallbackName, 40),
+    discordHandle: cleanText(profile.discordHandle, 40),
     games: cleanText(profile.games, 120),
     playTime: cleanText(profile.playTime, 50),
     style: normalizeProfileStyle(cleanText(profile.style, 40)),

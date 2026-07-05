@@ -294,6 +294,7 @@
               <span class="badge light" id="profileStyleBadge">未設定</span>
             </div>
             <h2 id="profileDisplayName">Anonymous</h2>
+            <p class="profile-discord" id="profileDiscord" hidden>Discord未設定</p>
             <p id="profileBio">プロフィールを書くと、募集や返信の前に自分の遊び方を整理できます。</p>
             <div class="profile-tags" id="profileGameTags"></div>
           </div>
@@ -301,6 +302,9 @@
         <form class="profile-form" id="profileForm">
           <div class="two">
             <label>表示名<input id="profileNameInput" maxlength="24" placeholder="Player"></label>
+            <label>Discordアカウント<input id="profileDiscordInput" maxlength="40" placeholder="例: player_name"></label>
+          </div>
+          <div class="two">
             <label>プレイスタイル
               <select id="profileStyleInput">
                 <option>未設定</option>
