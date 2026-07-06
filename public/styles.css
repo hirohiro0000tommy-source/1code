@@ -668,6 +668,16 @@ header .utility-link:hover {
   font-size: 12px;
   line-height: 1.5;
 }
+.form-status {
+  display: inline-flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
 label {
   display: grid;
   gap: 5px;

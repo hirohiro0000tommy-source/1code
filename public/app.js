@@ -489,6 +489,23 @@ function updateCreateButton(viewId = document.querySelector(".view.active")?.id 
   button.textContent = $("#recruitmentLayout").classList.contains("form-open") ? "入力欄を閉じる" : "募集を投稿";
 }
 
+function focusCreateForm(viewId) {
+  requestAnimationFrame(() => {
+    const target = viewId === "chatView" ? $("#chatTitleInput") : $("#gameInput");
+    target?.focus();
+  });
+}
+
+function updateFormStatus() {
+  const recruitmentStatus = $("#recruitmentFormStatus");
+  const chatStatus = $("#chatFormStatus");
+  const messageLength = $("#messageInput")?.value.trim().length || 0;
+  const chatTitleLength = $("#chatTitleInput")?.value.trim().length || 0;
+  const chatBodyLength = $("#chatBodyInput")?.value.trim().length || 0;
+  if (recruitmentStatus) recruitmentStatus.textContent = `本文 ${messageLength}/500`;
+  if (chatStatus) chatStatus.textContent = `タイトル ${chatTitleLength}/72 / 本文 ${chatBodyLength}/500`;
+}
+
 function switchView(viewId) {
   document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.view === viewId));
   document.querySelectorAll(".view").forEach(view => {
@@ -743,6 +760,7 @@ function applyRecruitmentTemplate(key) {
   $("#styleInput").value = template.style;
   $("#messageInput").value = template.body;
   saveFormDraft(recruitmentDraftKey, recruitmentDraftFields);
+  updateFormStatus();
   $("#messageInput").focus();
 }
 
@@ -753,6 +771,7 @@ function applyThreadTemplate(key) {
   $("#chatCategoryInput").value = template.category;
   $("#chatBodyInput").value = template.body;
   saveFormDraft(threadDraftKey, threadDraftFields);
+  updateFormStatus();
   $("#chatBodyInput").focus();
 }
 
@@ -2904,6 +2923,15 @@ function focusSharedCard() {
   });
 }
 
+function toggleCardForm(card, formSelector, focusSelector) {
+  const form = card.querySelector(formSelector);
+  if (!form) return;
+  form.classList.toggle("open");
+  if (form.classList.contains("open")) {
+    requestAnimationFrame(() => form.querySelector(focusSelector)?.focus());
+  }
+}
+
 async function handleCardClick(event) {
   const button = event.target.closest("button");
   if (!button) return;
@@ -2936,13 +2964,13 @@ async function handleCardClick(event) {
     await loadState();
   }
   if (button.dataset.action === "reply") {
-    card.querySelector(".reply-form").classList.toggle("open");
+    toggleCardForm(card, ".reply-form", "input");
   }
   if (button.dataset.action === "message") {
-    card.querySelector(".message-form").classList.toggle("open");
+    toggleCardForm(card, ".message-form", "textarea");
   }
   if (button.dataset.action === "reply-message") {
-    card.querySelector(".message-form").classList.toggle("open");
+    toggleCardForm(card, ".message-form", "textarea");
   }
   if (button.dataset.action === "report-message") {
     const reason = prompt("メッセージの通報理由を入力してください", "不適切なメッセージ");
@@ -3041,6 +3069,7 @@ $("#postForm").addEventListener("submit", async event => {
   const created = await api("/api/recruitments", { method: "POST", body: JSON.stringify(payload) });
   $("#postForm").reset();
   renderRecruitmentFormOptions();
+  updateFormStatus();
   localStorage.removeItem(recruitmentDraftKey);
   $("#recruitmentLayout").classList.remove("form-open");
   updateCreateButton("recruitmentView");
@@ -3061,6 +3090,7 @@ $("#chatForm").addEventListener("submit", async event => {
   };
   const created = await api("/api/threads", { method: "POST", body: JSON.stringify(payload) });
   $("#chatForm").reset();
+  updateFormStatus();
   localStorage.removeItem(threadDraftKey);
   $("#chatLayout").classList.remove("form-open");
   updateCreateButton("chatView");
@@ -3690,11 +3720,13 @@ $("#openRecruitFormButton").addEventListener("click", () => {
   if (!$("#chatView").hidden) {
     $("#chatLayout").classList.toggle("form-open");
     updateCreateButton("chatView");
+    if ($("#chatLayout").classList.contains("form-open")) focusCreateForm("chatView");
     return;
   }
   if ($("#recruitmentView").hidden) switchView("recruitmentView");
   $("#recruitmentLayout").classList.toggle("form-open");
   updateCreateButton("recruitmentView");
+  if ($("#recruitmentLayout").classList.contains("form-open")) focusCreateForm("recruitmentView");
 });
 $("#loginToggleButton").addEventListener("click", () => $("#accountPanel").classList.toggle("open"));
 $("#loginForm").addEventListener("submit", event => {
@@ -3766,13 +3798,18 @@ $("#logoutButton").addEventListener("click", async () => {
   $(selector).addEventListener("input", renderThreads);
   $(selector).addEventListener("change", renderThreads);
 });
+["#messageInput", "#chatTitleInput", "#chatBodyInput"].forEach(selector => {
+  $(selector).addEventListener("input", updateFormStatus);
+});
 
 async function init() {
   bindFormDraft(recruitmentDraftKey, recruitmentDraftFields);
   bindFormDraft(threadDraftKey, threadDraftFields);
+  updateFormStatus();
   await syncServerAccount().catch(() => null);
   await loadState();
   restoreRecruitmentDraft();
+  updateFormStatus();
   syncCheckListLabels();
   focusSharedCard();
 }

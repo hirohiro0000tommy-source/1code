@@ -126,7 +126,7 @@
       <div class="layout" id="recruitmentLayout">
         <aside>
           <form class="panel" id="postForm">
-            <div class="panel-title"><span>募集を書く</span></div>
+            <div class="panel-title"><span>募集を投稿</span></div>
             <div class="two">
               <label>ゲーム
                 <select id="gameInput" required></select>
@@ -162,9 +162,10 @@
                 <option>ガチ</option>
               </select>
             </label>
-            <label>本文<textarea id="messageInput" required placeholder="雰囲気、目的、連絡方法など"></textarea></label>
+            <label>本文<textarea id="messageInput" maxlength="500" required placeholder="雰囲気、目的、連絡方法など"></textarea></label>
+            <p class="form-status" id="recruitmentFormStatus" aria-live="polite">本文 0/500</p>
             <p class="form-note">外部IDや個人情報は必要な範囲だけでOKです。</p>
-            <button class="btn dark" type="submit">投稿</button>
+            <button class="btn dark" type="submit">募集を投稿</button>
           </form>
         </aside>
         <main>
@@ -231,7 +232,7 @@
       <div class="layout" id="chatLayout">
         <aside>
           <form class="panel" id="chatForm">
-            <div class="panel-title"><span>トークを書く</span><small>雑談 / 大会観戦 / 攻略相談</small></div>
+            <div class="panel-title"><span>スレッドを投稿</span><small>雑談 / 大会観戦 / 攻略相談</small></div>
             <div class="template-row" aria-label="フリートークテンプレート">
               <button class="template-button" type="button" data-template="thread:chat">雑談</button>
               <button class="template-button" type="button" data-template="thread:event">大会観戦</button>
@@ -245,9 +246,10 @@
                 <option>攻略相談</option>
               </select>
             </label>
-            <label>本文<textarea id="chatBodyInput" required placeholder="本文を書く"></textarea></label>
+            <label>本文<textarea id="chatBodyInput" maxlength="500" required placeholder="本文を書く"></textarea></label>
+            <p class="form-status" id="chatFormStatus" aria-live="polite">タイトル 0/72 / 本文 0/500</p>
             <p class="form-note">ネタバレや強い表現は、タイトルでわかるようにすると安心です。</p>
-            <button class="btn dark" type="submit">投稿</button>
+            <button class="btn dark" type="submit">スレッドを投稿</button>
           </form>
         </aside>
         <main>
