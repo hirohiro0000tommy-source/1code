@@ -92,6 +92,31 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function waitForProcessExit(child, timeoutMs = 1500) {
+  if (child.exitCode !== null || child.killed) return Promise.resolve(true);
+  return new Promise(resolve => {
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve(child.exitCode !== null || child.killed);
+    }, timeoutMs);
+    function cleanup() {
+      clearTimeout(timer);
+      child.off("exit", onExit);
+      child.off("error", onError);
+    }
+    function onExit() {
+      cleanup();
+      resolve(true);
+    }
+    function onError() {
+      cleanup();
+      resolve(true);
+    }
+    child.once("exit", onExit);
+    child.once("error", onError);
+  });
+}
+
 async function run() {
   const child = spawn(process.execPath, ["server.js"], {
     cwd: root,
@@ -213,8 +238,7 @@ async function run() {
       env: { ...process.env, PORT: String(port + 1), STORAGE_DRIVER: "json", NODE_ENV: "production", ADMIN_PIN: "admin", DATA_DIR: dataDir },
       stdio: "ignore"
     });
-    await new Promise(resolve => setTimeout(resolve, 500));
-    productionBlocked = blockedChild.exitCode !== null || blockedChild.killed;
+    productionBlocked = await waitForProcessExit(blockedChild);
     blockedChild.kill();
     assert(productionBlocked, "unsafe production config was not blocked");
 
@@ -239,8 +263,7 @@ async function run() {
       },
       stdio: "ignore"
     });
-    await new Promise(resolve => setTimeout(resolve, 500));
-    shortAdminPinBlocked = shortAdminPinChild.exitCode !== null || shortAdminPinChild.killed;
+    shortAdminPinBlocked = await waitForProcessExit(shortAdminPinChild);
     shortAdminPinChild.kill();
     assert(shortAdminPinBlocked, "short production admin pin was not blocked");
 
@@ -265,8 +288,7 @@ async function run() {
       },
       stdio: "ignore"
     });
-    await new Promise(resolve => setTimeout(resolve, 500));
-    publicBaseUrlPathBlocked = pathUrlChild.exitCode !== null || pathUrlChild.killed;
+    publicBaseUrlPathBlocked = await waitForProcessExit(pathUrlChild);
     pathUrlChild.kill();
     assert(publicBaseUrlPathBlocked, "public base url path was not blocked");
 
@@ -291,8 +313,7 @@ async function run() {
       },
       stdio: "ignore"
     });
-    await new Promise(resolve => setTimeout(resolve, 500));
-    securityContactPlaceholderBlocked = securityContactChild.exitCode !== null || securityContactChild.killed;
+    securityContactPlaceholderBlocked = await waitForProcessExit(securityContactChild);
     securityContactChild.kill();
     assert(securityContactPlaceholderBlocked, "placeholder security contact was not blocked");
 
@@ -317,8 +338,7 @@ async function run() {
       },
       stdio: "ignore"
     });
-    await new Promise(resolve => setTimeout(resolve, 500));
-    securityContactLocalBlocked = securityContactLocalChild.exitCode !== null || securityContactLocalChild.killed;
+    securityContactLocalBlocked = await waitForProcessExit(securityContactLocalChild);
     securityContactLocalChild.kill();
     assert(securityContactLocalBlocked, "local security contact was not blocked");
 
@@ -343,8 +363,7 @@ async function run() {
       },
       stdio: "ignore"
     });
-    await new Promise(resolve => setTimeout(resolve, 500));
-    databasePlaceholderBlocked = databasePlaceholderChild.exitCode !== null || databasePlaceholderChild.killed;
+    databasePlaceholderBlocked = await waitForProcessExit(databasePlaceholderChild);
     databasePlaceholderChild.kill();
     assert(databasePlaceholderBlocked, "placeholder database url was not blocked");
 
@@ -369,8 +388,7 @@ async function run() {
       },
       stdio: "ignore"
     });
-    await new Promise(resolve => setTimeout(resolve, 500));
-    databaseSslBlocked = databaseSslChild.exitCode !== null || databaseSslChild.killed;
+    databaseSslBlocked = await waitForProcessExit(databaseSslChild);
     databaseSslChild.kill();
     assert(databaseSslBlocked, "production database ssl false was not blocked");
 
@@ -395,8 +413,7 @@ async function run() {
       },
       stdio: "ignore"
     });
-    await new Promise(resolve => setTimeout(resolve, 500));
-    discordPlaceholderBlocked = discordPlaceholderChild.exitCode !== null || discordPlaceholderChild.killed;
+    discordPlaceholderBlocked = await waitForProcessExit(discordPlaceholderChild);
     discordPlaceholderChild.kill();
     assert(discordPlaceholderBlocked, "placeholder discord oauth credentials were not blocked");
 
@@ -421,8 +438,7 @@ async function run() {
       },
       stdio: "ignore"
     });
-    await new Promise(resolve => setTimeout(resolve, 500));
-    adminAccountPlaceholderBlocked = adminAccountPlaceholderChild.exitCode !== null || adminAccountPlaceholderChild.killed;
+    adminAccountPlaceholderBlocked = await waitForProcessExit(adminAccountPlaceholderChild);
     adminAccountPlaceholderChild.kill();
     assert(adminAccountPlaceholderBlocked, "placeholder admin account id was not blocked");
 

@@ -636,6 +636,69 @@ function visibleThreads() {
     });
 }
 
+function filterChip(label, value) {
+  return `<span class="filter-chip"><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</span>`;
+}
+
+function renderFilterSummary(selector, labels, clearAction) {
+  const container = $(selector);
+  if (!container) return;
+  if (!labels.length) {
+    container.hidden = true;
+    container.innerHTML = "";
+    return;
+  }
+  container.hidden = false;
+  container.innerHTML = `
+    <div class="filter-summary-list">${labels.map(item => filterChip(item.label, item.value)).join("")}</div>
+    <button class="link-action" type="button" data-filter-clear="${escapeHtml(clearAction)}">条件を解除</button>
+  `;
+}
+
+function recruitmentFilterLabels() {
+  const labels = [];
+  const query = $("#searchInput").value.trim();
+  if (query) labels.push({ label: "キーワード", value: query });
+  checkedValues("#gameFilter").forEach(value => labels.push({ label: "ゲーム", value }));
+  checkedValues("#platformFilter").forEach(value => labels.push({ label: "機種", value }));
+  checkedValues("#voiceFilter").forEach(value => labels.push({ label: "VC", value }));
+  checkedValues("#rankFilter").forEach(value => labels.push({ label: "ランク", value }));
+  checkedValues("#styleFilter").forEach(value => labels.push({ label: "スタイル", value }));
+  return labels;
+}
+
+function chatFilterLabels() {
+  const labels = [];
+  const query = $("#chatSearchInput").value.trim();
+  if (query) labels.push({ label: "キーワード", value: query });
+  checkedValues("#chatCategoryFilter").forEach(value => labels.push({ label: "カテゴリ", value }));
+  return labels;
+}
+
+function clearChecks(selector) {
+  document.querySelectorAll(`${selector} input[type='checkbox']`).forEach(input => {
+    input.checked = false;
+    syncCheckedLabel(input.closest("label"));
+  });
+}
+
+function clearRecruitmentFilters() {
+  $("#searchInput").value = "";
+  clearChecks("#gameFilter");
+  clearChecks("#platformFilter");
+  clearChecks("#voiceFilter");
+  clearChecks("#rankFilter");
+  clearChecks("#styleFilter");
+  renderRankFilter();
+  renderRecruitments();
+}
+
+function clearChatFilters() {
+  $("#chatSearchInput").value = "";
+  clearChecks("#chatCategoryFilter");
+  renderThreads();
+}
+
 function countBy(items, key) {
   const counts = new Map();
   for (const item of items) {
@@ -996,9 +1059,11 @@ function threadCard(post) {
 function renderRecruitments() {
   refreshGameFilter();
   const items = visibleRecruitments();
-  $("#recruitmentCount").textContent = `${items.length}件`;
+  const filtered = recruitmentFilterLabels();
+  renderFilterSummary("#recruitmentFilterSummary", filtered, "recruitment");
+  $("#recruitmentCount").textContent = filtered.length ? `${items.length}/${state.recruitments.length}件` : `${items.length}件`;
   if (!items.length) {
-    $("#feed").innerHTML = `<div class="empty">まだ表示できる募集はありません。最初の募集を投稿して、遊びたいゲームや雰囲気を伝えてみましょう。<button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を投稿</button></div>`;
+    $("#feed").innerHTML = `<div class="empty">${filtered.length ? "条件に合う募集がありません。条件を解除するか、少し広めに探してみてください。" : "まだ表示できる募集はありません。最初の募集を投稿して、遊びたいゲームや雰囲気を伝えてみましょう。"}<div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="recruitment">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を投稿</button></div></div>`;
     return;
   }
   const cards = items.map(recruitmentCard);
@@ -1007,9 +1072,11 @@ function renderRecruitments() {
 
 function renderThreads() {
   const items = visibleThreads();
-  $("#chatCount").textContent = `${items.length}件`;
+  const filtered = chatFilterLabels();
+  renderFilterSummary("#chatFilterSummary", filtered, "chat");
+  $("#chatCount").textContent = filtered.length ? `${items.length}/${state.threads.length}件` : `${items.length}件`;
   if (!items.length) {
-    $("#chatFeed").innerHTML = `<div class="empty">まだ表示できるフリートークはありません。雑談、大会観戦、攻略相談のどれかから話題を作れます。<button class="btn dark empty-action" type="button" data-empty-action="open-thread">スレッドを投稿</button></div>`;
+    $("#chatFeed").innerHTML = `<div class="empty">${filtered.length ? "条件に合うフリートークがありません。条件を解除するか、別のカテゴリを試してください。" : "まだ表示できるフリートークはありません。雑談、大会観戦、攻略相談のどれかから話題を作れます。"}<div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="chat">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-thread">スレッドを投稿</button></div></div>`;
     return;
   }
   const cards = items.map(threadCard);
@@ -3058,6 +3125,12 @@ $("#myDataFeed").addEventListener("click", async event => {
 });
 
 document.body.addEventListener("click", event => {
+  const clearButton = event.target.closest("[data-filter-clear]");
+  if (clearButton) {
+    if (clearButton.dataset.filterClear === "recruitment") clearRecruitmentFilters();
+    if (clearButton.dataset.filterClear === "chat") clearChatFilters();
+    return;
+  }
   const button = event.target.closest("[data-empty-action]");
   if (!button) return;
   if (button.dataset.emptyAction === "open-recruitment") {
