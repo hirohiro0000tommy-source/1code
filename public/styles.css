@@ -579,6 +579,15 @@ header .utility-link:hover {
   background: var(--ink);
   color: var(--paper);
 }
+.action.primary {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18);
+}
+.action.primary:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
 .action[disabled] {
   opacity: .75;
 }
@@ -1289,12 +1298,30 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   background: #fafaf7;
 }
 .poster-profile summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   cursor: pointer;
   padding: 8px 10px;
   color: var(--ink);
   font-size: 13px;
   font-weight: 900;
   user-select: none;
+}
+.poster-profile-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.poster-profile-cue {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  padding: 2px 8px;
+  font-size: 11px;
 }
 .poster-profile[open] summary {
   border-bottom: 1px solid #e0e0dc;

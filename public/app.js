@@ -778,7 +778,10 @@ function applyThreadTemplate(key) {
 function actionButtons(item) {
   const liked = hasLiked(item);
   const joinButton = item.capacity
-    ? `<button class="action" data-action="join">${item.viewerJoined ? "参加取消" : "参加希望"}</button>`
+    ? `<button class="action primary" data-action="join">${item.viewerJoined ? "参加取消" : "参加希望"}</button>`
+    : "";
+  const messageButton = item.canMessage
+    ? `<button class="action" data-action="message" title="募集者へメッセージ">メッセージ</button>`
     : "";
   const statusButton = item.status && item.canManage
     ? `<button class="action" data-action="status">${item.status === "closed" ? "再開" : "締切"}</button>`
@@ -786,6 +789,7 @@ function actionButtons(item) {
   return `
     <button class="action" data-action="like" title="${liked ? "いいね解除" : "いいね"}">${liked ? "♥" : "♡"} ${item.likeCount}</button>
     ${joinButton}
+    ${messageButton}
     <button class="action" data-action="reply" title="返信">↩ ${item.replies.length}</button>
     <button class="action" data-action="share" title="共有">共有</button>
     <button class="action" data-action="report" title="通報">通報</button>
@@ -828,12 +832,15 @@ function recruitmentProfileMarkup(post) {
   const bio = profile.bio || "プロフィールはまだ短めです。";
   return `
     <details class="poster-profile">
-      <summary>募集者プロフィール</summary>
+      <summary>
+        <span class="poster-profile-name">募集者: ${escapeHtml(displayName)}</span>
+        <span class="poster-profile-cue">プロフィール</span>
+      </summary>
       <div class="poster-profile-body">
         <strong>${escapeHtml(displayName)}</strong>
         <div class="poster-profile-meta">
           <span>${escapeHtml(style)}</span>
-          ${discordHandle ? `<span>Discord: ${escapeHtml(discordHandle)}</span>` : ""}
+          ${discordHandle ? `<span>Discord登録あり</span>` : ""}
         </div>
         ${games.length ? `<div class="profile-tags">${games.map(game => `<span>${escapeHtml(game)}</span>`).join("")}</div>` : ""}
         <p>${escapeHtml(bio)}</p>
