@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="1code（ワンコード）は、ゲーム仲間募集とフリートークを気軽に投稿できる掲示板です。募集、返信、いいね、リマインダーで一緒に遊ぶ相手を見つけやすくします。">
+  <meta name="description" content="1code（ワンコード）は、ゲーム仲間をゆるく探せる掲示板です。募集、返信、いいね、リマインダーで遊びたい人とつながれます。">
   <meta name="theme-color" content="#111111">
   <title>1code（ワンコード）</title>
   <link rel="canonical" href="/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="1code（ワンコード）">
   <meta property="og:title" content="1code（ワンコード） | ゲーム仲間募集掲示板">
-  <meta property="og:description" content="ゲーム仲間募集とフリートークを気軽に投稿できる掲示板。">
+  <meta property="og:description" content="ゲーム仲間をゆるく探せる掲示板。">
   <meta property="og:image" content="/og-image.svg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -23,7 +23,7 @@
     "@type": "WebSite",
     "name": "1code",
     "alternateName": "1code（ワンコード）",
-    "description": "ゲーム仲間募集とフリートークを気軽に投稿できる掲示板です。",
+    "description": "ゲーム仲間をゆるく探せる掲示板です。",
     "url": "/",
     "inLanguage": "ja"
   }
@@ -48,7 +48,7 @@
     <section class="box account" id="accountPanel">
       <div>
         <strong id="accountName">ログインしていません</strong>
-        <span id="accountStatus">表示名だけでも投稿できます。Discordログインは任意です。</span>
+        <span id="accountStatus">表示名だけでも使えます。Discordログインは任意です。</span>
         <form class="auth-form" id="loginForm">
           <label>表示名<input id="loginNameInput" maxlength="24" placeholder="Player"></label>
           <input id="loginDiscordInput" type="hidden" value="">
@@ -86,7 +86,7 @@
     <section class="beta-checklist" id="betaChecklist" hidden>
       <div>
         <strong>βテストで試してほしいこと</strong>
-        <span id="betaChecklistStatus">まずは3つだけ試してください。</span>
+        <span id="betaChecklistStatus">まずは3つだけ触ってみてください。</span>
       </div>
       <div class="beta-task-list" id="betaTaskList" aria-live="polite"></div>
     </section>
@@ -104,8 +104,8 @@
     </section>
 
     <section class="safety-strip" aria-label="安全に使うための案内">
-      <strong>安心して使うために</strong>
-      <span>外部IDや個人情報は必要な範囲だけでOKです。不安な投稿は通報できます。</span>
+      <strong>無理なく使うために</strong>
+      <span>外部IDは必要なときだけで大丈夫です。気になる投稿は通報できます。</span>
       <a href="/terms.html">利用ルール</a>
     </section>
 
@@ -164,7 +164,7 @@
             </label>
             <label>本文<textarea id="messageInput" maxlength="500" required placeholder="雰囲気、目的、連絡方法など"></textarea></label>
             <p class="form-status" id="recruitmentFormStatus" aria-live="polite">本文 0/500</p>
-            <p class="form-note">外部IDや個人情報は必要な範囲だけでOKです。</p>
+            <p class="form-note">外部IDは、必要なときだけ書けば大丈夫です。</p>
             <button class="btn dark" type="submit">募集を投稿</button>
           </form>
         </aside>
@@ -248,7 +248,7 @@
             </label>
             <label>本文<textarea id="chatBodyInput" maxlength="500" required placeholder="本文を書く"></textarea></label>
             <p class="form-status" id="chatFormStatus" aria-live="polite">タイトル 0/72 / 本文 0/500</p>
-            <p class="form-note">ネタバレや強い表現は、タイトルでわかるようにすると安心です。</p>
+            <p class="form-note">ネタバレや強めの話題は、タイトルで少し伝えておくと親切です。</p>
             <button class="btn dark" type="submit">スレッドを投稿</button>
           </form>
         </aside>
@@ -299,7 +299,7 @@
             </div>
             <h2 id="profileDisplayName">Anonymous</h2>
             <p class="profile-discord" id="profileDiscord" hidden>Discord未設定</p>
-            <p id="profileBio">プロフィールを書くと、募集や返信の前に自分の遊び方を整理できます。</p>
+            <p id="profileBio">よく遊ぶゲームや雰囲気を少し書いておくと、声をかけやすくなります。</p>
             <div class="profile-tags" id="profileGameTags"></div>
           </div>
         </div>
@@ -357,7 +357,7 @@
             </select>
           </label>
           <label>エラーID<input id="inquiryRequestIdInput" maxlength="80" placeholder="表示された場合のみ"></label>
-          <label>内容<textarea id="inquiryMessageInput" maxlength="1200" required placeholder="内容を入力してください"></textarea></label>
+          <label>内容<textarea id="inquiryMessageInput" maxlength="1200" required placeholder="内容を書く"></textarea></label>
           <button class="btn dark" type="submit">送信</button>
           <p class="muted" id="inquiryStatus" aria-live="polite"></p>
         </form>
@@ -433,7 +433,7 @@
         <button type="button" data-view="adminView">管理</button>
         <a href="/feed.xml">RSS</a>
       </nav>
-      <p>広告や外部リンクを開く場合は、リンク先の表示と規約を確認してください。</p>
+      <p>広告や外部リンクは、開く前にリンク先を軽く見てください。</p>
     </footer>
   </div>
   <script src="/app.js"></script>

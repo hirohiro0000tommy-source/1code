@@ -23,7 +23,7 @@ const recruitmentTemplates = {
     rank: "ランク相談",
     capacity: "2",
     style: "ガチ",
-    body: "ランクを一緒に回せる方を募集します。\n近いランク帯で、勝ちを目指しつつ落ち着いて遊べる方だと嬉しいです。\n希望ランクや時間帯を返信してください。"
+    body: "ランク一緒に回せる方募集です。\n近いランク帯で、勝ちを目指しつつ落ち着いて遊べる方だと嬉しいです。\nランクだけ返信に書いてもらえれば大丈夫です。"
   },
   beginner: {
     game: "Monster Hunter",
@@ -32,24 +32,24 @@ const recruitmentTemplates = {
     rank: "初心者",
     capacity: "4",
     style: "初心者",
-    body: "初心者や復帰勢の方も歓迎です。\n失敗しても気にしない雰囲気で遊びたいです。\n気軽に返信してください。"
+    body: "初心者・復帰勢の方も歓迎です。\nミスっても気にしない感じで遊びたいです。\n気軽に返信どうぞ。"
   }
 };
 const threadTemplates = {
   chat: {
     title: "最近遊んでいるゲームを話したい",
     category: "雑談",
-    body: "最近遊んでいるゲームや、気になっているタイトルについて話したいです。\nおすすめがあればぜひ教えてください。"
+    body: "最近遊んでいるゲームとか、気になっているタイトルの話がしたいです。\nおすすめがあればぜひ。"
   },
   event: {
     title: "大会観戦しながら話したい",
     category: "大会観戦",
-    body: "大会や配信を見ながら話せるスレッドです。\n注目している試合や選手、見どころを気軽に書いてください。"
+    body: "大会や配信を見ながら話せる場所です。\n注目している試合や選手、見どころなど気軽にどうぞ。"
   },
   strategy: {
     title: "立ち回りや編成の相談",
     category: "攻略相談",
-    body: "攻略や立ち回りについて相談したいです。\n使っているキャラ、ランク帯、困っている場面を書いてもらえると助かります。"
+    body: "攻略や立ち回りについて相談したいです。\n使っているキャラやランク、困っている場面を書いてもらえると助かります。"
   }
 };
 const recruitmentDraftKey = "partyfinder.draft.recruitment.v1";
@@ -349,7 +349,7 @@ function renderAccount() {
   const expires = suspension.expiresAt ? ` / ${new Date(suspension.expiresAt).toLocaleDateString("ja-JP")}まで` : "";
   $("#accountStatus").textContent = suspension.active
     ? `利用制限中: ${suspension.reason || "moderation"}${expires}`
-    : account.discord ? "Discordログイン済み" : "表示名だけでも投稿できます。Discordログインは任意です。";
+    : account.discord ? "Discordログイン済み" : "表示名だけでも使えます。Discordログインは任意です。";
   $("#accountPanel").classList.toggle("suspended", !!suspension.active);
   $("#loginToggleButton").style.display = account.name === "Anonymous" ? "inline-flex" : "none";
   $("#logoutButton").style.display = account.name === "Anonymous" ? "none" : "inline-flex";
@@ -402,7 +402,7 @@ function renderProfile() {
   const displayName = profile.displayName || (account.name === "Anonymous" ? "Anonymous" : account.name);
   $("#profileDisplayName").textContent = displayName;
   $("#profileStyleBadge").textContent = profile.style || "未設定";
-  $("#profileBio").textContent = profile.bio || "プロフィールを書くと、募集や返信の前に自分の遊び方を整理できます。";
+  $("#profileBio").textContent = profile.bio || "よく遊ぶゲームや雰囲気を少し書いておくと、声をかけやすくなります。";
   const discordHandle = (profile.discordHandle || "").trim();
   $("#profileDiscord").textContent = discordHandle ? `Discord: ${discordHandle}` : "Discord未設定";
   $("#profileDiscord").hidden = !discordHandle;
@@ -435,10 +435,10 @@ function renderBetaAccess() {
   quickStart.hidden = !betaAccess.granted || betaAccess.writePaused;
   $("#betaAccessInput").value = betaAccess.code;
   $("#betaAccessStatus").textContent = betaAccess.writePaused
-    ? "現在、投稿受付を一時停止しています。閲覧、通報、お問い合わせは利用できます。"
+    ? "いまは投稿を一時停止中です。閲覧、通報、お問い合わせは使えます。"
     : betaAccess.granted
-      ? "参加コードを確認済みです。β版への投稿ができます。"
-      : "投稿・返信・通報・問い合わせには参加コードが必要です。";
+      ? "参加コードOK。投稿できます。"
+      : "投稿や返信には参加コードが必要です。";
   panel.classList.toggle("verified", betaAccess.granted && !betaAccess.writePaused);
   panel.classList.toggle("paused", betaAccess.writePaused);
 }
@@ -846,7 +846,7 @@ function recruitmentProfileMarkup(post) {
   const games = profileGames(profile);
   const style = profile.style || "未設定";
   const discordHandle = (profile.discordHandle || "").trim();
-  const bio = profile.bio || "プロフィールはまだ短めです。";
+  const bio = profile.bio || "プロフィールはまだありません。";
   return `
     <details class="poster-profile">
       <summary>
@@ -904,7 +904,7 @@ function messageCard(conversation) {
         <button class="action" data-action="reply-message" type="button">返信</button>
       </div>
       <form class="message-form">
-        <p class="message-safety">外部IDや個人情報は必要な範囲だけでOKです。不安な内容は通報できます。</p>
+        <p class="message-safety">外部IDは必要なときだけで大丈夫です。気になる内容は通報できます。</p>
         <textarea maxlength="500" placeholder="メッセージを書く"></textarea>
         <button class="btn dark" type="submit">送信</button>
       </form>
@@ -999,7 +999,7 @@ function openErrorInquiryDraft(context = {}) {
     "",
     "直前にしていた操作:",
     "",
-    "もう一度試しても同じか:",
+    "もう一度やっても同じか:",
     "",
     "補足:"
   ].join("\n");
@@ -1014,8 +1014,8 @@ function openBetaFeedbackDraft(context = {}) {
   const label = context.type === "threads" ? "フリートーク" : context.type === "recruitments" ? "募集" : "βテスト";
   const title = context.title || "";
   const draft = title
-    ? `${label}「${title}」を試しました。\n\n分かりやすかった点:\n\n迷った点・改善してほしい点:\n\nスマホ/PCで気になった表示:`
-    : "βテストを試しました。\n\n分かりやすかった点:\n\n迷った点・改善してほしい点:\n\nスマホ/PCで気になった表示:";
+    ? `${label}「${title}」を触ってみました。\n\n分かりやすかった点:\n\n迷ったところ:\n\n表示で気になったところ:`
+    : "βテストを触ってみました。\n\n分かりやすかった点:\n\n迷ったところ:\n\n表示で気になったところ:";
   if (!$("#inquiryMessageInput").value.trim()) $("#inquiryMessageInput").value = draft;
   $("#inquiryMessageInput").focus();
 }
@@ -1027,7 +1027,7 @@ function showPostCreatedToast(type, item) {
     : "";
   showToast(
     `${label}を投稿しました`,
-    "共有リンクをコピーして、XやDiscordに貼れます。",
+    "XやDiscordで募集を見せたいときに使えます。",
     `<button class="action" type="button" data-toast-action="copy-share" data-type="${escapeHtml(type)}" data-id="${escapeHtml(item.id)}" data-title="${escapeHtml(item.title || label)}">共有リンクをコピー</button>${feedbackAction}`
   );
 }
@@ -1058,7 +1058,7 @@ function recruitmentCard(post) {
       <div class="message">${escapeHtml(post.body)}</div>
       ${recruitmentProfileMarkup(post)}
       <form class="message-form">
-        <p class="message-safety">外部IDや個人情報は必要な範囲だけでOKです。不安な内容は通報できます。</p>
+        <p class="message-safety">外部IDは必要なときだけで大丈夫です。気になる内容は通報できます。</p>
         <textarea maxlength="500" placeholder="募集者にメッセージを書く"></textarea>
         <button class="btn dark" type="submit">送信</button>
       </form>
@@ -1107,7 +1107,7 @@ function renderRecruitments() {
   renderFilterSummary("#recruitmentFilterSummary", filtered, "recruitment");
   $("#recruitmentCount").textContent = filtered.length ? `${items.length}/${state.recruitments.length}件` : `${items.length}件`;
   if (!items.length) {
-    $("#feed").innerHTML = `<div class="empty">${filtered.length ? "条件に合う募集がありません。条件を解除するか、少し広めに探してみてください。" : "まだ表示できる募集はありません。最初の募集を投稿して、遊びたいゲームや雰囲気を伝えてみましょう。"}<div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="recruitment">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を投稿</button></div></div>`;
+    $("#feed").innerHTML = `<div class="empty">${filtered.length ? "この条件の募集はまだありません。条件を少しゆるめると見つかるかも。" : "まだ募集はありません。最初の募集を書いてみませんか。"}<div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="recruitment">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を投稿</button></div></div>`;
     return;
   }
   const cards = items.map(recruitmentCard);
@@ -1120,7 +1120,7 @@ function renderThreads() {
   renderFilterSummary("#chatFilterSummary", filtered, "chat");
   $("#chatCount").textContent = filtered.length ? `${items.length}/${state.threads.length}件` : `${items.length}件`;
   if (!items.length) {
-    $("#chatFeed").innerHTML = `<div class="empty">${filtered.length ? "条件に合うフリートークがありません。条件を解除するか、別のカテゴリを試してください。" : "まだ表示できるフリートークはありません。雑談、大会観戦、攻略相談のどれかから話題を作れます。"}<div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="chat">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-thread">スレッドを投稿</button></div></div>`;
+    $("#chatFeed").innerHTML = `<div class="empty">${filtered.length ? "この条件のフリートークはまだありません。カテゴリを変えると見つかるかも。" : "まだフリートークはありません。ちょっとした話題からどうぞ。"}<div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="chat">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-thread">スレッドを投稿</button></div></div>`;
     return;
   }
   const cards = items.map(threadCard);
@@ -1147,7 +1147,7 @@ function renderMessages() {
   $("#messageCount").textContent = `${conversations.length}件`;
   renderMessageNavBadge();
   if (!conversations.length) {
-    $("#messageFeed").innerHTML = `<div class="empty">募集者プロフィールからメッセージを送ると、ここに会話が表示されます。<button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を見る</button></div>`;
+    $("#messageFeed").innerHTML = `<div class="empty">まだメッセージはありません。気になる募集から声をかけられます。<button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を見る</button></div>`;
     return;
   }
   $("#messageFeed").innerHTML = conversations.map(messageCard).join("");
@@ -3049,7 +3049,7 @@ async function handleReplySubmit(event) {
   await loadState();
   window.location.hash = appHash(card.dataset.type, card.dataset.id);
   focusSharedCard();
-  showToast("返信しました", "投稿が最近動いた順で見つけやすくなりました。");
+  showToast("返信しました", "一覧にも反映しました。");
 }
 
 async function handleMessageSubmit(event) {
