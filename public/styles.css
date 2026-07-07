@@ -1365,6 +1365,21 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   border-left-color: #6d6d66;
   background: #fff;
 }
+.card-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 14px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.card-summary span {
+  border: 1px solid #deded8;
+  border-radius: 999px;
+  background: #fff;
+  padding: 3px 8px;
+}
 .card-preview {
   margin: 6px 0 0;
   color: var(--muted);

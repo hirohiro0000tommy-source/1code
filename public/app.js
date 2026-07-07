@@ -815,6 +815,23 @@ function activityBadge(post) {
   return `<span class="badge light">返信 ${timeAgo(post.lastReplyAt)}</span>`;
 }
 
+function engagementSummary(post, type) {
+  const latestAt = post.lastReplyAt || post.createdAt;
+  const items = type === "recruitments"
+    ? [
+        `参加 ${post.participantCount || 0}/${post.capacity || 4}`,
+        `返信 ${post.replies?.length || 0}`,
+        `いいね ${post.likeCount || 0}`,
+        `更新 ${timeAgo(latestAt)}`
+      ]
+    : [
+        `返信 ${post.replies?.length || 0}`,
+        `いいね ${post.likeCount || 0}`,
+        `更新 ${timeAgo(latestAt)}`
+      ];
+  return `<div class="card-summary">${items.map(item => `<span>${escapeHtml(item)}</span>`).join("")}</div>`;
+}
+
 function shareUrl(type, id) {
   return `${window.location.origin}/share/${type}/${encodeURIComponent(id)}`;
 }
@@ -844,7 +861,6 @@ function recruitmentProfileMarkup(post) {
         </div>
         ${games.length ? `<div class="profile-tags">${games.map(game => `<span>${escapeHtml(game)}</span>`).join("")}</div>` : ""}
         <p>${escapeHtml(bio)}</p>
-        ${post.canMessage ? `<button class="action" type="button" data-action="message">メッセージ</button>` : ""}
       </div>
     </details>
   `;
@@ -1047,6 +1063,7 @@ function recruitmentCard(post) {
         <button class="btn dark" type="submit">送信</button>
       </form>
       <div class="replies">${post.replies.map(replyMarkup).join("")}</div>
+      ${engagementSummary(post, "recruitments")}
       <div class="actions">${actionButtons(post)}</div>
       <form class="reply-form">
         <input maxlength="160" placeholder="返信を書く">
@@ -1073,6 +1090,7 @@ function threadCard(post) {
       </div>
       <div class="message">${escapeHtml(post.body)}</div>
       <div class="replies">${post.replies.map(replyMarkup).join("")}</div>
+      ${engagementSummary(post, "threads")}
       <div class="actions">${actionButtons(post)}</div>
       <form class="reply-form">
         <input maxlength="160" placeholder="返信を書く">
