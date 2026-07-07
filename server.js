@@ -57,6 +57,18 @@ const retentionPolicy = {
   recentRateLimits: 20,
   adminListLimit: 100
 };
+const officialBot = {
+  accountId: "bot:official",
+  author: "1code運営",
+  profile: {
+    displayName: "1code運営",
+    discordHandle: "",
+    games: "いろいろ",
+    playTime: "",
+    style: "まったり",
+    bio: "募集例や話題出しを置く公式アカウントです。"
+  }
+};
 
 function cleanEnv(value) {
   return String(value || "").trim();
@@ -858,6 +870,7 @@ function publicAdSlot(slot) {
 
 function publicItem(item, viewerId = "", viewerIsAdmin = false) {
   const canManage = viewerIsAdmin || !!item.ownerAccountId && item.ownerAccountId === viewerId;
+  const isBotOwned = String(item.ownerAccountId || "").startsWith("bot:");
   const replies = Array.isArray(item.replies) ? item.replies : [];
   const lastReplyAt = replies.reduce((latest, reply) => Math.max(latest, Number(reply.createdAt || 0)), 0);
   return {
@@ -867,7 +880,7 @@ function publicItem(item, viewerId = "", viewerIsAdmin = false) {
     lastReplyAt,
     participantCount: Array.isArray(item.participants) ? item.participants.length : 0,
     viewerOwned: !!item.ownerAccountId && item.ownerAccountId === viewerId,
-    canMessage: !!item.ownerAccountId && item.ownerAccountId !== viewerId,
+    canMessage: !!item.ownerAccountId && !isBotOwned && item.ownerAccountId !== viewerId,
     viewerJoined: Array.isArray(item.participants) ? item.participants.some(participant => participant.accountId === viewerId) : false,
     participants: Array.isArray(item.participants) ? item.participants.map(participant => ({
       name: participant.name,
@@ -3089,6 +3102,125 @@ function duplicateThread(db, item, ownerAccountId) {
   );
 }
 
+function officialBotDrafts(db) {
+  const recruitmentDrafts = [
+    {
+      id: "recruit-shadowverse-beginner",
+      type: "recruitments",
+      title: "Shadowverse/Worlds Beyond 初心者・復帰勢で対戦したい",
+      game: "Shadowverse/Worlds Beyond",
+      platform: "モバイル",
+      voice: "なし",
+      rank: "初心者",
+      style: "初心者",
+      capacity: 2,
+      body: "公式の募集例です。\n初心者・復帰勢同士で、デッキを試しながら軽く対戦したい人向け。\n実際に募集するときは、この文章をまねして短く書けば大丈夫です。"
+    },
+    {
+      id: "recruit-monster-hunter-casual",
+      type: "recruitments",
+      title: "Monster Hunter まったり素材集め",
+      game: "Monster Hunter",
+      platform: "クロスプレイ",
+      voice: "どちらでも",
+      rank: "ランク不問",
+      style: "まったり",
+      capacity: 4,
+      body: "公式の募集例です。\n素材集めやクエスト消化を、急がずまったり遊びたい人向け。\n失敗しても気にしない雰囲気の募集に使えます。"
+    },
+    {
+      id: "recruit-valorant-casual",
+      type: "recruitments",
+      title: "VALORANT 初心者歓迎でアンレート",
+      game: "VALORANT",
+      platform: "PC",
+      voice: "どちらでも",
+      rank: "ランク不問",
+      style: "エンジョイ",
+      capacity: 5,
+      body: "公式の募集例です。\nアンレートや練習を、雰囲気よく遊びたい人向け。\nランクや強さより、落ち着いて遊べることを重視した募集です。"
+    }
+  ];
+  const threadDrafts = [
+    {
+      id: "thread-first-game-friends",
+      type: "threads",
+      title: "最初に募集してみたいゲーム",
+      category: "雑談",
+      body: "公式の話題出しです。\nこのサイトで最初に募集してみたいゲームがあれば、気軽に書いてください。"
+    },
+    {
+      id: "thread-watch-party",
+      type: "threads",
+      title: "大会や配信を見ながら話す場所",
+      category: "大会観戦",
+      body: "公式の話題出しです。\n大会、配信、イベントの感想などをゆるく書ける場所です。"
+    },
+    {
+      id: "thread-beginner-help",
+      type: "threads",
+      title: "初心者が聞きやすい攻略相談",
+      category: "攻略相談",
+      body: "公式の話題出しです。\n立ち回り、キャラ、デッキ、装備など、ちょっと聞きたいことを置いていけます。"
+    }
+  ];
+  return [...recruitmentDrafts, ...threadDrafts].map(draft => ({
+    ...draft,
+    alreadyPublished: botDraftAlreadyPublished(db, draft)
+  }));
+}
+
+function botDraftAlreadyPublished(db, draft) {
+  if (draft.type === "recruitments") {
+    const fingerprint = textFingerprint(draft.title, draft.game, draft.body);
+    return (db.recruitments || []).some(item =>
+      item.author === officialBot.author
+      && textFingerprint(item.title, item.game, item.body) === fingerprint
+    );
+  }
+  const fingerprint = textFingerprint(draft.title, draft.category, draft.body);
+  return (db.threads || []).some(item =>
+    item.author === officialBot.author
+    && textFingerprint(item.title, item.category, item.body) === fingerprint
+  );
+}
+
+function officialBotItemFromDraft(draft, createdAt = Date.now()) {
+  if (draft.type === "recruitments") {
+    return {
+      id: crypto.randomUUID(),
+      title: cleanText(draft.title, 90),
+      author: officialBot.author,
+      authorProfile: officialBot.profile,
+      game: cleanText(draft.game, 60),
+      ownerAccountId: officialBot.accountId,
+      platform: cleanText(draft.platform, 30),
+      voice: cleanText(draft.voice, 20),
+      rank: cleanText(draft.rank, 40) || "ランク不問",
+      time: "",
+      style: normalizePlayStyle(cleanText(draft.style, 40)),
+      capacity: Math.max(1, Math.min(99, Number(draft.capacity || 4))),
+      body: cleanText(draft.body, 1000),
+      status: "open",
+      createdAt,
+      likes: [],
+      participants: [],
+      replies: []
+    };
+  }
+  return {
+    id: crypto.randomUUID(),
+    title: cleanText(draft.title, 90),
+    category: normalizeTalkCategory(draft.category),
+    ownerAccountId: officialBot.accountId,
+    author: officialBot.author,
+    body: cleanText(draft.body, 1000),
+    createdAt,
+    likes: [],
+    replies: []
+  };
+}
+
 function duplicateReply(item, body, ownerAccountId) {
   const fingerprint = textFingerprint(body);
   const threshold = Date.now() - duplicateWindowMs;
@@ -3428,6 +3560,47 @@ async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/admin/announcements") {
     if (!adminOnly(req, res)) return;
     sendJson(res, 200, { announcements: (db.announcements || []).slice(0, retentionPolicy.adminListLimit) });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/bot/drafts") {
+    if (!adminOnly(req, res)) return;
+    const drafts = officialBotDrafts(db);
+    sendJson(res, 200, {
+      drafts,
+      readyCount: drafts.filter(draft => !draft.alreadyPublished).length,
+      bot: { author: officialBot.author, accountId: officialBot.accountId }
+    });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/admin/bot/publish") {
+    if (!adminOnly(req, res)) return;
+    const body = await readBody(req);
+    const requestedIds = Array.isArray(body.draftIds) ? new Set(body.draftIds.map(value => cleanText(value, 120)).filter(Boolean)) : null;
+    const drafts = officialBotDrafts(db).filter(draft => !draft.alreadyPublished && (!requestedIds || requestedIds.has(draft.id)));
+    const published = [];
+    const now = Date.now();
+    for (const draft of drafts.slice(0, 6)) {
+      const item = officialBotItemFromDraft(draft, now - published.length * 1000);
+      const violation = draft.type === "recruitments"
+        ? contentViolation(item.title, item.game, item.body)
+        : contentViolation(item.title, item.body);
+      if (violation) {
+        addModerationEvent(db, req, "bot_content_blocked", { draftId: draft.id, type: draft.type, reason: violation });
+        continue;
+      }
+      if (draft.type === "recruitments") db.recruitments.unshift(item);
+      else db.threads.unshift(item);
+      published.push({ id: item.id, draftId: draft.id, type: draft.type, title: item.title });
+    }
+    addAuditLog(db, req, "official_bot_publish", {
+      requested: requestedIds ? requestedIds.size : "all",
+      published: published.length,
+      titles: published.map(item => item.title)
+    });
+    await writeDb(db);
+    sendJson(res, 201, { ok: true, published, drafts: officialBotDrafts(db) });
     return;
   }
 

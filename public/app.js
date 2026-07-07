@@ -1505,6 +1505,52 @@ function renderAnnouncementAdmin(announcements = []) {
   $("#announcementFeed").innerHTML = form + (list || `<div class="empty">お知らせはまだありません。</div>`);
 }
 
+function renderOfficialBot(botData = {}) {
+  const drafts = botData.drafts || [];
+  const ready = drafts.filter(draft => !draft.alreadyPublished);
+  $("#botDraftStatus").textContent = `${ready.length}/${drafts.length}件`;
+  if (!drafts.length) {
+    $("#botDraftFeed").innerHTML = `<div class="empty">ボット下書きはまだありません。</div>`;
+    return;
+  }
+  const actions = `
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <div class="meta">
+            <span class="badge">公式</span>
+            <span>${escapeHtml(botData.bot?.author || "1code運営")}</span>
+          </div>
+          <h2>公式ボット投稿</h2>
+        </div>
+      </div>
+      <div class="message">人が少ない時間に置いておく、公式の募集例と話題出しです。一般ユーザーのふりはしません。</div>
+      <div class="actions">
+        <button class="action primary" type="button" data-action="publish-bot-drafts" ${ready.length ? "" : "disabled"}>未投稿分を公開</button>
+      </div>
+    </article>
+  `;
+  const list = drafts.map(draft => `
+    <article class="card ${draft.alreadyPublished ? "closed" : ""}" data-bot-draft-id="${escapeHtml(draft.id)}">
+      <div class="card-head">
+        <div>
+          <div class="meta">
+            <span class="badge">${draft.type === "threads" ? "話題" : "募集"}</span>
+            <span>${draft.alreadyPublished ? "公開済み" : "未投稿"}</span>
+            <span>${escapeHtml(draft.game || draft.category || "")}</span>
+          </div>
+          <h2>${escapeHtml(draft.title)}</h2>
+        </div>
+      </div>
+      <div class="message">${escapeHtml(draft.body)}</div>
+      <div class="actions">
+        <button class="action" type="button" data-action="publish-bot-draft" ${draft.alreadyPublished ? "disabled" : ""}>これだけ公開</button>
+      </div>
+    </article>
+  `).join("");
+  $("#botDraftFeed").innerHTML = actions + list;
+}
+
 function renderAdSlots(slots = []) {
   $("#adSlotCount").textContent = `${slots.length}件`;
   if (!slots.length) {
@@ -2853,6 +2899,8 @@ async function loadAdminData() {
     $("#inquiryCount").textContent = "管理者のみ";
     adminInquiriesCache = [];
     $("#inquiryFeed").innerHTML = `<div class="empty">お問い合わせ管理は管理者のみ確認できます。</div>`;
+    $("#botDraftStatus").textContent = "管理者のみ";
+    $("#botDraftFeed").innerHTML = `<div class="empty">公式ボットは管理者のみ使えます。</div>`;
     $("#announcementCount").textContent = "管理者のみ";
     $("#announcementFeed").innerHTML = `<div class="empty">お知らせ管理は管理者のみ確認できます。</div>`;
     $("#banCount").textContent = "管理者のみ";
@@ -2872,7 +2920,7 @@ async function loadAdminData() {
     renderDeletedItems(deletedItems.deletedItems);
     return;
   }
-  const [stats, system, backupStatus, operatorDigest, incidentBrief, publicReport, publicLaunch, publicReleaseChecklist, deploymentHandoff, betaLaunch, betaReport, betaBacklog, reports, inquiries, announcements, adSlots, bans, moderationEvents, deletedItems, auditLogs] = await Promise.all([
+  const [stats, system, backupStatus, operatorDigest, incidentBrief, publicReport, publicLaunch, publicReleaseChecklist, deploymentHandoff, betaLaunch, betaReport, betaBacklog, reports, inquiries, botDrafts, announcements, adSlots, bans, moderationEvents, deletedItems, auditLogs] = await Promise.all([
     api("/api/admin/stats"),
     api("/api/admin/system"),
     api("/api/admin/backup-status"),
@@ -2887,6 +2935,7 @@ async function loadAdminData() {
     api("/api/admin/beta-backlog"),
     api("/api/admin/reports"),
     api("/api/admin/inquiries"),
+    api("/api/admin/bot/drafts"),
     api("/api/admin/announcements"),
     api("/api/admin/ad-slots"),
     api("/api/admin/bans"),
@@ -2908,6 +2957,7 @@ async function loadAdminData() {
   renderBetaBacklog(betaBacklog.backlog);
   renderReports(reports.reports.filter(report => report.status === "open"));
   renderInquiries(inquiries.inquiries);
+  renderOfficialBot(botDrafts);
   renderAnnouncementAdmin(announcements.announcements);
   renderAdSlots(adSlots.adSlots);
   renderBans(bans.bannedAccounts);
@@ -3613,6 +3663,22 @@ $("#announcementFeed").addEventListener("submit", async event => {
   event.target.reset();
   await loadAdminData();
   await loadState();
+});
+
+$("#botDraftFeed").addEventListener("click", async event => {
+  const button = event.target.closest("button");
+  if (!button || !["publish-bot-drafts", "publish-bot-draft"].includes(button.dataset.action)) return;
+  const card = event.target.closest("[data-bot-draft-id]");
+  const payload = button.dataset.action === "publish-bot-draft" && card
+    ? { draftIds: [card.dataset.botDraftId] }
+    : {};
+  const result = await api("/api/admin/bot/publish", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+  showToast("公式ボットを公開しました", `${result.published?.length || 0}件を追加しました。`);
+  await loadState();
+  await loadAdminData();
 });
 
 $("#announcementFeed").addEventListener("click", async event => {
