@@ -452,13 +452,13 @@ function renderBetaChecklist() {
   const tasks = [
     {
       id: "recruitment",
-      label: "募集を1件投稿",
+      label: "募集をひとつ書く",
       done: state.recruitments.some(item => item.viewerOwned),
       action: "募集を書く"
     },
     {
       id: "thread",
-      label: "フリートークを1件投稿",
+      label: "話題をひとつ書く",
       done: state.threads.some(item => item.viewerOwned),
       action: "話題を書く"
     },
@@ -470,12 +470,12 @@ function renderBetaChecklist() {
     }
   ];
   const doneCount = tasks.filter(task => task.done).length;
-  $("#betaChecklistStatus").textContent = `${doneCount}/${tasks.length} 完了`;
+  $("#betaChecklistStatus").textContent = `${doneCount}/${tasks.length} 済み`;
   $("#betaTaskList").innerHTML = tasks.map(task => `
     <div class="beta-task ${task.done ? "done" : ""}">
-      <strong>${task.done ? "OK" : "未"}</strong>
+      <strong>${task.done ? "OK" : "まだ"}</strong>
       <span>${escapeHtml(task.label)}</span>
-      <button type="button" data-beta-task="${escapeHtml(task.id)}">${escapeHtml(task.done ? "確認" : task.action)}</button>
+      <button type="button" data-beta-task="${escapeHtml(task.id)}">${escapeHtml(task.done ? "見る" : task.action)}</button>
     </div>
   `).join("");
 }

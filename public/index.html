@@ -38,8 +38,8 @@
         <p>ゲーマーのための掲示板</p>
       </div>
       <nav class="utility-links" aria-label="サポートリンク">
-        <button class="utility-link" type="button" data-view="adminView">管理</button>
-        <button class="utility-link" type="button" data-view="contactView">お問い合わせ</button>
+        <button class="utility-link" type="button" data-view="adminView">運営</button>
+        <button class="utility-link" type="button" data-view="contactView">連絡</button>
         <a class="utility-link" href="/terms.html">利用規約</a>
         <a class="utility-link" href="/privacy.html">プライバシー</a>
       </nav>
@@ -68,7 +68,7 @@
 
     <section class="box beta-access" id="betaAccessPanel" hidden>
       <div>
-        <strong>β版参加コード</strong>
+        <strong>参加コード</strong>
         <span id="betaAccessStatus">投稿には参加コードが必要です。</span>
       </div>
       <form class="beta-form" id="betaAccessForm">
@@ -78,14 +78,14 @@
     </section>
 
     <section class="beta-notice" id="betaNotice" hidden>
-      <strong>β版テスト中</strong>
+      <strong>テスト公開中</strong>
       <span>使いづらい点や分かりにくい点があれば、短い内容でも送ってください。</span>
-      <button class="utility-link" type="button" id="openBetaFeedbackButton">βフィードバックを送る</button>
+      <button class="utility-link" type="button" id="openBetaFeedbackButton">感想を送る</button>
     </section>
 
     <section class="beta-checklist" id="betaChecklist" hidden>
       <div>
-        <strong>βテストで試してほしいこと</strong>
+        <strong>まず試すこと</strong>
         <span id="betaChecklistStatus">まずは3つだけ触ってみてください。</span>
       </div>
       <div class="beta-task-list" id="betaTaskList" aria-live="polite"></div>
@@ -93,7 +93,7 @@
 
     <section class="beta-quickstart" id="betaQuickStart" hidden>
       <div>
-        <strong>βクイックスタート</strong>
+        <strong>はじめに</strong>
         <span>迷ったらここから。</span>
       </div>
       <div class="beta-quick-actions">
@@ -340,7 +340,7 @@
 
     <section class="view" id="contactView" hidden>
       <div class="box">
-        <div class="panel-title"><span>お問い合わせ</span><small>不具合・要望・βフィードバック</small></div>
+        <div class="panel-title"><span>連絡</span><small>不具合・要望・感想</small></div>
         <form class="contact-form" id="inquiryForm">
           <div class="two">
             <label>お名前<input id="inquiryNameInput" maxlength="40" placeholder="Anonymous"></label>
@@ -429,8 +429,8 @@
         <a href="/privacy.html">プライバシー</a>
         <a href="/guidelines.html">ガイドライン</a>
         <a href="/status">ステータス</a>
-        <button type="button" data-view="contactView">お問い合わせ</button>
-        <button type="button" data-view="adminView">管理</button>
+        <button type="button" data-view="contactView">連絡</button>
+        <button type="button" data-view="adminView">運営</button>
         <a href="/feed.xml">RSS</a>
       </nav>
       <p>広告や外部リンクは、開く前にリンク先を軽く見てください。</p>
