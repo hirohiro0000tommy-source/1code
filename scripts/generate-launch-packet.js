@@ -57,7 +57,7 @@ const envRows = [
 ];
 
 const packet = [
-  "# 1code launch packet",
+  "# Red Thread launch packet",
   "",
   `Generated: ${generatedAt}`,
   "",

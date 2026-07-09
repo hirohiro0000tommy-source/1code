@@ -34,7 +34,7 @@ function request(pathname, options = {}) {
       method: options.method || "GET",
       timeout: options.timeoutMs || 8000,
       headers: {
-        "user-agent": "1code-live-smoke/1.0"
+        "user-agent": "red-thread-live-smoke/1.0"
       }
     }, res => {
       let body = "";
@@ -140,7 +140,7 @@ async function main() {
 
   const statusPage = await request("/status");
   assert("status page status", statusPage.status === 200, String(statusPage.status));
-  assert("status page content", statusPage.body.includes("1code サービス状況") && statusPage.body.includes("/status.json"));
+  assert("status page content", statusPage.body.includes("Red Thread サービス状況") && statusPage.body.includes("/status.json"));
 
   const home = await request("/");
   assert("home status", home.status === 200, String(home.status));
@@ -194,7 +194,7 @@ async function main() {
 
   const manifest = await request("/site.webmanifest");
   assert("manifest status", manifest.status === 200, String(manifest.status));
-  assert("manifest content", manifest.body.includes("\"name\"") && manifest.body.includes("1code"));
+  assert("manifest content", manifest.body.includes("\"name\"") && manifest.body.includes("Red Thread"));
 
   const security = await request("/.well-known/security.txt");
   assert("security.txt status", security.status === 200, String(security.status));

@@ -2,7 +2,7 @@
   "name": "partyfinder-production",
   "version": "0.1.0",
   "private": true,
-  "description": "Production-oriented 1code prototype",
+  "description": "Production-oriented Red Thread prototype",
   "dependencies": {
     "pg": "^8.13.1"
   },

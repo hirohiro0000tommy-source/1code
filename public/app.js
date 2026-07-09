@@ -278,7 +278,7 @@ function adMarkup(placement) {
     <div class="ad-card">
       <span>広告 / PR</span>
       <strong>${escapeHtml(label)}</strong>
-      <span>1codeを応援するPR枠です。</span>
+      <span>Red Threadを応援するPR枠です。</span>
       ${target !== "#" ? `<a class="btn" href="${escapeHtml(target)}" rel="sponsored noopener noreferrer" target="_blank">詳しく見る</a>` : ""}
     </div>
   `;
@@ -929,7 +929,7 @@ async function copyText(value) {
 }
 
 async function copyShareLink(card, button) {
-  const title = card.querySelector("h2")?.textContent?.trim() || "1code";
+  const title = card.querySelector("h2")?.textContent?.trim() || "Red Thread";
   const url = shareUrl(card.dataset.type, card.dataset.id);
   await copyText(`${title}\n${url}`);
   const original = button.textContent;
@@ -1372,46 +1372,46 @@ function buildInquiryReplyDraft(inquiry) {
   if (category === "削除依頼") {
     return `${inquiry.name || "お問い合わせいただいた方"} 様
 
-1code運営です。削除依頼を受け付けました。${requestIdLine}
+Red Thread運営です。削除依頼を受け付けました。${requestIdLine}
 
 対象アカウントと対象データを確認し、必要なバックアップを取得したうえで対応します。
 追加確認が必要な場合は、この連絡先へ返信します。
 
-1code運営`;
+Red Thread運営`;
   }
   if (category === "βフィードバック") {
     return `${inquiry.name || "フィードバックいただいた方"} 様
 
-1code運営です。β版へのフィードバックありがとうございます。${requestIdLine}
+Red Thread運営です。β版へのフィードバックありがとうございます。${requestIdLine}
 
 内容を確認し、優先度を付けて改善候補に入れました。
 反映した場合はサイト内のお知らせ、または更新内容で共有します。
 
-1code運営`;
+Red Thread運営`;
   }
   if (category === "不具合") {
     return `${inquiry.name || "お問い合わせいただいた方"} 様
 
-1code運営です。不具合のご連絡ありがとうございます。${requestIdLine}
+Red Thread運営です。不具合のご連絡ありがとうございます。${requestIdLine}
 
 いただいた内容とエラーIDをもとに調査します。
 再現手順や発生した画面が追加で分かる場合は、この連絡先へ追記してください。
 
-1code運営`;
+Red Thread運営`;
   }
   return `${inquiry.name || "お問い合わせいただいた方"} 様
 
-1code運営です。お問い合わせを受け付けました。${requestIdLine}
+Red Thread運営です。お問い合わせを受け付けました。${requestIdLine}
 
 内容を確認し、必要に応じて対応します。
 
-1code運営`;
+Red Thread運営`;
 }
 
 function buildInquiryInternalMemo(inquiry) {
   const traceText = inquiryTraceText(inquiry.requestTrace);
   return [
-    "[1code inquiry memo]",
+    "[Red Thread inquiry memo]",
     `id: ${inquiry.id || "-"}`,
     `category: ${inquiry.category || "その他"}`,
     `status: ${inquiry.status || "-"}`,
@@ -1521,7 +1521,7 @@ function renderOfficialBot(botData = {}) {
         <div>
           <div class="meta">
             <span class="badge">公式</span>
-            <span>${escapeHtml(botData.bot?.author || "1code運営")}</span>
+            <span>${escapeHtml(botData.bot?.author || "Red Thread運営")}</span>
           </div>
           <h2>公式ボット投稿</h2>
         </div>
@@ -2814,9 +2814,9 @@ function renderBetaBacklog(backlog) {
 
 function betaBacklogClipboardText(backlog) {
   const candidates = backlog?.fixCandidates || [];
-  if (!candidates.length) return "1code β改善バックログ\n次の修正候補はありません。";
+  if (!candidates.length) return "Red Thread β改善バックログ\n次の修正候補はありません。";
   return [
-    "1code β改善バックログ",
+    "Red Thread β改善バックログ",
     `生成: ${new Date(backlog.generatedAt || Date.now()).toLocaleString("ja-JP")}`,
     `未対応: ${backlog.open || 0}件 / 高優先: ${backlog.highOpen || 0}件`,
     "",
@@ -3205,7 +3205,7 @@ $("#myDataFeed").addEventListener("click", async event => {
   if (button.dataset.action === "download-my-data") {
     const result = await api("/api/me/export");
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    downloadJson(`1code-user-data-${stamp}.json`, result.data);
+    downloadJson(`red-thread-user-data-${stamp}.json`, result.data);
     showToast("データを保存しました", "このブラウザのアカウントに紐づくデータを書き出しました。");
     return;
   }
@@ -3756,7 +3756,7 @@ $("#toast").addEventListener("click", async event => {
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.toastAction === "copy-share") {
-    await copyText(`${button.dataset.title || "1code"}\n${shareUrl(button.dataset.type, button.dataset.id)}`);
+    await copyText(`${button.dataset.title || "Red Thread"}\n${shareUrl(button.dataset.type, button.dataset.id)}`);
     button.textContent = "コピー済み";
     setTimeout(() => {
       button.textContent = "共有リンクをコピー";

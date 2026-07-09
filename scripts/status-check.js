@@ -19,7 +19,7 @@ function request(baseUrl, pathname, options = {}) {
       method: options.method || "GET",
       timeout: options.timeoutMs || 5000,
       headers: {
-        "user-agent": "1code-status-check/1.0"
+        "user-agent": "red-thread-status-check/1.0"
       }
     }, res => {
       let body = "";
@@ -51,7 +51,7 @@ async function main() {
   }
 
   const statusPage = await request(baseUrl, "/status");
-  if (statusPage.status !== 200 || !statusPage.body.includes("1code サービス状況")) {
+  if (statusPage.status !== 200 || !statusPage.body.includes("Red Thread サービス状況")) {
     console.error(`status page failed: ${statusPage.status}`);
     process.exit(1);
   }
@@ -85,7 +85,7 @@ async function main() {
   const commit = status.deployment?.commit ? ` / ${status.deployment.commit}` : "";
   const statusPageRequestId = String(statusPage.headers["x-request-id"] || "").slice(0, 8);
   const statusJsonRequestId = String(statusResponse.headers["x-request-id"] || "").slice(0, 8);
-  console.log(`1code status: ${ready} / ${mode} / ${label} / release ${release}${commit} / request ${statusJsonRequestId || "-"}`);
+  console.log(`Red Thread status: ${ready} / ${mode} / ${label} / release ${release}${commit} / request ${statusJsonRequestId || "-"}`);
   console.log(`trace: status ${statusPageRequestId || "-"} / status.json ${statusJsonRequestId || "-"}`);
 
   if (!["open", "beta", "paused"].includes(mode)) {

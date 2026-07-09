@@ -1,6 +1,6 @@
-# 1code
+# Red Thread
 
-1code（ワンコード）は、ゲーム仲間募集とフリートークを気軽に投稿できる掲示板です。
+Red Threadは、ゲーム仲間募集とフリートークを気軽に投稿できる掲示板です。
 
 ## What changed from the single HTML demo
 

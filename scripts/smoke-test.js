@@ -149,7 +149,7 @@ async function run() {
     assert(publicStatus.status?.mode === "open", "status json public mode missing");
     assert(publicStatus.deployment?.version, "status json deployment version missing");
     const statusPage = await requestRaw("/status");
-    assert(statusPage.statusCode === 200 && statusPage.body.includes("1code サービス状況"), "status page failed");
+    assert(statusPage.statusCode === 200 && statusPage.body.includes("Red Thread サービス状況"), "status page failed");
     assert(statusPage.body.includes("/status.json"), "status page json link missing");
     const statusPageHead = await requestRaw("/status", { method: "HEAD" });
     assert(statusPageHead.statusCode === 200 && statusPageHead.body === "", "status page head failed");
@@ -851,7 +851,7 @@ async function run() {
     assert(userData.data.dataHandling?.deletionRequestTargets?.includes("表示中DM"), "user data handling deletion scope missing");
     assert(userData.data.dataHandling?.retainedForSafety?.includes("監査ログ"), "user data handling safety retention missing");
     const userExport = await request("/api/me/export");
-    assert(userExport.data.format === "1code-user-data-v1", "user data export format failed");
+    assert(userExport.data.format === "red-thread-user-data-v1", "user data export format failed");
     assert(userExport.data.accountId === "smoke-user", "user data export account failed");
     assert(userExport.data.recruitments.some(item => item.id === recruitment.id), "user data export recruitment failed");
     assert(userExport.data.messages.length >= 1, "user data export messages failed");
@@ -1005,7 +1005,7 @@ async function run() {
     assert(sitemap.body.includes(`/share/threads/${thread.id}`), "sitemap thread share missing");
     const feed = await requestRaw("/feed.xml");
     assert(feed.headers["content-type"]?.includes("application/rss+xml"), "feed content type failed");
-    assert(feed.body.includes("<rss") && feed.body.includes("1code 新着投稿"), "feed rss root missing");
+    assert(feed.body.includes("<rss") && feed.body.includes("Red Thread 新着投稿"), "feed rss root missing");
     assert(feed.body.includes(`/share/recruitments/${recruitment.id}`), "feed recruitment share missing");
     assert(feed.body.includes(`/share/threads/${thread.id}`), "feed thread share missing");
 
@@ -1106,7 +1106,7 @@ async function run() {
     assert(typeof betaReport.report.summary.staleQueue === "number", "beta daily report stale queue count failed");
     assert(betaReport.report.summary.backupAgeHours === null || typeof betaReport.report.summary.backupAgeHours === "number", "beta daily report backup age failed");
     assert(betaReport.report.summary.betaFeedback >= 1, "beta daily report feedback failed");
-    assert(betaReport.report.summaryText.includes("1code β日次メモ"), "beta daily report summary text missing");
+    assert(betaReport.report.summaryText.includes("Red Thread β日次メモ"), "beta daily report summary text missing");
     assert(betaReport.report.summaryText.includes("未対応DM通報"), "beta daily report dm summary missing");
     assert(betaReport.report.summaryText.includes("今日の確認"), "beta daily report summary actions missing");
     assert(betaReport.report.summaryText.includes("[高]") || betaReport.report.summaryText.includes("[中]") || betaReport.report.summaryText.includes("[低]"), "beta daily report priority summary missing");
@@ -1168,7 +1168,7 @@ async function run() {
     assert(typeof publicLaunch.launch.counts.invalidAdTargets === "number", "public launch invalid ad target count failed");
     assert(Array.isArray(publicLaunch.launch.nextActions), "public launch next actions missing");
     assert(Array.isArray(publicLaunch.launch.publicTemplates) && publicLaunch.launch.publicTemplates.length >= 3, "public launch templates missing");
-    assert(publicLaunch.launch.publicTemplates.some(template => template.label === "X告知" && template.text.includes("1code")), "public launch x template missing");
+    assert(publicLaunch.launch.publicTemplates.some(template => template.label === "X告知" && template.text.includes("Red Thread")), "public launch x template missing");
 
     const publicReport = await request("/api/admin/public-report", { adminPin: "admin" });
     assert(publicReport.report.summary && typeof publicReport.report.summary.posts === "number", "public report summary failed");
@@ -1183,14 +1183,14 @@ async function run() {
     assert(Array.isArray(publicReport.report.recentErrors), "public report recent errors missing");
     assert(publicReport.report.ads && typeof publicReport.report.ads.placeholder === "number", "public report ad summary missing");
     assert(typeof publicReport.report.summary.invalidAdTargets === "number", "public report invalid ad target summary missing");
-    assert(publicReport.report.summaryText.includes("1code 公開運用メモ"), "public report summary text missing");
+    assert(publicReport.report.summaryText.includes("Red Thread 公開運用メモ"), "public report summary text missing");
     assert(publicReport.report.summaryText.includes("広告:"), "public report ad summary text missing");
     assert(publicReport.report.summaryText.includes("公開後手動確認"), "public report manual checks text missing");
     assert(publicReport.report.summaryText.includes("公開直後の監視"), "public report launch watch text missing");
 
     const publicReleaseChecklist = await request("/api/admin/public-release-checklist", { adminPin: "admin" });
     assert(["ready", "caution", "stop"].includes(publicReleaseChecklist.checklist.status), "public release checklist status failed");
-    assert(publicReleaseChecklist.checklist.summaryText.includes("1code 公開直前チェック"), "public release checklist summary missing");
+    assert(publicReleaseChecklist.checklist.summaryText.includes("Red Thread 公開直前チェック"), "public release checklist summary missing");
     assert(typeof publicReleaseChecklist.checklist.gateSummary?.stop === "number", "public release gate summary stop missing");
     assert(publicReleaseChecklist.checklist.summaryText.includes("最初に見る項目"), "public release first actions missing");
     assert(publicReleaseChecklist.checklist.checks.some(group => group.phase === "ホスティング設定"), "public release hosting phase missing");
@@ -1205,7 +1205,7 @@ async function run() {
 
     const deploymentHandoff = await request("/api/admin/deployment-handoff", { adminPin: "admin" });
     assert(["ready", "todo"].includes(deploymentHandoff.handoff.status), "deployment handoff status failed");
-    assert(deploymentHandoff.handoff.summaryText.includes("1code 外部サービス設定ハンドオフ"), "deployment handoff summary missing");
+    assert(deploymentHandoff.handoff.summaryText.includes("Red Thread 外部サービス設定ハンドオフ"), "deployment handoff summary missing");
     assert(deploymentHandoff.handoff.summaryText.includes("実行順"), "deployment handoff sequence summary missing");
     assert(Array.isArray(deploymentHandoff.handoff.handoffSteps), "deployment handoff steps missing");
     assert(deploymentHandoff.handoff.handoffSteps.some(step => step.label === "デプロイ検証"), "deployment handoff deploy verify step missing");
@@ -1224,7 +1224,7 @@ async function run() {
     const operatorDigest = await request("/api/admin/operator-digest", { adminPin: "admin" });
     assert(operatorDigest.digest.summary && typeof operatorDigest.digest.summary.openReports === "number", "operator digest summary failed");
     assert(Array.isArray(operatorDigest.digest.priorityQueue), "operator digest priority queue missing");
-    assert(operatorDigest.digest.summaryText.includes("1code 運用ダイジェスト"), "operator digest summary text missing");
+    assert(operatorDigest.digest.summaryText.includes("Red Thread 運用ダイジェスト"), "operator digest summary text missing");
     assert(operatorDigest.digest.launch && typeof operatorDigest.digest.launch.publicBlockers === "number", "operator digest launch failed");
     assert(typeof operatorDigest.digest.summary.openDeletionRequests === "number", "operator digest deletion requests failed");
     assert(typeof operatorDigest.digest.summary.invalidAdTargets === "number", "operator digest ad target summary missing");
@@ -1234,11 +1234,11 @@ async function run() {
 
     const incidentBrief = await request("/api/admin/incident-brief", { adminPin: "admin" });
     assert(["normal", "watch", "incident"].includes(incidentBrief.brief.status), "incident brief status failed");
-    assert(incidentBrief.brief.summaryText.includes("1code インシデント共有メモ"), "incident brief summary text missing");
+    assert(incidentBrief.brief.summaryText.includes("Red Thread インシデント共有メモ"), "incident brief summary text missing");
     assert(Array.isArray(incidentBrief.brief.immediateActions), "incident brief actions missing");
     assert(typeof incidentBrief.brief.health.recentErrors === "number", "incident brief health failed");
     assert(incidentBrief.brief.publicNoticeText.includes("/status"), "incident public notice missing");
-    assert(incidentBrief.brief.internalHandoffText.includes("1code internal handoff"), "incident internal handoff missing");
+    assert(incidentBrief.brief.internalHandoffText.includes("Red Thread internal handoff"), "incident internal handoff missing");
 
     await request(`/api/admin/inquiries/${deletionEntry.id}/resolve`, {
       method: "POST",
@@ -1435,7 +1435,7 @@ async function run() {
 
     const backupStatusBefore = await request("/api/admin/backup-status", { adminPin: "admin" });
     assert(["missing", "stale", "fresh"].includes(backupStatusBefore.backup.status), "backup status failed");
-    assert(backupStatusBefore.backup.summaryText.includes("1code バックアップ確認メモ"), "backup status summary text missing");
+    assert(backupStatusBefore.backup.summaryText.includes("Red Thread バックアップ確認メモ"), "backup status summary text missing");
 
     const backup = await request("/api/admin/export", { adminPin: "admin" });
     assert(backup.format === "partyfinder-backup-v1", "backup format failed");

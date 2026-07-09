@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">1code corgi icon</title>
-  <desc id="desc">Flat pixel art corgi mascot on a black background.</desc>
-  <rect width="512" height="512" rx="96" fill="#08090b"/>
+  <title id="title">Red Thread corgi icon</title>
+  <desc id="desc">Flat pixel art corgi mascot on a red and white background.</desc>
+  <rect width="512" height="512" rx="96" fill="#c93542"/>
+  <path d="M40 206 C124 132 194 256 278 188 S386 116 472 202" fill="none" stroke="#ffd7d3" stroke-width="24" stroke-linecap="round"/>
 
   <!-- Pixel blocks use a 16px grid for a deliberately low-bit corgi look. -->
   <g shape-rendering="crispEdges">
@@ -34,6 +35,6 @@
     <rect x="128" y="400" width="48" height="32" fill="#8b5b2b"/>
     <rect x="336" y="400" width="48" height="32" fill="#8b5b2b"/>
 
-    <rect x="0" y="480" width="512" height="32" fill="#08090b"/>
+    <rect x="0" y="480" width="512" height="32" fill="#8f1724"/>
   </g>
 </svg>

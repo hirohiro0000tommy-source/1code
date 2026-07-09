@@ -22,7 +22,7 @@ function line(text = "") {
   console.log(text);
 }
 
-line("1code launch-today command");
+line("Red Thread launch-today command");
 line("Target: publish or beta-publish today, with manual account/dashboard steps separated.");
 line("Secrets are never printed by this command.");
 

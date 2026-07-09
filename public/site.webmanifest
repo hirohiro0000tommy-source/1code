@@ -1,10 +1,10 @@
 {
-  "name": "1code（ワンコード）",
-  "short_name": "1code",
+  "name": "Red Thread",
+  "short_name": "Red Thread",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#111111",
+  "background_color": "#fffafa",
+  "theme_color": "#c93542",
   "description": "ゲーム仲間を探すための掲示板",
   "icons": [
     {

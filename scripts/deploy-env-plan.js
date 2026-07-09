@@ -30,7 +30,7 @@ function row([key, expected, target]) {
   return `${key.padEnd(24)} ${state(key).padEnd(8)} ${target.padEnd(9)} ${expected}`;
 }
 
-console.log("1code deploy environment plan");
+console.log("Red Thread deploy environment plan");
 console.log("");
 console.log("Do not paste DATABASE_URL, ADMIN_PIN, SESSION_SECRET, BETA_ACCESS_CODE, or DISCORD_CLIENT_SECRET into chat or docs.");
 console.log("Use this as a safe checklist while filling the hosting dashboard.");

@@ -59,9 +59,9 @@ const retentionPolicy = {
 };
 const officialBot = {
   accountId: "bot:official",
-  author: "1code運営",
+  author: "Red Thread運営",
   profile: {
-    displayName: "1code運営",
+    displayName: "Red Thread運営",
     discordHandle: "",
     games: "いろいろ",
     playTime: "",
@@ -313,7 +313,7 @@ const initialData = {
   announcements: [
     {
       id: crypto.randomUUID(),
-      title: "1code（ワンコード）へようこそ",
+      title: "Red Threadへようこそ",
       body: "ゲーム仲間募集と雑談を安心して使えるよう、現在も機能を整備しています。",
       tone: "info",
       isActive: true,
@@ -337,7 +337,7 @@ if (process.env.NODE_ENV === "production" && !envFlag(process.env.ENABLE_SEED_DA
   initialData.announcements = [
     {
       id: crypto.randomUUID(),
-      title: "1code（ワンコード）へようこそ",
+      title: "Red Threadへようこそ",
       body: "ゲーム仲間募集とフリートークを、気軽に投稿できます。はじめは少人数で、安心して使える場所として運用しています。",
       tone: "info",
       isActive: true,
@@ -832,7 +832,7 @@ function feedXml(db) {
     .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
     .slice(0, 30);
   const latest = items[0]?.createdAt || Date.now();
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0">\n  <channel>\n    <title>1code 新着投稿</title>\n    <link>${escapeHtml(absoluteUrl("/"))}</link>\n    <description>1code（ワンコード）のゲーム仲間募集とフリートークの新着投稿です。</description>\n    <language>ja</language>\n    <lastBuildDate>${escapeHtml(new Date(latest).toUTCString())}</lastBuildDate>\n${items.map(item => {
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0">\n  <channel>\n    <title>Red Thread 新着投稿</title>\n    <link>${escapeHtml(absoluteUrl("/"))}</link>\n    <description>Red Threadのゲーム仲間募集とフリートークの新着投稿です。</description>\n    <language>ja</language>\n    <lastBuildDate>${escapeHtml(new Date(latest).toUTCString())}</lastBuildDate>\n${items.map(item => {
     const url = absoluteUrl(`/share/${item.type}/${encodeURIComponent(item.id)}`);
     return [
       "    <item>",
@@ -983,8 +983,8 @@ function statusHtml(db) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>サービス状況 | 1code</title>
-  <meta name="description" content="1code（ワンコード）のサービス状況、投稿受付、β運用状態を確認できます。">
+  <title>サービス状況 | Red Thread</title>
+  <meta name="description" content="Red Threadのサービス状況、投稿受付、β運用状態を確認できます。">
   <meta name="robots" content="${betaAccessCode ? "noindex,nofollow,noarchive" : "noindex,follow"}">
   <link rel="canonical" href="${escapeHtml(absoluteUrl("/status"))}">
   <link rel="stylesheet" href="/styles.css">
@@ -998,7 +998,7 @@ function statusHtml(db) {
             <span class="badge">${escapeHtml(modeLabel)}</span>
             <span class="badge ${health.ready ? "" : "danger"}">${health.ready ? "稼働中" : "確認中"}</span>
           </div>
-          <h1>1code サービス状況</h1>
+          <h1>Red Thread サービス状況</h1>
         </div>
       </div>
       <div class="message">
@@ -1015,7 +1015,7 @@ function statusHtml(db) {
         ${checks}
       </ul>
       <div class="actions">
-        <a class="btn dark" href="/">1codeを開く</a>
+        <a class="btn dark" href="/">Red Threadを開く</a>
         <a class="btn ghost" href="/status.json">JSONで確認</a>
       </div>
     </article>
@@ -1097,7 +1097,7 @@ function userDataExport(db, viewerId = "") {
     .filter(reply => reply.accountId === viewerId)
     .map(reply => ({ ...reply, parentType: "thread", parentId: item.id, parentTitle: item.title })));
   return {
-    format: "1code-user-data-v1",
+    format: "red-thread-user-data-v1",
     exportedAt: Date.now(),
     accountId: viewerId,
     summary: userDataSummary(db, viewerId),
@@ -1673,7 +1673,7 @@ function betaDailyReport(db) {
     testerCallouts.push({ tone: "ok", label: "継続依頼", detail: "今日も1投稿・1返信・1いいねを目安に、普段の使い方で触ってもらってください。" });
   }
   const summaryText = [
-    `1code β日次メモ (${new Date().toLocaleDateString("ja-JP")})`,
+    `Red Thread β日次メモ (${new Date().toLocaleDateString("ja-JP")})`,
     `投稿:${posts.length} / 活動投稿:${activePosts.length} / 返信:${replies.length} / 参加希望:${recentParticipants.length}`,
     `DM:${recentMessages.length} / DM会話:${activeMessageConversations} / 未対応DM通報:${openMessageReports.length} / 非表示DM:${hiddenMessages}`,
     `反応率:${responseRate}% / 反応なし:${silentPosts.length} / βFB:${betaFeedback.length} / 高優先未対応:${highPriorityOpenBetaFeedback.length}`,
@@ -1885,7 +1885,7 @@ function publicOperationsReport(db) {
     }
   ];
   const summaryText = [
-    `1code 公開運用メモ (${new Date().toLocaleDateString("ja-JP")})`,
+    `Red Thread 公開運用メモ (${new Date().toLocaleDateString("ja-JP")})`,
     `投稿:${summary.posts || 0} / 活動投稿:${summary.activePosts || 0} / 返信:${summary.replies || 0} / 参加希望:${summary.participants || 0}`,
     `反応率:${summary.responseRate || 0}% / 反応なし:${summary.silentPosts || 0} / 24h DM:${summary.directMessages || 0} / DM会話:${summary.messageConversations || 0}`,
     `未対応通報:${summary.openReports || 0} / 未対応DM通報:${summary.openMessageReports || 0} / 未対応問合せ:${summary.openInquiries || 0} / 削除依頼:${summary.openDeletionRequests || 0} / 対応待ち24h+:${summary.staleQueue || 0}`,
@@ -1970,7 +1970,7 @@ function operatorDigest(db) {
   const mode = betaAccessCode ? "closed_beta" : "public";
   const topRisk = publicBlockers[0] || betaBlockers[0] || null;
   const summaryText = [
-    `1code 運用ダイジェスト (${new Date().toLocaleString("ja-JP")})`,
+    `Red Thread 運用ダイジェスト (${new Date().toLocaleString("ja-JP")})`,
     `モード:${mode === "closed_beta" ? "クローズドβ" : "一般公開"} / ヘルス:${health.ready ? "ready" : "not ready"} / 投稿停止:${writePaused ? "ON" : "OFF"}`,
     `公開判定:${publicLaunch.label || publicLaunch.status} / β判定:${betaLaunch.label || betaLaunch.status}`,
     `未対応通報:${publicReport.summary.openReports || 0} / 未対応DM通報:${publicReport.summary.openMessageReports || 0} / 未対応問合せ:${publicReport.summary.openInquiries || 0} / 削除依頼:${publicReport.summary.openDeletionRequests || 0} / 対応待ち24h+:${publicReport.summary.staleQueue || 0}`,
@@ -2235,7 +2235,7 @@ function betaLaunchDecision(db) {
           { tone: "ok", label: "日次確認", detail: "公開後はβ日次レポートとβ改善バックログを毎日確認してください。" }
         ];
   const inviteTemplate = [
-    "1code（ワンコード）の小規模βテストに参加してくれる方を募集しています。",
+    "Red Threadの小規模βテストに参加してくれる方を募集しています。",
     "",
     `URL: ${publicBaseUrl}?ref=beta-invite`,
     "参加コード: 別途お送りします",
@@ -2255,7 +2255,7 @@ function betaLaunchDecision(db) {
     {
       label: "初日のお願い",
       text: [
-        "1code βテスト初日のお願いです。",
+        "Red Thread βテスト初日のお願いです。",
         "",
         "まずは気軽に、募集を1件かフリートークを1件だけ試してみてください。",
         "投稿後に分かりづらい場所があれば、βフィードバックから一言送ってもらえると助かります。"
@@ -2264,7 +2264,7 @@ function betaLaunchDecision(db) {
     {
       label: "反応促進",
       text: [
-        "1code βテストの追加お願いです。",
+        "Red Thread βテストの追加お願いです。",
         "",
         "まだ反応が少ない投稿があるので、見かけた募集やフリートークにいいねか返信を1回だけお願いします。",
         "短い一言でも、掲示板として動いているか確認できます。"
@@ -2273,7 +2273,7 @@ function betaLaunchDecision(db) {
     {
       label: "感想依頼",
       text: [
-        "1code βテストの感想を集めています。",
+        "Red Thread βテストの感想を集めています。",
         "",
         "使ってみて迷った場所、投稿しづらかった場所、逆に分かりやすかった場所をβフィードバックから送ってください。",
         "一言だけでも次の修正候補にできます。"
@@ -2370,7 +2370,7 @@ function publicLaunchDecision(db) {
     {
       label: "X告知",
       text: [
-        "ゲーム仲間を気軽に探せる掲示板「1code（ワンコード）」を公開しました。",
+        "ゲーム仲間を気軽に探せる掲示板「Red Thread」を公開しました。",
         "",
         "募集、フリートーク、いいね、返信、DMで、一緒に遊ぶ相手をゆるく探せます。",
         "まずはPCブラウザ向けに小さく運用しています。",
@@ -2383,7 +2383,7 @@ function publicLaunchDecision(db) {
     {
       label: "Discord告知",
       text: [
-        "1code（ワンコード）を公開しました。",
+        "Red Threadを公開しました。",
         "",
         "ゲーム仲間募集とフリートーク用の掲示板です。",
         "気軽な募集、攻略相談、大会観戦の話題などに使えます。",
@@ -2396,7 +2396,7 @@ function publicLaunchDecision(db) {
     {
       label: "初回お知らせ",
       text: [
-        "1code（ワンコード）へようこそ",
+        "Red Threadへようこそ",
         "",
         "ゲーム仲間募集とフリートークを気軽に投稿できます。",
         "外部IDや個人情報は必要な範囲だけで大丈夫です。",
@@ -2529,7 +2529,7 @@ function publicReleaseChecklist(db) {
     },
     checks,
     summaryText: [
-      "1code 公開直前チェック",
+      "Red Thread 公開直前チェック",
       `判定:${stopItems.length ? `停止 ${stopItems.length}件` : cautionItems.length ? `要確認 ${cautionItems.length}件` : "OK"}`,
       `手動確認:${manualChecks.length}件`,
       `公開URL:${publicBaseUrl}`,
@@ -2698,7 +2698,7 @@ function deploymentHandoff(db) {
       DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET ? discord.ok ? "valid" : "invalid" : "missing"
     },
     summaryText: [
-      "1code 外部サービス設定ハンドオフ",
+      "Red Thread 外部サービス設定ハンドオフ",
       `判定:${openItems.length ? `未完了 ${openItems.length}件` : "OK"}`,
       `公開URL:${publicBaseUrl}`,
       `DB:${storageDriver} / ${databaseReady ? "DATABASE_URL valid" : databaseConfigured ? "DATABASE_URL invalid" : "DATABASE_URL missing"}`,
@@ -2745,16 +2745,16 @@ function incidentBrief(db) {
   const statusLabel = severity === "高" ? "要対応" : severity === "中" ? "注意" : "通常";
   const publicNoticeText = [
     severity === "高"
-      ? "1codeで一部機能に問題が発生している可能性があるため、現在確認しています。"
+      ? "Red Threadで一部機能に問題が発生している可能性があるため、現在確認しています。"
       : severity === "中"
-        ? "1codeの運用状況を確認中です。閲覧や投稿で気になる点があればお問い合わせからお知らせください。"
-        : "1codeは通常どおり運用中です。",
+        ? "Red Threadの運用状況を確認中です。閲覧や投稿で気になる点があればお問い合わせからお知らせください。"
+        : "Red Threadは通常どおり運用中です。",
     writePaused ? "現在、投稿やDMなど一部の書き込み機能を一時停止しています。閲覧、通報、お問い合わせは利用できます。" : "",
     "状況が変わり次第、サービス状況ページと管理から更新します。",
     `${publicBaseUrl.replace(/\/$/, "")}/status`
   ].filter(Boolean).join("\n");
   const internalHandoffText = [
-    `1code internal handoff / ${statusLabel}`,
+    `Red Thread internal handoff / ${statusLabel}`,
     `severity=${severity} ready=${health.ready ? "yes" : "no"} writePaused=${writePaused ? "yes" : "no"}`,
     `reports=${summary.openReports || 0} dmReports=${summary.openMessageReports || 0} inquiries=${summary.openInquiries || 0} deletion=${summary.openDeletionRequests || 0}`,
     `5xx=${recentErrors.length} 429=${recentRateLimits.length} backup=${summary.backupAgeHours === null || summary.backupAgeHours === undefined ? "missing" : `${summary.backupAgeHours}h`}`,
@@ -2782,7 +2782,7 @@ function incidentBrief(db) {
     publicNoticeText,
     internalHandoffText,
     summaryText: [
-      `1code インシデント共有メモ (${new Date().toLocaleString("ja-JP")})`,
+      `Red Thread インシデント共有メモ (${new Date().toLocaleString("ja-JP")})`,
       `状態:${statusLabel} / 重要度:${severity} / ヘルス:${health.ready ? "ready" : "not ready"} / 投稿停止:${writePaused ? "ON" : "OFF"}`,
       `公開状態:${publicServiceStatus().label} / URL:${publicBaseUrl}`,
       `未対応: 通報${summary.openReports || 0} / DM通報${summary.openMessageReports || 0} / 問合せ${summary.openInquiries || 0} / 削除依頼${summary.openDeletionRequests || 0}`,
@@ -2925,7 +2925,7 @@ function backupStatus(db) {
     dataCounts,
     nextActions,
     summaryText: [
-      "1code バックアップ確認メモ",
+      "Red Thread バックアップ確認メモ",
       `状態:${fresh ? "OK" : latest ? "要更新" : "未取得"}`,
       `最新:${latest ? `${ageHours}時間前 / ${latest.actorName || "Admin"}` : "未取得"}`,
       `照合ID:${latest?.details?.checksumPrefix || "-"}`,
@@ -2958,8 +2958,8 @@ function homeHtml(html) {
 function shareHtml(item, type) {
   const isThread = type === "threads";
   const label = isThread ? "フリートーク" : "募集";
-  const title = `${item.title || label} | 1code`;
-  const description = truncate(item.body || item.title || "1code（ワンコード）", 150);
+  const title = `${item.title || label} | Red Thread`;
+  const description = truncate(item.body || item.title || "Red Thread", 150);
   const canonical = absoluteUrl(`/share/${type}/${encodeURIComponent(item.id)}`);
   const appUrl = absoluteUrl(`/#${type}:${encodeURIComponent(item.id)}`);
   const imageUrl = absoluteUrl("/og-image.svg");
@@ -2979,7 +2979,7 @@ function shareHtml(item, type) {
     },
     publisher: {
       "@type": "Organization",
-      name: "1code"
+      name: "Red Thread"
     },
     about: badge || label
   };
@@ -2992,7 +2992,7 @@ function shareHtml(item, type) {
   <meta name="description" content="${escapeHtml(description)}">
   <link rel="canonical" href="${escapeHtml(canonical)}">
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="1code（ワンコード）">
+  <meta property="og:site_name" content="Red Thread">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:url" content="${escapeHtml(canonical)}">
@@ -3020,7 +3020,7 @@ function shareHtml(item, type) {
       </div>
       <div class="message">${escapeHtml(item.body || "")}</div>
       <div class="actions">
-        <a class="btn dark" href="${escapeHtml(appUrl)}">1codeで開く</a>
+        <a class="btn dark" href="${escapeHtml(appUrl)}">Red Threadで開く</a>
       </div>
     </article>
   </main>
@@ -4724,22 +4724,22 @@ validateRuntimeConfig();
 
 server.listen(port, async () => {
   await store.ensureDb();
-  console.log(`1code running at http://localhost:${port}`);
+  console.log(`Red Thread running at http://localhost:${port}`);
 });
 
 function shutdown(signal) {
-  console.log(`1code received ${signal}; shutting down`);
+  console.log(`Red Thread received ${signal}; shutting down`);
   const forceExit = setTimeout(() => {
-    console.error("1code shutdown timed out");
+    console.error("Red Thread shutdown timed out");
     process.exit(1);
   }, 8000);
   forceExit.unref();
   server.close(error => {
     if (error) {
-      console.error(`1code shutdown error: ${error.message}`);
+      console.error(`Red Thread shutdown error: ${error.message}`);
       process.exit(1);
     }
-    console.log("1code shutdown complete");
+    console.log("Red Thread shutdown complete");
     process.exit(0);
   });
 }
