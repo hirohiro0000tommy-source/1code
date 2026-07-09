@@ -90,6 +90,7 @@ let adminInquiriesCache = [];
 let adminBetaBacklogCache = null;
 let myDataSummaryCache = null;
 const pendingActions = new Set();
+const renderTimers = new Map();
 
 function messageSeenKey() {
   return `${messageSeenKeyPrefix}.${account.id || "anonymous"}`;
@@ -134,6 +135,14 @@ function beginPendingAction(key) {
   if (pendingActions.has(key)) return null;
   pendingActions.add(key);
   return () => pendingActions.delete(key);
+}
+
+function debounceRender(key, fn, delay = 90) {
+  clearTimeout(renderTimers.get(key));
+  renderTimers.set(key, setTimeout(() => {
+    renderTimers.delete(key);
+    fn();
+  }, delay));
 }
 
 function loadAccount() {
@@ -376,10 +385,14 @@ function collectionForType(type) {
 function renderItemLists(type) {
   normalizeViewerFlags();
   renderActivitySummaries();
-  if (type === "threads") renderThreads();
-  else renderRecruitments();
-  renderReminder();
-  renderMyPage();
+  const activeView = document.querySelector(".view.active")?.id || "recruitmentView";
+  if (type === "threads") {
+    if (activeView === "chatView") renderThreads();
+  } else if (activeView === "recruitmentView") {
+    renderRecruitments();
+  }
+  if (activeView === "reminderView") renderReminder();
+  if (activeView === "myView") renderMyPage();
 }
 
 function upsertStateItem(type, item) {
@@ -604,7 +617,9 @@ function switchView(viewId) {
   $("#recruitmentLayout").classList.remove("form-open");
   $("#chatLayout").classList.remove("form-open");
   updateCreateButton(viewId);
-  renderReminder();
+  if (viewId === "recruitmentView") renderRecruitments();
+  if (viewId === "chatView") renderThreads();
+  if (viewId === "reminderView") renderReminder();
   if (viewId === "myView") {
     markMessagesSeen();
     renderMyPage();
@@ -4109,7 +4124,8 @@ $("#profileForm").addEventListener("submit", event => {
     bio: $("#profileBioInput").value.trim()
   };
   saveAccount({ ...account, profile });
-  renderAll();
+  renderAccount();
+  renderMyPage();
   restore();
   showToast("プロフィールを保存しました", "マイページに反映しました。");
 });
@@ -4120,7 +4136,8 @@ $("#profileApplyNameButton").addEventListener("click", () => {
     return;
   }
   saveAccount({ ...account, name, profile: { ...profileValues(), displayName: name } });
-  renderAll();
+  renderAccount();
+  renderMyPage();
   showToast("表示名を反映しました", "募集者プロフィールにもこの名前を使えます。");
 });
 $("#betaAccessForm").addEventListener("submit", async event => {
@@ -4150,12 +4167,12 @@ $("#logoutButton").addEventListener("click", async () => {
   renderAll();
 });
 ["#searchInput", "#sortInput", "#gameFilter", "#platformFilter", "#voiceFilter", "#rankFilter", "#styleFilter"].forEach(selector => {
-  $(selector).addEventListener("input", renderRecruitments);
-  $(selector).addEventListener("change", renderRecruitments);
+  $(selector).addEventListener("input", () => debounceRender("recruitments", renderRecruitments));
+  $(selector).addEventListener("change", () => debounceRender("recruitments", renderRecruitments, 20));
 });
 ["#chatSearchInput", "#chatSortInput", "#chatCategoryFilter"].forEach(selector => {
-  $(selector).addEventListener("input", renderThreads);
-  $(selector).addEventListener("change", renderThreads);
+  $(selector).addEventListener("input", () => debounceRender("threads", renderThreads));
+  $(selector).addEventListener("change", () => debounceRender("threads", renderThreads, 20));
 });
 ["#messageInput", "#chatTitleInput", "#chatBodyInput"].forEach(selector => {
   $(selector).addEventListener("input", updateFormStatus);
