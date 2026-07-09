@@ -3,8 +3,8 @@
   "short_name": "Red Thread",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fffafa",
-  "theme_color": "#c93542",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
   "description": "ゲーム仲間を探すための掲示板",
   "icons": [
     {
