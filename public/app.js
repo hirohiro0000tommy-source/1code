@@ -4,6 +4,7 @@ const clientAccountKey = "partyfinder.client.account.v1";
 const clientProfileKey = "partyfinder.client.profile.v1";
 const betaAccessKey = "partyfinder.beta.access.v1";
 const betaFeedbackSentKey = "partyfinder.beta.feedback.sent.v1";
+const stateCacheKeyPrefix = "partyfinder.state.cache.v1";
 const featuredGames = ["Shadowverse/Worlds Beyond", "Pokemon Champions", "Monster Hunter", "Apex", "VALORANT", "STREET FIGHTER 6", "Overwatch", "Splatoon", "その他"];
 const styleOptions = ["初心者", "まったり", "エンジョイ", "ガチ"];
 const recruitmentTemplates = {
@@ -100,6 +101,32 @@ function lastMessageSeenAt() {
 function markMessagesSeen() {
   localStorage.setItem(messageSeenKey(), String(Date.now()));
   renderMessageNavBadge();
+}
+
+function stateCacheKey() {
+  return `${stateCacheKeyPrefix}.${account.id || "anonymous"}`;
+}
+
+function loadCachedState(maxAgeMs = 5 * 60 * 1000) {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(stateCacheKey()) || "null");
+    if (!cached || Date.now() - Number(cached.savedAt || 0) > maxAgeMs) return false;
+    state = cached.state || state;
+    normalizeViewerFlags();
+    renderAll();
+    return true;
+  } catch {
+    sessionStorage.removeItem(stateCacheKey());
+    return false;
+  }
+}
+
+function saveCachedState() {
+  try {
+    sessionStorage.setItem(stateCacheKey(), JSON.stringify({ savedAt: Date.now(), state }));
+  } catch {
+    // Session storage can be unavailable or full; live data still works without it.
+  }
 }
 
 function loadAccount() {
@@ -331,7 +358,38 @@ async function loadState() {
   const data = await api("/api/state");
   state = data;
   normalizeViewerFlags();
+  saveCachedState();
   renderAll();
+}
+
+function collectionForType(type) {
+  return type === "threads" ? state.threads : state.recruitments;
+}
+
+function renderItemLists(type) {
+  normalizeViewerFlags();
+  renderActivitySummaries();
+  if (type === "threads") renderThreads();
+  else renderRecruitments();
+  renderReminder();
+  renderMyPage();
+}
+
+function upsertStateItem(type, item) {
+  const collection = collectionForType(type);
+  const index = collection.findIndex(entry => entry.id === item.id);
+  if (index >= 0) collection[index] = item;
+  else collection.unshift(item);
+  saveCachedState();
+  renderItemLists(type);
+}
+
+function removeStateItem(type, id) {
+  const collection = collectionForType(type);
+  const index = collection.findIndex(entry => entry.id === id);
+  if (index >= 0) collection.splice(index, 1);
+  saveCachedState();
+  renderItemLists(type);
 }
 
 async function syncServerAccount() {
@@ -3056,8 +3114,8 @@ async function handleCardClick(event) {
     if (!confirm("この返信を削除しますか？")) return;
     const restore = setButtonState(button, true, "削除中...");
     try {
-      await api(`/api/${type}/${id}/replies/${reply.dataset.replyId}`, { method: "DELETE" });
-      await loadState();
+      const updated = await api(`/api/${type}/${id}/replies/${reply.dataset.replyId}`, { method: "DELETE" });
+      upsertStateItem(type, updated);
     } catch (error) {
       showErrorToast(error);
     } finally {
@@ -3068,8 +3126,8 @@ async function handleCardClick(event) {
   if (button.dataset.action === "like") {
     const restore = setButtonState(button, true, "反映中...");
     try {
-      await api(`/api/${type}/${id}/like`, { method: "POST" });
-      await loadState();
+      const updated = await api(`/api/${type}/${id}/like`, { method: "POST" });
+      upsertStateItem(type, updated);
     } catch (error) {
       showErrorToast(error);
     } finally {
@@ -3079,8 +3137,8 @@ async function handleCardClick(event) {
   if (button.dataset.action === "join") {
     const restore = setButtonState(button, true, "参加中...");
     try {
-      await api(`/api/${type}/${id}/join`, { method: "POST" });
-      await loadState();
+      const updated = await api(`/api/${type}/${id}/join`, { method: "POST" });
+      upsertStateItem(type, updated);
     } catch (error) {
       showErrorToast(error);
     } finally {
@@ -3120,11 +3178,11 @@ async function handleCardClick(event) {
     const nextStatus = card.dataset.status === "closed" ? "open" : "closed";
     const restore = setButtonState(button, true, "更新中...");
     try {
-      await api(`/api/${type}/${id}/status`, {
+      const updated = await api(`/api/${type}/${id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status: nextStatus })
       });
-      await loadState();
+      upsertStateItem(type, updated);
     } catch (error) {
       showErrorToast(error);
     } finally {
@@ -3136,7 +3194,7 @@ async function handleCardClick(event) {
     const restore = setButtonState(button, true, "削除中...");
     try {
       await api(`/api/${type}/${id}`, { method: "DELETE" });
-      await loadState();
+      removeStateItem(type, id);
     } catch (error) {
       showErrorToast(error);
     } finally {
@@ -3171,12 +3229,12 @@ async function handleReplySubmit(event) {
   if (!body) return;
   const restore = setSubmitState(form, true, "返信中...");
   try {
-    await api(`/api/${card.dataset.type}/${card.dataset.id}/reply`, {
+    const updated = await api(`/api/${card.dataset.type}/${card.dataset.id}/reply`, {
       method: "POST",
       body: JSON.stringify({ body })
     });
     input.value = "";
-    await loadState();
+    upsertStateItem(card.dataset.type, updated);
     window.location.hash = appHash(card.dataset.type, card.dataset.id);
     focusSharedCard();
     showToast("返信しました", "一覧にも反映しました。");
@@ -3206,7 +3264,8 @@ async function handleMessageSubmit(event) {
     });
     input.value = "";
     state.messages = result.messages || state.messages || [];
-    await loadState();
+    saveCachedState();
+    renderMessages();
     switchView("myView");
     showToast("メッセージを送信しました", "マイページのメッセージに追加しました。");
   } catch (error) {
@@ -3244,8 +3303,8 @@ $("#postForm").addEventListener("submit", async event => {
     localStorage.removeItem(recruitmentDraftKey);
     $("#recruitmentLayout").classList.remove("form-open");
     updateCreateButton("recruitmentView");
-    setStatusText("#recruitmentFormStatus", "投稿しました。最新の一覧を読み込んでいます");
-    await loadState();
+    setStatusText("#recruitmentFormStatus", "投稿しました。一覧へ反映しました");
+    upsertStateItem("recruitments", created);
     renderBetaChecklist();
     window.location.hash = appHash("recruitments", created.id);
     focusSharedCard();
@@ -3275,8 +3334,8 @@ $("#chatForm").addEventListener("submit", async event => {
     localStorage.removeItem(threadDraftKey);
     $("#chatLayout").classList.remove("form-open");
     updateCreateButton("chatView");
-    setStatusText("#chatFormStatus", "投稿しました。最新の一覧を読み込んでいます");
-    await loadState();
+    setStatusText("#chatFormStatus", "投稿しました。一覧へ反映しました");
+    upsertStateItem("threads", created);
     renderBetaChecklist();
     window.location.hash = appHash("threads", created.id);
     focusSharedCard();
@@ -4022,6 +4081,7 @@ async function init() {
   bindFormDraft(recruitmentDraftKey, recruitmentDraftFields);
   bindFormDraft(threadDraftKey, threadDraftFields);
   updateFormStatus();
+  loadCachedState();
   await syncServerAccount().catch(() => null);
   await loadState();
   restoreRecruitmentDraft();
