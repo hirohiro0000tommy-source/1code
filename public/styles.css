@@ -577,6 +577,13 @@ header .utility-link:hover {
   font-weight: 800;
   text-decoration: none;
 }
+.tab[disabled], .btn[disabled], .action[disabled],
+button[aria-busy="true"] {
+  cursor: wait;
+  opacity: .68;
+  transform: none;
+  box-shadow: none;
+}
 .tab.active, .btn.dark, .action:hover {
   background: var(--ink);
   color: var(--paper);

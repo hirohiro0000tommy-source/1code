@@ -968,6 +968,25 @@ function showToast(title, message, actions = "", tone = "info") {
   }, 7000);
 }
 
+function setSubmitState(form, busy, label = "送信中...") {
+  const button = form?.querySelector('button[type="submit"]');
+  if (!button) return () => {};
+  return setButtonState(button, busy, label);
+}
+
+function setButtonState(button, busy, label = "処理中...") {
+  if (!button.dataset.idleText) button.dataset.idleText = button.textContent;
+  button.disabled = busy;
+  button.setAttribute("aria-busy", busy ? "true" : "false");
+  button.textContent = busy ? label : button.dataset.idleText;
+  return () => setButtonState(button, false);
+}
+
+function setStatusText(selector, text) {
+  const element = $(selector);
+  if (element) element.textContent = text;
+}
+
 function showErrorToast(error) {
   const requestId = error?.requestId || "";
   const suspensionExpires = error?.expiresAt ? ` / ${new Date(error.expiresAt).toLocaleDateString("ja-JP")}まで` : "";
@@ -3019,26 +3038,54 @@ async function handleCardClick(event) {
   if (button.dataset.action === "report-reply" && reply) {
     const reason = prompt("返信の通報理由を入力してください", "不適切な返信");
     if (!reason) return;
-    await api("/api/reports", {
-      method: "POST",
-      body: JSON.stringify({ type: "replies", parentType: type, parentId: id, itemId: reply.dataset.replyId, replyId: reply.dataset.replyId, reason })
-    });
-    showToast("通報しました", "確認後、必要に応じて対応します。");
+    const restore = setButtonState(button, true, "送信中...");
+    try {
+      await api("/api/reports", {
+        method: "POST",
+        body: JSON.stringify({ type: "replies", parentType: type, parentId: id, itemId: reply.dataset.replyId, replyId: reply.dataset.replyId, reason })
+      });
+      showToast("通報しました", "確認後、必要に応じて対応します。");
+    } catch (error) {
+      showErrorToast(error);
+    } finally {
+      restore();
+    }
     return;
   }
   if (button.dataset.action === "delete-reply" && reply) {
     if (!confirm("この返信を削除しますか？")) return;
-    await api(`/api/${type}/${id}/replies/${reply.dataset.replyId}`, { method: "DELETE" });
-    await loadState();
+    const restore = setButtonState(button, true, "削除中...");
+    try {
+      await api(`/api/${type}/${id}/replies/${reply.dataset.replyId}`, { method: "DELETE" });
+      await loadState();
+    } catch (error) {
+      showErrorToast(error);
+    } finally {
+      restore();
+    }
     return;
   }
   if (button.dataset.action === "like") {
-    await api(`/api/${type}/${id}/like`, { method: "POST" });
-    await loadState();
+    const restore = setButtonState(button, true, "反映中...");
+    try {
+      await api(`/api/${type}/${id}/like`, { method: "POST" });
+      await loadState();
+    } catch (error) {
+      showErrorToast(error);
+    } finally {
+      restore();
+    }
   }
   if (button.dataset.action === "join") {
-    await api(`/api/${type}/${id}/join`, { method: "POST" });
-    await loadState();
+    const restore = setButtonState(button, true, "参加中...");
+    try {
+      await api(`/api/${type}/${id}/join`, { method: "POST" });
+      await loadState();
+    } catch (error) {
+      showErrorToast(error);
+    } finally {
+      restore();
+    }
   }
   if (button.dataset.action === "reply") {
     toggleCardForm(card, ".reply-form", "input");
@@ -3052,11 +3099,18 @@ async function handleCardClick(event) {
   if (button.dataset.action === "report-message") {
     const reason = prompt("メッセージの通報理由を入力してください", "不適切なメッセージ");
     if (!reason) return;
-    await api("/api/reports", {
-      method: "POST",
-      body: JSON.stringify({ type: "messages", itemId: button.dataset.messageId, reason })
-    });
-    showToast("通報しました", "確認後、必要に応じて対応します。");
+    const restore = setButtonState(button, true, "送信中...");
+    try {
+      await api("/api/reports", {
+        method: "POST",
+        body: JSON.stringify({ type: "messages", itemId: button.dataset.messageId, reason })
+      });
+      showToast("通報しました", "確認後、必要に応じて対応します。");
+    } catch (error) {
+      showErrorToast(error);
+    } finally {
+      restore();
+    }
     return;
   }
   if (button.dataset.action === "share") {
@@ -3064,69 +3118,109 @@ async function handleCardClick(event) {
   }
   if (button.dataset.action === "status") {
     const nextStatus = card.dataset.status === "closed" ? "open" : "closed";
-    await api(`/api/${type}/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status: nextStatus })
-    });
-    await loadState();
+    const restore = setButtonState(button, true, "更新中...");
+    try {
+      await api(`/api/${type}/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: nextStatus })
+      });
+      await loadState();
+    } catch (error) {
+      showErrorToast(error);
+    } finally {
+      restore();
+    }
   }
   if (button.dataset.action === "delete") {
     if (!confirm("この投稿を削除しますか？")) return;
-    await api(`/api/${type}/${id}`, { method: "DELETE" });
-    await loadState();
+    const restore = setButtonState(button, true, "削除中...");
+    try {
+      await api(`/api/${type}/${id}`, { method: "DELETE" });
+      await loadState();
+    } catch (error) {
+      showErrorToast(error);
+    } finally {
+      restore();
+    }
   }
   if (button.dataset.action === "report") {
     const reason = prompt("通報理由を入力してください", "不適切な投稿");
     if (!reason) return;
-    await api("/api/reports", {
-      method: "POST",
-      body: JSON.stringify({ type, itemId: id, reason })
-    });
-    showToast("通報しました", "確認後、必要に応じて対応します。");
+    const restore = setButtonState(button, true, "送信中...");
+    try {
+      await api("/api/reports", {
+        method: "POST",
+        body: JSON.stringify({ type, itemId: id, reason })
+      });
+      showToast("通報しました", "確認後、必要に応じて対応します。");
+    } catch (error) {
+      showErrorToast(error);
+    } finally {
+      restore();
+    }
   }
 }
 
 async function handleReplySubmit(event) {
   if (!event.target.classList.contains("reply-form")) return;
   event.preventDefault();
+  const form = event.target;
   const card = event.target.closest("[data-id]");
-  const input = event.target.querySelector("input");
+  const input = form.querySelector("input");
   const body = input.value.trim();
   if (!body) return;
-  await api(`/api/${card.dataset.type}/${card.dataset.id}/reply`, {
-    method: "POST",
-    body: JSON.stringify({ body })
-  });
-  input.value = "";
-  await loadState();
-  window.location.hash = appHash(card.dataset.type, card.dataset.id);
-  focusSharedCard();
-  showToast("返信しました", "一覧にも反映しました。");
+  const restore = setSubmitState(form, true, "返信中...");
+  try {
+    await api(`/api/${card.dataset.type}/${card.dataset.id}/reply`, {
+      method: "POST",
+      body: JSON.stringify({ body })
+    });
+    input.value = "";
+    await loadState();
+    window.location.hash = appHash(card.dataset.type, card.dataset.id);
+    focusSharedCard();
+    showToast("返信しました", "一覧にも反映しました。");
+  } catch (error) {
+    showErrorToast(error);
+  } finally {
+    restore();
+  }
 }
 
 async function handleMessageSubmit(event) {
   if (!event.target.classList.contains("message-form")) return;
   event.preventDefault();
+  const form = event.target;
   const card = event.target.closest("[data-id], [data-conversation-id]");
-  const input = event.target.querySelector("textarea");
+  const input = form.querySelector("textarea");
   const body = input.value.trim();
   if (!body) return;
   const payload = card.dataset.type === "messages"
     ? { conversationId: card.dataset.conversationId, body }
     : { recruitmentId: card.dataset.id, body };
-  const result = await api("/api/messages", {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
-  input.value = "";
-  state.messages = result.messages || state.messages || [];
-  await loadState();
-  switchView("myView");
-  showToast("メッセージを送信しました", "マイページのメッセージに追加しました。");
+  const restore = setSubmitState(form, true, "送信中...");
+  try {
+    const result = await api("/api/messages", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    input.value = "";
+    state.messages = result.messages || state.messages || [];
+    await loadState();
+    switchView("myView");
+    showToast("メッセージを送信しました", "マイページのメッセージに追加しました。");
+  } catch (error) {
+    showErrorToast(error);
+  } finally {
+    restore();
+  }
 }
 
 $("#postForm").addEventListener("submit", async event => {
   event.preventDefault();
+  const form = event.currentTarget;
+  const restore = setSubmitState(form, true, "投稿中...");
+  setStatusText("#recruitmentFormStatus", "投稿中... 一覧へ反映しています");
   const game = $("#gameInput").value;
   const rank = $("#rankInput").value || "ランク不問";
   const style = $("#styleInput").value;
@@ -3143,60 +3237,86 @@ $("#postForm").addEventListener("submit", async event => {
     capacity: $("#capacityInput").value,
     body: $("#messageInput").value.trim()
   };
-  const created = await api("/api/recruitments", { method: "POST", body: JSON.stringify(payload) });
-  $("#postForm").reset();
-  renderRecruitmentFormOptions();
-  updateFormStatus();
-  localStorage.removeItem(recruitmentDraftKey);
-  $("#recruitmentLayout").classList.remove("form-open");
-  updateCreateButton("recruitmentView");
-  await loadState();
-  renderBetaChecklist();
-  window.location.hash = appHash("recruitments", created.id);
-  focusSharedCard();
-  showPostCreatedToast("recruitments", created);
+  try {
+    const created = await api("/api/recruitments", { method: "POST", body: JSON.stringify(payload) });
+    $("#postForm").reset();
+    renderRecruitmentFormOptions();
+    localStorage.removeItem(recruitmentDraftKey);
+    $("#recruitmentLayout").classList.remove("form-open");
+    updateCreateButton("recruitmentView");
+    setStatusText("#recruitmentFormStatus", "投稿しました。最新の一覧を読み込んでいます");
+    await loadState();
+    renderBetaChecklist();
+    window.location.hash = appHash("recruitments", created.id);
+    focusSharedCard();
+    showPostCreatedToast("recruitments", created);
+  } catch (error) {
+    showErrorToast(error);
+  } finally {
+    restore();
+    updateFormStatus();
+  }
 });
 
 $("#chatForm").addEventListener("submit", async event => {
   event.preventDefault();
+  const form = event.currentTarget;
+  const restore = setSubmitState(form, true, "投稿中...");
+  setStatusText("#chatFormStatus", "投稿中... 一覧へ反映しています");
   const payload = {
     title: $("#chatTitleInput").value.trim(),
     category: $("#chatCategoryInput").value,
     author: account.name,
     body: $("#chatBodyInput").value.trim()
   };
-  const created = await api("/api/threads", { method: "POST", body: JSON.stringify(payload) });
-  $("#chatForm").reset();
-  updateFormStatus();
-  localStorage.removeItem(threadDraftKey);
-  $("#chatLayout").classList.remove("form-open");
-  updateCreateButton("chatView");
-  await loadState();
-  renderBetaChecklist();
-  window.location.hash = appHash("threads", created.id);
-  focusSharedCard();
-  showPostCreatedToast("threads", created);
+  try {
+    const created = await api("/api/threads", { method: "POST", body: JSON.stringify(payload) });
+    $("#chatForm").reset();
+    localStorage.removeItem(threadDraftKey);
+    $("#chatLayout").classList.remove("form-open");
+    updateCreateButton("chatView");
+    setStatusText("#chatFormStatus", "投稿しました。最新の一覧を読み込んでいます");
+    await loadState();
+    renderBetaChecklist();
+    window.location.hash = appHash("threads", created.id);
+    focusSharedCard();
+    showPostCreatedToast("threads", created);
+  } catch (error) {
+    showErrorToast(error);
+  } finally {
+    restore();
+    updateFormStatus();
+  }
 });
 
 $("#inquiryForm").addEventListener("submit", async event => {
   event.preventDefault();
+  const form = event.currentTarget;
+  const restore = setSubmitState(form, true, "送信中...");
   $("#inquiryStatus").textContent = "送信中...";
   const category = $("#inquiryCategoryInput").value;
-  const result = await api("/api/inquiries", {
-    method: "POST",
-    body: JSON.stringify({
-      name: $("#inquiryNameInput").value.trim(),
-      contact: $("#inquiryContactInput").value.trim(),
-      category,
-      requestId: $("#inquiryRequestIdInput").value.trim(),
-      message: $("#inquiryMessageInput").value.trim()
-    })
-  });
-  if (category === "βフィードバック") localStorage.setItem(betaFeedbackSentKey, "1");
-  $("#inquiryForm").reset();
-  const receipt = result.requestId ? ` 受付ID: ${result.requestId.slice(0, 8)}` : "";
-  $("#inquiryStatus").textContent = `送信しました。確認ありがとうございます。${receipt}`;
-  renderBetaChecklist();
+  try {
+    const result = await api("/api/inquiries", {
+      method: "POST",
+      body: JSON.stringify({
+        name: $("#inquiryNameInput").value.trim(),
+        contact: $("#inquiryContactInput").value.trim(),
+        category,
+        requestId: $("#inquiryRequestIdInput").value.trim(),
+        message: $("#inquiryMessageInput").value.trim()
+      })
+    });
+    if (category === "βフィードバック") localStorage.setItem(betaFeedbackSentKey, "1");
+    $("#inquiryForm").reset();
+    const receipt = result.requestId ? ` 受付ID: ${result.requestId.slice(0, 8)}` : "";
+    $("#inquiryStatus").textContent = `送信しました。確認ありがとうございます。${receipt}`;
+    renderBetaChecklist();
+  } catch (error) {
+    $("#inquiryStatus").textContent = "送信に失敗しました。";
+    showErrorToast(error);
+  } finally {
+    restore();
+  }
 });
 
 $("#myDataFeed").addEventListener("click", async event => {
@@ -3835,6 +3955,8 @@ $("#loginForm").addEventListener("submit", event => {
 });
 $("#profileForm").addEventListener("submit", event => {
   event.preventDefault();
+  const form = event.currentTarget;
+  const restore = setSubmitState(form, true, "保存中...");
   const profile = {
     displayName: $("#profileNameInput").value.trim(),
     discordHandle: $("#profileDiscordInput").value.trim(),
@@ -3845,6 +3967,7 @@ $("#profileForm").addEventListener("submit", event => {
   };
   saveAccount({ ...account, profile });
   renderAll();
+  restore();
   showToast("プロフィールを保存しました", "マイページに反映しました。");
 });
 $("#profileApplyNameButton").addEventListener("click", () => {
