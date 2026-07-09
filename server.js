@@ -878,6 +878,7 @@ function publicItem(item, viewerId = "", viewerIsAdmin = false) {
     likeCount: item.likes.length,
     lastActivityAt: Math.max(Number(item.createdAt || 0), lastReplyAt),
     lastReplyAt,
+    isOfficial: isBotOwned,
     participantCount: Array.isArray(item.participants) ? item.participants.length : 0,
     viewerOwned: !!item.ownerAccountId && item.ownerAccountId === viewerId,
     canMessage: !!item.ownerAccountId && !isBotOwned && item.ownerAccountId !== viewerId,

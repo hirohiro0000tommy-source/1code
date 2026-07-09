@@ -1163,6 +1163,15 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
+.card.official-card {
+  background:
+    linear-gradient(90deg, rgba(17, 17, 17, .025) 1px, transparent 1px),
+    rgba(255, 255, 255, .96);
+  background-size: 18px 100%, auto;
+}
+.card.official-card::before {
+  background: var(--ink);
+}
 .card.shared-focus {
   outline: 3px solid var(--ink);
   outline-offset: 3px;
@@ -1197,6 +1206,11 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
 .badge.light {
   background: var(--soft);
   color: var(--ink);
+}
+.badge.official {
+  background: #fff;
+  color: var(--ink);
+  border-color: var(--ink);
 }
 .badge.danger {
   background: #fff;

@@ -777,7 +777,7 @@ function applyThreadTemplate(key) {
 
 function actionButtons(item) {
   const liked = hasLiked(item);
-  const joinButton = item.capacity
+  const joinButton = item.capacity && !item.isOfficial
     ? `<button class="action primary" data-action="join">${item.viewerJoined ? "参加取消" : "参加希望"}</button>`
     : "";
   const messageButton = item.canMessage
@@ -819,7 +819,7 @@ function engagementSummary(post, type) {
   const latestAt = post.lastReplyAt || post.createdAt;
   const items = type === "recruitments"
     ? [
-        `参加 ${post.participantCount || 0}/${post.capacity || 4}`,
+        post.isOfficial ? "公式例" : `参加 ${post.participantCount || 0}/${post.capacity || 4}`,
         `返信 ${post.replies?.length || 0}`,
         `いいね ${post.likeCount || 0}`,
         `更新 ${timeAgo(latestAt)}`
@@ -1034,12 +1034,13 @@ function showPostCreatedToast(type, item) {
 
 function recruitmentCard(post) {
   return `
-    <article class="card ${post.status === "closed" ? "closed" : ""}" data-type="recruitments" data-id="${post.id}" data-status="${post.status || "open"}">
+    <article class="card ${post.status === "closed" ? "closed" : ""} ${post.isOfficial ? "official-card" : ""}" data-type="recruitments" data-id="${post.id}" data-status="${post.status || "open"}">
       <div class="card-head">
         <div>
           <div class="meta">
+            ${post.isOfficial ? `<span class="badge official">公式</span>` : ""}
             <span class="badge">${escapeHtml(post.game)}</span>
-            <span class="badge ${post.status === "closed" ? "light" : ""}">${post.status === "closed" ? "締切" : "募集中"}</span>
+            <span class="badge ${post.status === "closed" || post.isOfficial ? "light" : ""}">${post.isOfficial ? "募集例" : post.status === "closed" ? "締切" : "募集中"}</span>
             <span class="badge light">${escapeHtml(post.platform)}</span>
             ${activityBadge(post)}
             <span>${timeAgo(post.createdAt)}</span>
@@ -1075,10 +1076,11 @@ function recruitmentCard(post) {
 
 function threadCard(post) {
   return `
-    <article class="card" data-type="threads" data-id="${post.id}">
+    <article class="card ${post.isOfficial ? "official-card" : ""}" data-type="threads" data-id="${post.id}">
       <div class="card-head">
         <div>
           <div class="meta">
+            ${post.isOfficial ? `<span class="badge official">公式</span>` : ""}
             <span class="badge">${escapeHtml(post.category)}</span>
             ${activityBadge(post)}
             <span>${escapeHtml(post.author)}</span>
