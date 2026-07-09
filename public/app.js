@@ -89,6 +89,7 @@ let toastTimer = null;
 let adminInquiriesCache = [];
 let adminBetaBacklogCache = null;
 let myDataSummaryCache = null;
+const pendingActions = new Set();
 
 function messageSeenKey() {
   return `${messageSeenKeyPrefix}.${account.id || "anonymous"}`;
@@ -127,6 +128,12 @@ function saveCachedState() {
   } catch {
     // Session storage can be unavailable or full; live data still works without it.
   }
+}
+
+function beginPendingAction(key) {
+  if (pendingActions.has(key)) return null;
+  pendingActions.add(key);
+  return () => pendingActions.delete(key);
 }
 
 function loadAccount() {
@@ -390,6 +397,29 @@ function removeStateItem(type, id) {
   if (index >= 0) collection.splice(index, 1);
   saveCachedState();
   renderItemLists(type);
+}
+
+function cloneStateItem(item) {
+  return item ? JSON.parse(JSON.stringify(item)) : null;
+}
+
+function stateItem(type, id) {
+  return collectionForType(type).find(item => item.id === id) || null;
+}
+
+function updateStateItem(type, id, updater) {
+  const item = stateItem(type, id);
+  const previous = cloneStateItem(item);
+  if (!item) return previous;
+  updater(item);
+  saveCachedState();
+  renderItemLists(type);
+  return previous;
+}
+
+function restoreStateItem(type, previous) {
+  if (!previous) return;
+  upsertStateItem(type, previous);
 }
 
 async function syncServerAccount() {
@@ -3112,37 +3142,63 @@ async function handleCardClick(event) {
   }
   if (button.dataset.action === "delete-reply" && reply) {
     if (!confirm("この返信を削除しますか？")) return;
-    const restore = setButtonState(button, true, "削除中...");
+    const endPending = beginPendingAction(`${type}:${id}:delete-reply:${reply.dataset.replyId}`);
+    if (!endPending) return;
+    const previous = updateStateItem(type, id, item => {
+      item.replies = (item.replies || []).filter(entry => entry.id !== reply.dataset.replyId);
+    });
     try {
       const updated = await api(`/api/${type}/${id}/replies/${reply.dataset.replyId}`, { method: "DELETE" });
       upsertStateItem(type, updated);
     } catch (error) {
+      restoreStateItem(type, previous);
       showErrorToast(error);
     } finally {
-      restore();
+      endPending();
     }
     return;
   }
   if (button.dataset.action === "like") {
-    const restore = setButtonState(button, true, "反映中...");
+    const endPending = beginPendingAction(`${type}:${id}:like`);
+    if (!endPending) return;
+    const previous = updateStateItem(type, id, item => {
+      const liked = !!item.viewerLiked;
+      item.viewerLiked = !liked;
+      item.likeCount = Math.max(0, Number(item.likeCount || 0) + (liked ? -1 : 1));
+    });
     try {
       const updated = await api(`/api/${type}/${id}/like`, { method: "POST" });
       upsertStateItem(type, updated);
     } catch (error) {
+      restoreStateItem(type, previous);
       showErrorToast(error);
     } finally {
-      restore();
+      endPending();
     }
   }
   if (button.dataset.action === "join") {
-    const restore = setButtonState(button, true, "参加中...");
+    const endPending = beginPendingAction(`${type}:${id}:join`);
+    if (!endPending) return;
+    const previous = updateStateItem(type, id, item => {
+      const joined = !!item.viewerJoined;
+      item.viewerJoined = !joined;
+      item.participants = Array.isArray(item.participants) ? item.participants : [];
+      if (joined) {
+        item.participants = item.participants.filter(participant => participant.name !== account.name);
+        item.participantCount = Math.max(0, Number(item.participantCount || 0) - 1);
+      } else {
+        item.participants.push({ name: account.name === "Anonymous" ? "Player" : account.name, joinedAt: Date.now() });
+        item.participantCount = Number(item.participantCount || 0) + 1;
+      }
+    });
     try {
       const updated = await api(`/api/${type}/${id}/join`, { method: "POST" });
       upsertStateItem(type, updated);
     } catch (error) {
+      restoreStateItem(type, previous);
       showErrorToast(error);
     } finally {
-      restore();
+      endPending();
     }
   }
   if (button.dataset.action === "reply") {
@@ -3176,7 +3232,11 @@ async function handleCardClick(event) {
   }
   if (button.dataset.action === "status") {
     const nextStatus = card.dataset.status === "closed" ? "open" : "closed";
-    const restore = setButtonState(button, true, "更新中...");
+    const endPending = beginPendingAction(`${type}:${id}:status`);
+    if (!endPending) return;
+    const previous = updateStateItem(type, id, item => {
+      item.status = nextStatus;
+    });
     try {
       const updated = await api(`/api/${type}/${id}/status`, {
         method: "PATCH",
@@ -3184,21 +3244,25 @@ async function handleCardClick(event) {
       });
       upsertStateItem(type, updated);
     } catch (error) {
+      restoreStateItem(type, previous);
       showErrorToast(error);
     } finally {
-      restore();
+      endPending();
     }
   }
   if (button.dataset.action === "delete") {
     if (!confirm("この投稿を削除しますか？")) return;
-    const restore = setButtonState(button, true, "削除中...");
+    const endPending = beginPendingAction(`${type}:${id}:delete`);
+    if (!endPending) return;
+    const previous = cloneStateItem(stateItem(type, id));
+    removeStateItem(type, id);
     try {
       await api(`/api/${type}/${id}`, { method: "DELETE" });
-      removeStateItem(type, id);
     } catch (error) {
+      restoreStateItem(type, previous);
       showErrorToast(error);
     } finally {
-      restore();
+      endPending();
     }
   }
   if (button.dataset.action === "report") {
@@ -3227,20 +3291,40 @@ async function handleReplySubmit(event) {
   const input = form.querySelector("input");
   const body = input.value.trim();
   if (!body) return;
+  const endPending = beginPendingAction(`${card.dataset.type}:${card.dataset.id}:reply`);
+  if (!endPending) return;
   const restore = setSubmitState(form, true, "返信中...");
+  const previous = updateStateItem(card.dataset.type, card.dataset.id, item => {
+    item.replies = Array.isArray(item.replies) ? item.replies : [];
+    item.replies.push({
+      id: `pending:${crypto.randomUUID()}`,
+      author: account.name === "Anonymous" ? "Player" : account.name,
+      accountId: account.id,
+      body,
+      createdAt: Date.now(),
+      viewerOwned: true,
+      canDelete: false
+    });
+    item.viewerReplied = true;
+    item.lastReplyAt = Date.now();
+    item.lastActivityAt = Date.now();
+  });
+  input.value = "";
   try {
     const updated = await api(`/api/${card.dataset.type}/${card.dataset.id}/reply`, {
       method: "POST",
       body: JSON.stringify({ body })
     });
-    input.value = "";
     upsertStateItem(card.dataset.type, updated);
     window.location.hash = appHash(card.dataset.type, card.dataset.id);
     focusSharedCard();
     showToast("返信しました", "一覧にも反映しました。");
   } catch (error) {
+    restoreStateItem(card.dataset.type, previous);
+    input.value = body;
     showErrorToast(error);
   } finally {
+    endPending();
     restore();
   }
 }
@@ -4082,8 +4166,12 @@ async function init() {
   bindFormDraft(threadDraftKey, threadDraftFields);
   updateFormStatus();
   loadCachedState();
-  await syncServerAccount().catch(() => null);
-  await loadState();
+  const accountSync = syncServerAccount().catch(() => null);
+  const stateSync = loadState();
+  await Promise.all([accountSync, stateSync]);
+  renderAccount();
+  renderBetaAccess();
+  renderBetaChecklist();
   restoreRecruitmentDraft();
   updateFormStatus();
   syncCheckListLabels();
