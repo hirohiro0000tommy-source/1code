@@ -57,18 +57,52 @@ const retentionPolicy = {
   recentRateLimits: 20,
   adminListLimit: 100
 };
-const officialBot = {
-  accountId: "bot:official",
-  author: "Red Thread運営",
-  profile: {
-    displayName: "Red Thread運営",
-    discordHandle: "",
-    games: "いろいろ",
-    playTime: "",
-    style: "まったり",
-    bio: "募集例や話題出しを置く公式アカウントです。"
+const legacyOfficialBotAuthor = "Red Thread運営";
+const officialBots = [
+  {
+    id: "scout",
+    accountId: "bot:scout",
+    author: "スカウト",
+    role: "募集案内",
+    profile: {
+      displayName: "スカウト",
+      discordHandle: "",
+      games: "Apex, VALORANT, Monster Hunter",
+      playTime: "",
+      style: "エンジョイ",
+      bio: "募集の書き方や、最初に声をかけやすい募集例を置く公式ボットです。"
+    }
+  },
+  {
+    id: "lobby",
+    accountId: "bot:lobby",
+    author: "ロビー",
+    role: "フリートーク案内",
+    profile: {
+      displayName: "ロビー",
+      discordHandle: "",
+      games: "大会観戦, 雑談",
+      playTime: "",
+      style: "まったり",
+      bio: "雑談や大会観戦の話題を置く公式ボットです。"
+    }
+  },
+  {
+    id: "coach",
+    accountId: "bot:coach",
+    author: "コーチ",
+    role: "攻略相談案内",
+    profile: {
+      displayName: "コーチ",
+      discordHandle: "",
+      games: "Shadowverse/Worlds Beyond, STREET FIGHTER 6, Splatoon",
+      playTime: "",
+      style: "初心者",
+      bio: "初心者が聞きやすい攻略相談のきっかけを置く公式ボットです。"
+    }
   }
-};
+];
+const officialBot = officialBots[0];
 
 function cleanEnv(value) {
   return String(value || "").trim();
@@ -3107,6 +3141,7 @@ function officialBotDrafts(db) {
   const recruitmentDrafts = [
     {
       id: "recruit-shadowverse-beginner",
+      botId: "coach",
       type: "recruitments",
       title: "Shadowverse/Worlds Beyond 初心者・復帰勢で対戦したい",
       game: "Shadowverse/Worlds Beyond",
@@ -3119,6 +3154,7 @@ function officialBotDrafts(db) {
     },
     {
       id: "recruit-monster-hunter-casual",
+      botId: "scout",
       type: "recruitments",
       title: "Monster Hunter まったり素材集め",
       game: "Monster Hunter",
@@ -3131,6 +3167,7 @@ function officialBotDrafts(db) {
     },
     {
       id: "recruit-valorant-casual",
+      botId: "scout",
       type: "recruitments",
       title: "VALORANT 初心者歓迎でアンレート",
       game: "VALORANT",
@@ -3145,6 +3182,7 @@ function officialBotDrafts(db) {
   const threadDrafts = [
     {
       id: "thread-first-game-friends",
+      botId: "lobby",
       type: "threads",
       title: "最初に募集してみたいゲーム",
       category: "雑談",
@@ -3152,6 +3190,7 @@ function officialBotDrafts(db) {
     },
     {
       id: "thread-watch-party",
+      botId: "lobby",
       type: "threads",
       title: "大会や配信を見ながら話す場所",
       category: "大会観戦",
@@ -3159,6 +3198,7 @@ function officialBotDrafts(db) {
     },
     {
       id: "thread-beginner-help",
+      botId: "coach",
       type: "threads",
       title: "初心者が聞きやすい攻略相談",
       category: "攻略相談",
@@ -3167,34 +3207,54 @@ function officialBotDrafts(db) {
   ];
   return [...recruitmentDrafts, ...threadDrafts].map(draft => ({
     ...draft,
+    bot: publicOfficialBot(botForDraft(draft)),
     alreadyPublished: botDraftAlreadyPublished(db, draft)
   }));
 }
 
+function botForDraft(draft = {}) {
+  return officialBots.find(bot => bot.id === draft.botId) || officialBot;
+}
+
+function publicOfficialBot(bot = officialBot) {
+  return {
+    id: bot.id,
+    author: bot.author,
+    accountId: bot.accountId,
+    role: bot.role
+  };
+}
+
+function officialBotAuthorsForDraft(draft) {
+  return new Set([botForDraft(draft).author, legacyOfficialBotAuthor]);
+}
+
 function botDraftAlreadyPublished(db, draft) {
+  const authors = officialBotAuthorsForDraft(draft);
   if (draft.type === "recruitments") {
     const fingerprint = textFingerprint(draft.title, draft.game, draft.body);
     return (db.recruitments || []).some(item =>
-      item.author === officialBot.author
+      authors.has(item.author)
       && textFingerprint(item.title, item.game, item.body) === fingerprint
     );
   }
   const fingerprint = textFingerprint(draft.title, draft.category, draft.body);
   return (db.threads || []).some(item =>
-    item.author === officialBot.author
+    authors.has(item.author)
     && textFingerprint(item.title, item.category, item.body) === fingerprint
   );
 }
 
 function officialBotItemFromDraft(draft, createdAt = Date.now()) {
+  const bot = botForDraft(draft);
   if (draft.type === "recruitments") {
     return {
       id: crypto.randomUUID(),
       title: cleanText(draft.title, 90),
-      author: officialBot.author,
-      authorProfile: officialBot.profile,
+      author: bot.author,
+      authorProfile: bot.profile,
       game: cleanText(draft.game, 60),
-      ownerAccountId: officialBot.accountId,
+      ownerAccountId: bot.accountId,
       platform: cleanText(draft.platform, 30),
       voice: cleanText(draft.voice, 20),
       rank: cleanText(draft.rank, 40) || "ランク不問",
@@ -3213,8 +3273,8 @@ function officialBotItemFromDraft(draft, createdAt = Date.now()) {
     id: crypto.randomUUID(),
     title: cleanText(draft.title, 90),
     category: normalizeTalkCategory(draft.category),
-    ownerAccountId: officialBot.accountId,
-    author: officialBot.author,
+    ownerAccountId: bot.accountId,
+    author: bot.author,
     body: cleanText(draft.body, 1000),
     createdAt,
     likes: [],
@@ -3570,7 +3630,8 @@ async function handleApi(req, res, url) {
     sendJson(res, 200, {
       drafts,
       readyCount: drafts.filter(draft => !draft.alreadyPublished).length,
-      bot: { author: officialBot.author, accountId: officialBot.accountId }
+      bot: { author: officialBot.author, accountId: officialBot.accountId },
+      bots: officialBots.map(publicOfficialBot)
     });
     return;
   }

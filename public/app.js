@@ -1632,23 +1632,27 @@ function renderAnnouncementAdmin(announcements = []) {
 function renderOfficialBot(botData = {}) {
   const drafts = botData.drafts || [];
   const ready = drafts.filter(draft => !draft.alreadyPublished);
+  const bots = botData.bots || [];
   $("#botDraftStatus").textContent = `${ready.length}/${drafts.length}件`;
   if (!drafts.length) {
     $("#botDraftFeed").innerHTML = `<div class="empty">ボット下書きはまだありません。</div>`;
     return;
   }
+  const botNames = bots.length
+    ? bots.map(bot => `${bot.author}${bot.role ? `（${bot.role}）` : ""}`).join(" / ")
+    : botData.bot?.author || "Red Thread運営";
   const actions = `
     <article class="card">
       <div class="card-head">
         <div>
           <div class="meta">
             <span class="badge">公式</span>
-            <span>${escapeHtml(botData.bot?.author || "Red Thread運営")}</span>
+            <span>${escapeHtml(`${bots.length || 1}人`)}</span>
           </div>
           <h2>公式ボット投稿</h2>
         </div>
       </div>
-      <div class="message">人が少ない時間に置いておく、公式の募集例と話題出しです。一般ユーザーのふりはしません。</div>
+      <div class="message">人が少ない時間に置いておく、公式の募集例と話題出しです。一般ユーザーのふりはしません。\n${escapeHtml(botNames)}</div>
       <div class="actions">
         <button class="action primary" type="button" data-action="publish-bot-drafts" ${ready.length ? "" : "disabled"}>未投稿分を公開</button>
       </div>
@@ -1660,6 +1664,7 @@ function renderOfficialBot(botData = {}) {
         <div>
           <div class="meta">
             <span class="badge">${draft.type === "threads" ? "話題" : "募集"}</span>
+            <span>${escapeHtml(draft.bot?.author || botData.bot?.author || "公式")}</span>
             <span>${draft.alreadyPublished ? "公開済み" : "未投稿"}</span>
             <span>${escapeHtml(draft.game || draft.category || "")}</span>
           </div>
