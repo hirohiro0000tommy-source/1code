@@ -1178,12 +1178,13 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
 }
 .card.official-card {
   background:
-    linear-gradient(90deg, rgba(201, 53, 66, .04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 53, 66, .06) 1px, transparent 1px),
     rgba(255, 255, 255, .96);
   background-size: 18px 100%, auto;
 }
 .card.official-card::before {
-  background: var(--ink);
+  background:
+    linear-gradient(180deg, var(--accent), var(--ink));
 }
 .card.shared-focus {
   outline: 3px solid var(--ink);
@@ -1223,6 +1224,11 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
 .badge.official {
   background: #fff;
   color: var(--ink);
+  border-color: var(--ink);
+}
+.badge.sample {
+  background: linear-gradient(135deg, var(--ink) 0 68%, var(--accent) 100%);
+  color: var(--paper);
   border-color: var(--ink);
 }
 .badge.danger {
@@ -1318,6 +1324,24 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   color: #5c1f1f;
   font-size: 13px;
   font-weight: 900;
+}
+.official-guide {
+  display: grid;
+  gap: 4px;
+  margin: 0 14px 12px;
+  border: 1px dashed #b8b8b0;
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: #fafaf7;
+  padding: 9px 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.official-guide strong {
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.2;
 }
 .poster-profile {
   margin: 0 14px 12px;

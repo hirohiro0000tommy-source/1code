@@ -1154,15 +1154,33 @@ function showPostCreatedToast(type, item) {
   );
 }
 
+function officialSampleBadges(post, label) {
+  if (!post.isOfficial) return "";
+  return `<span class="badge sample">見本</span><span class="badge official">公式</span><span class="badge light">${escapeHtml(label)}</span>`;
+}
+
+function officialGuideMarkup(post, type) {
+  if (!post.isOfficial) return "";
+  const text = type === "threads"
+    ? "話題名、カテゴリ、聞きたいことを短く置くと返信しやすくなります。"
+    : "ゲーム、目的、雰囲気、連絡方法を短く入れると参加しやすくなります。";
+  return `
+    <div class="official-guide">
+      <strong>見本ガイド</strong>
+      <span>${escapeHtml(text)}</span>
+    </div>
+  `;
+}
+
 function recruitmentCard(post) {
   return `
     <article class="card ${post.status === "closed" ? "closed" : ""} ${post.isOfficial ? "official-card" : ""}" data-type="recruitments" data-id="${post.id}" data-status="${post.status || "open"}">
       <div class="card-head">
         <div>
           <div class="meta">
-            ${post.isOfficial ? `<span class="badge official">公式</span>` : ""}
+            ${officialSampleBadges(post, "募集見本")}
             <span class="badge">${escapeHtml(post.game)}</span>
-            <span class="badge ${post.status === "closed" || post.isOfficial ? "light" : ""}">${post.isOfficial ? "募集例" : post.status === "closed" ? "締切" : "募集中"}</span>
+            ${post.isOfficial ? "" : `<span class="badge ${post.status === "closed" ? "light" : ""}">${post.status === "closed" ? "締切" : "募集中"}</span>`}
             <span class="badge light">${escapeHtml(post.platform)}</span>
             ${activityBadge(post)}
             <span>${timeAgo(post.createdAt)}</span>
@@ -1179,6 +1197,7 @@ function recruitmentCard(post) {
       </div>
       ${post.participants?.length ? `<div class="replies">${post.participants.map(participant => `<div class="reply">参加希望: ${escapeHtml(participant.name || "Player")}</div>`).join("")}</div>` : ""}
       <div class="message">${escapeHtml(post.body)}</div>
+      ${officialGuideMarkup(post, "recruitments")}
       ${recruitmentProfileMarkup(post)}
       <form class="message-form">
         <p class="message-safety">外部IDは必要なときだけで大丈夫です。気になる内容は通報できます。</p>
@@ -1202,7 +1221,7 @@ function threadCard(post) {
       <div class="card-head">
         <div>
           <div class="meta">
-            ${post.isOfficial ? `<span class="badge official">公式</span>` : ""}
+            ${officialSampleBadges(post, "話題見本")}
             <span class="badge">${escapeHtml(post.category)}</span>
             ${activityBadge(post)}
             <span>${escapeHtml(post.author)}</span>
@@ -1213,6 +1232,7 @@ function threadCard(post) {
         <div class="count">♡${post.likeCount}</div>
       </div>
       <div class="message">${escapeHtml(post.body)}</div>
+      ${officialGuideMarkup(post, "threads")}
       <div class="replies">${post.replies.map(replyMarkup).join("")}</div>
       ${engagementSummary(post, "threads")}
       <div class="actions">${actionButtons(post)}</div>
