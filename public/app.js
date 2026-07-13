@@ -953,7 +953,15 @@ function renderQuickSections() {
   const hot = hotRecruitments();
   const games = countBy(state.recruitments.filter(item => item.status !== "closed"), "game").slice(0, 6);
   if (!today.length && !hot.length && !games.length) {
-    container.innerHTML = "";
+    container.innerHTML = `
+      <div class="quick-card guide">
+        <div><strong>募集の入口</strong><span>最初の投稿が増えると、ここに今日遊べる募集や人気ゲームが出ます。</span></div>
+        <div class="quick-list">
+          <button type="button" data-guide-jump="recruitment"><strong>募集を書く</strong><span>テンプレートから始められます</span></button>
+          <button type="button" data-guide-jump="referral"><strong>紹介する</strong><span>XやDiscordに貼れるURL</span></button>
+        </div>
+      </div>
+    `;
     return;
   }
   container.innerHTML = `
@@ -973,7 +981,8 @@ function renderQuickSections() {
 }
 
 function quickPostButton(item, type) {
-  return `<button type="button" data-quick-post="${escapeHtml(type)}:${escapeHtml(item.id)}"><strong>${escapeHtml(item.game || item.category || "投稿")}</strong><span>${escapeHtml(item.title || item.body || "開く")}</span></button>`;
+  const activity = item.lastReplyAt ? `返信 ${timeAgo(item.lastReplyAt)}` : `投稿 ${timeAgo(item.createdAt)}`;
+  return `<button type="button" data-quick-post="${escapeHtml(type)}:${escapeHtml(item.id)}"><strong>${escapeHtml(item.game || item.category || "投稿")}</strong><span>${escapeHtml(item.title || item.body || "開く")}</span><em>${escapeHtml(activity)}</em></button>`;
 }
 
 function renderWeeklySummary() {
@@ -998,10 +1007,14 @@ function renderWeeklySummary() {
 function renderWeeklyTopic() {
   const container = $("#weeklyTopic");
   if (!container) return;
+  const threadCount = state.threads.filter(item => item.category === "雑談").length;
+  const eventCount = state.threads.filter(item => item.category === "大会観戦").length;
+  const strategyCount = state.threads.filter(item => item.category === "攻略相談").length;
   container.innerHTML = `
     <div>
       <strong>今週のお題</strong>
       <span>今週遊びたいゲーム、気になっている大会、攻略で詰まっていることを書いてみませんか。</span>
+      <div class="topic-counts"><span>雑談 ${escapeHtml(threadCount)}</span><span>大会観戦 ${escapeHtml(eventCount)}</span><span>攻略相談 ${escapeHtml(strategyCount)}</span></div>
     </div>
     <button class="btn ghost" type="button" data-template="thread:weekly">お題で書く</button>
   `;
@@ -1090,7 +1103,7 @@ function actionButtons(item) {
     ${messageButton}
     <button class="action" data-action="reply" title="返信">↩ ${item.replies.length}</button>
     <button class="action" data-action="share" title="共有">共有</button>
-    <button class="action" data-action="copy-x" title="X告知文をコピー">X文</button>
+    <button class="action" data-action="copy-x" title="X告知文をコピー">X告知</button>
     <button class="action" data-action="report" title="通報">通報</button>
     ${statusButton}
     ${item.canDelete ? `<button class="action delete" data-action="delete" title="削除">削除</button>` : ""}
@@ -3802,7 +3815,7 @@ $("#myDataFeed").addEventListener("click", async event => {
   $(selector).addEventListener("submit", handleMessageSubmit);
 });
 
-document.body.addEventListener("click", event => {
+document.body.addEventListener("click", async event => {
   const guideButton = event.target.closest("[data-guide-jump]");
   if (guideButton) {
     const target = guideButton.dataset.guideJump;
@@ -3821,6 +3834,10 @@ document.body.addEventListener("click", event => {
       switchView("recruitmentView");
       renderRecruitments();
       $("#feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (target === "referral") {
+      await copyText(`${window.location.origin}/?ref=friend`);
+      showToast("紹介リンクをコピーしました", "XやDiscordでテスト募集を呼びかけるときに使えます。");
     }
     return;
   }
