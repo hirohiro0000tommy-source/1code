@@ -91,6 +91,13 @@ let adminBetaBacklogCache = null;
 let myDataSummaryCache = null;
 const pendingActions = new Set();
 const renderTimers = new Map();
+let cacheSaveTimer = null;
+let cacheSaveCancel = null;
+const feedPageSize = 30;
+const feedLimits = {
+  recruitments: feedPageSize,
+  threads: feedPageSize
+};
 
 function messageSeenKey() {
   return `${messageSeenKeyPrefix}.${account.id || "anonymous"}`;
@@ -123,12 +130,32 @@ function loadCachedState(maxAgeMs = 5 * 60 * 1000) {
   }
 }
 
-function saveCachedState() {
+function writeCachedState() {
   try {
     sessionStorage.setItem(stateCacheKey(), JSON.stringify({ savedAt: Date.now(), state }));
   } catch {
     // Session storage can be unavailable or full; live data still works without it.
   }
+}
+
+function saveCachedState({ immediate = false } = {}) {
+  if (cacheSaveTimer && cacheSaveCancel) {
+    cacheSaveCancel(cacheSaveTimer);
+    cacheSaveTimer = null;
+    cacheSaveCancel = null;
+  }
+  if (immediate) {
+    writeCachedState();
+    return;
+  }
+  const hasIdleCallback = typeof window.requestIdleCallback === "function";
+  const schedule = hasIdleCallback ? window.requestIdleCallback : callback => setTimeout(callback, 120);
+  cacheSaveCancel = hasIdleCallback && typeof window.cancelIdleCallback === "function" ? window.cancelIdleCallback : clearTimeout;
+  cacheSaveTimer = schedule(() => {
+    cacheSaveTimer = null;
+    cacheSaveCancel = null;
+    writeCachedState();
+  }, { timeout: 500 });
 }
 
 function beginPendingAction(key) {
@@ -143,6 +170,10 @@ function debounceRender(key, fn, delay = 90) {
     renderTimers.delete(key);
     fn();
   }, delay));
+}
+
+function resetFeedLimit(type) {
+  feedLimits[type] = feedPageSize;
 }
 
 function loadAccount() {
@@ -385,7 +416,7 @@ function collectionForType(type) {
 function renderItemLists(type) {
   normalizeViewerFlags();
   renderActivitySummaries();
-  const activeView = document.querySelector(".view.active")?.id || "recruitmentView";
+  const activeView = activeViewId();
   if (type === "threads") {
     if (activeView === "chatView") renderThreads();
   } else if (activeView === "recruitmentView") {
@@ -617,12 +648,9 @@ function switchView(viewId) {
   $("#recruitmentLayout").classList.remove("form-open");
   $("#chatLayout").classList.remove("form-open");
   updateCreateButton(viewId);
-  if (viewId === "recruitmentView") renderRecruitments();
-  if (viewId === "chatView") renderThreads();
-  if (viewId === "reminderView") renderReminder();
+  renderView(viewId);
   if (viewId === "myView") {
     markMessagesSeen();
-    renderMyPage();
     loadMyDataSummary().catch(showErrorToast);
   }
 }
@@ -809,6 +837,7 @@ function clearRecruitmentFilters() {
   clearChecks("#voiceFilter");
   clearChecks("#rankFilter");
   clearChecks("#styleFilter");
+  feedLimits.recruitments = feedPageSize;
   renderRankFilter();
   renderRecruitments();
 }
@@ -816,6 +845,7 @@ function clearRecruitmentFilters() {
 function clearChatFilters() {
   $("#chatSearchInput").value = "";
   clearChecks("#chatCategoryFilter");
+  feedLimits.threads = feedPageSize;
   renderThreads();
 }
 
@@ -1284,31 +1314,50 @@ function threadCard(post) {
   `;
 }
 
+function visibleFeedItems(type, items) {
+  const limit = feedLimits[type] || feedPageSize;
+  return items.slice(0, limit);
+}
+
+function loadMoreMarkup(type, total) {
+  const limit = feedLimits[type] || feedPageSize;
+  if (total <= limit) return "";
+  const nextCount = Math.min(feedPageSize, total - limit);
+  return `
+    <div class="load-more">
+      <button class="btn ghost" type="button" data-load-more="${escapeHtml(type)}">さらに表示</button>
+      <span>${escapeHtml(limit)} / ${escapeHtml(total)}件表示中、次に${escapeHtml(nextCount)}件追加</span>
+    </div>
+  `;
+}
+
 function renderRecruitments() {
   refreshGameFilter();
-  const items = visibleRecruitments();
+  const allItems = visibleRecruitments();
+  const items = visibleFeedItems("recruitments", allItems);
   const filtered = recruitmentFilterLabels();
   renderFilterSummary("#recruitmentFilterSummary", filtered, "recruitment");
-  $("#recruitmentCount").textContent = filtered.length ? `${items.length}/${state.recruitments.length}件` : `${items.length}件`;
+  $("#recruitmentCount").textContent = filtered.length ? `${allItems.length}/${state.recruitments.length}件` : `${allItems.length}件`;
   if (!items.length) {
     $("#feed").innerHTML = `<div class="empty">${filtered.length ? "この条件の募集はまだありません。条件を少しゆるめると見つかるかも。" : "まだ募集はありません。最初の募集を書いてみませんか。"}<div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="recruitment">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を投稿</button></div></div>`;
     return;
   }
   const cards = items.map(recruitmentCard);
-  $("#feed").innerHTML = cards.join("");
+  $("#feed").innerHTML = cards.join("") + loadMoreMarkup("recruitments", allItems.length);
 }
 
 function renderThreads() {
-  const items = visibleThreads();
+  const allItems = visibleThreads();
+  const items = visibleFeedItems("threads", allItems);
   const filtered = chatFilterLabels();
   renderFilterSummary("#chatFilterSummary", filtered, "chat");
-  $("#chatCount").textContent = filtered.length ? `${items.length}/${state.threads.length}件` : `${items.length}件`;
+  $("#chatCount").textContent = filtered.length ? `${allItems.length}/${state.threads.length}件` : `${allItems.length}件`;
   if (!items.length) {
     $("#chatFeed").innerHTML = `<div class="empty">${filtered.length ? "この条件のフリートークはまだありません。カテゴリを変えると見つかるかも。" : "まだフリートークはありません。ちょっとした話題からどうぞ。"}<div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="chat">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-thread">スレッドを投稿</button></div></div>`;
     return;
   }
   const cards = items.map(threadCard);
-  $("#chatFeed").innerHTML = cards.join("");
+  $("#chatFeed").innerHTML = cards.join("") + loadMoreMarkup("threads", allItems.length);
 }
 
 function renderReminder() {
@@ -3155,6 +3204,17 @@ async function loadAdminData() {
   renderAuditLogs(auditLogs.auditLogs);
 }
 
+function activeViewId() {
+  return document.querySelector(".view.active")?.id || "recruitmentView";
+}
+
+function renderView(viewId = activeViewId()) {
+  if (viewId === "recruitmentView") renderRecruitments();
+  if (viewId === "chatView") renderThreads();
+  if (viewId === "reminderView") renderReminder();
+  if (viewId === "myView") renderMyPage();
+}
+
 function renderAll() {
   renderAccount();
   renderMessageNavBadge();
@@ -3165,10 +3225,7 @@ function renderAll() {
   renderAds();
   renderActivitySummaries();
   renderRecruitmentFormOptions();
-  renderRecruitments();
-  renderThreads();
-  renderReminder();
-  renderMyPage();
+  renderView();
 }
 
 function focusSharedCard() {
@@ -3579,6 +3636,14 @@ $("#myDataFeed").addEventListener("click", async event => {
 });
 
 document.body.addEventListener("click", event => {
+  const loadMoreButton = event.target.closest("[data-load-more]");
+  if (loadMoreButton) {
+    const type = loadMoreButton.dataset.loadMore;
+    feedLimits[type] = (feedLimits[type] || feedPageSize) + feedPageSize;
+    if (type === "recruitments") renderRecruitments();
+    if (type === "threads") renderThreads();
+    return;
+  }
   const clearButton = event.target.closest("[data-filter-clear]");
   if (clearButton) {
     if (clearButton.dataset.filterClear === "recruitment") clearRecruitmentFilters();
@@ -4236,12 +4301,24 @@ $("#logoutButton").addEventListener("click", async () => {
   renderAll();
 });
 ["#searchInput", "#sortInput", "#gameFilter", "#platformFilter", "#voiceFilter", "#rankFilter", "#styleFilter"].forEach(selector => {
-  $(selector).addEventListener("input", () => debounceRender("recruitments", renderRecruitments));
-  $(selector).addEventListener("change", () => debounceRender("recruitments", renderRecruitments, 20));
+  $(selector).addEventListener("input", () => {
+    resetFeedLimit("recruitments");
+    debounceRender("recruitments", renderRecruitments);
+  });
+  $(selector).addEventListener("change", () => {
+    resetFeedLimit("recruitments");
+    debounceRender("recruitments", renderRecruitments, 20);
+  });
 });
 ["#chatSearchInput", "#chatSortInput", "#chatCategoryFilter"].forEach(selector => {
-  $(selector).addEventListener("input", () => debounceRender("threads", renderThreads));
-  $(selector).addEventListener("change", () => debounceRender("threads", renderThreads, 20));
+  $(selector).addEventListener("input", () => {
+    resetFeedLimit("threads");
+    debounceRender("threads", renderThreads);
+  });
+  $(selector).addEventListener("change", () => {
+    resetFeedLimit("threads");
+    debounceRender("threads", renderThreads, 20);
+  });
 });
 ["#messageInput", "#chatTitleInput", "#chatBodyInput"].forEach(selector => {
   $(selector).addEventListener("input", updateFormStatus);

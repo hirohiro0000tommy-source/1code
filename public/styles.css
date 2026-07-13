@@ -1152,6 +1152,20 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   line-height: 1;
 }
 .feed { display: grid; gap: 10px; }
+.load-more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: #fafaf7;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
 .card {
   position: relative;
   overflow: hidden;
