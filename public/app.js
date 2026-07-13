@@ -34,6 +34,24 @@ const recruitmentTemplates = {
     capacity: "4",
     style: "初心者",
     body: "初心者・復帰勢の方も歓迎です。\nミスっても気にしない感じで遊びたいです。\n気軽に返信どうぞ。"
+  },
+  noVoice: {
+    game: "Splatoon",
+    platform: "Switch",
+    voice: "なし",
+    rank: "ランク不問",
+    capacity: "4",
+    style: "エンジョイ",
+    body: "VCなしで気軽に遊べる方を募集しています。\n短時間でも大丈夫です。\n返信で遊べる時間や希望ルールを書いてください。"
+  },
+  practice: {
+    game: "STREET FIGHTER 6",
+    platform: "クロスプレイ",
+    voice: "どちらでも",
+    rank: "ランク相談",
+    capacity: "2",
+    style: "ガチ",
+    body: "対戦練習できる方を募集しています。\nキャラ対策や立ち回り確認をしながら遊びたいです。\n使用キャラとランクを書いてもらえると助かります。"
   }
 };
 const threadTemplates = {
@@ -51,6 +69,11 @@ const threadTemplates = {
     title: "立ち回りや編成の相談",
     category: "攻略相談",
     body: "攻略や立ち回りについて相談したいです。\n使っているキャラやランク、困っている場面を書いてもらえると助かります。"
+  },
+  weekly: {
+    title: "今週遊びたいゲーム",
+    category: "雑談",
+    body: "今週遊びたいゲームや、誰かと試したいモードを書いてみませんか。\n募集にするほど決まっていない話でも大丈夫です。"
   }
 };
 const recruitmentDraftKey = "partyfinder.draft.recruitment.v1";
@@ -98,6 +121,13 @@ const feedLimits = {
   recruitments: feedPageSize,
   threads: feedPageSize
 };
+const safeTagRules = [
+  { label: "初心者歓迎", test: item => item.style === "初心者" || /初心者|初めて|復帰/u.test(`${item.body || ""} ${item.rank || ""}`) },
+  { label: "VCなしOK", test: item => item.voice === "なし" || item.voice === "どちらでも" || /VCなし|聞き専|ボイチャなし/u.test(item.body || "") },
+  { label: "短時間OK", test: item => /短時間|少しだけ|軽め|1戦|一戦/u.test(item.body || "") },
+  { label: "まったり", test: item => item.style === "まったり" || /まったり|ゆるく|気軽/u.test(item.body || "") },
+  { label: "ガチ", test: item => item.style === "ガチ" || /勝ち|練習|ランク|大会/u.test(item.body || "") }
+];
 
 function messageSeenKey() {
   return `${messageSeenKeyPrefix}.${account.id || "anonymous"}`;
@@ -416,6 +446,8 @@ function collectionForType(type) {
 function renderItemLists(type) {
   normalizeViewerFlags();
   renderActivitySummaries();
+  renderQuickSections();
+  renderWeeklySummary();
   const activeView = activeViewId();
   if (type === "threads") {
     if (activeView === "chatView") renderThreads();
@@ -881,6 +913,100 @@ function renderActivitySummaries() {
   renderActivityStrip("#chatActivity", countBy(state.threads, "category"), "category");
 }
 
+function safeTags(item) {
+  return safeTagRules
+    .filter(rule => rule.test(item))
+    .slice(0, 4)
+    .map(rule => rule.label);
+}
+
+function safeTagMarkup(item) {
+  const tags = safeTags(item);
+  if (!tags.length) return "";
+  return `<div class="safe-tags">${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>`;
+}
+
+function hotRecruitments() {
+  return [...state.recruitments]
+    .filter(item => item.status !== "closed")
+    .sort((a, b) => {
+      const scoreA = Number(a.likeCount || 0) * 2 + (a.replies?.length || 0) * 3 + Number(a.participantCount || 0) * 2 + Number(a.lastActivityAt || a.createdAt || 0) / 1000000000000;
+      const scoreB = Number(b.likeCount || 0) * 2 + (b.replies?.length || 0) * 3 + Number(b.participantCount || 0) * 2 + Number(b.lastActivityAt || b.createdAt || 0) / 1000000000000;
+      return scoreB - scoreA;
+    })
+    .slice(0, 3);
+}
+
+function todayRecruitments() {
+  const dayMs = 24 * 60 * 60 * 1000;
+  return [...state.recruitments]
+    .filter(item => item.status !== "closed")
+    .filter(item => Date.now() - Number(item.lastActivityAt || item.createdAt || 0) <= dayMs)
+    .sort((a, b) => Number(b.lastActivityAt || b.createdAt || 0) - Number(a.lastActivityAt || a.createdAt || 0))
+    .slice(0, 3);
+}
+
+function renderQuickSections() {
+  const container = $("#recruitmentQuickSection");
+  if (!container) return;
+  const today = todayRecruitments();
+  const hot = hotRecruitments();
+  const games = countBy(state.recruitments.filter(item => item.status !== "closed"), "game").slice(0, 6);
+  if (!today.length && !hot.length && !games.length) {
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = `
+    <div class="quick-card">
+      <div><strong>今日遊べる募集</strong><span>${today.length ? "直近で動きがある募集です。" : "動きが出たらここに表示されます。"}</span></div>
+      <div class="quick-list">${today.map(item => quickPostButton(item, "recruitments")).join("") || `<span class="muted">まだありません</span>`}</div>
+    </div>
+    <div class="quick-card">
+      <div><strong>人気・動きあり</strong><span>反応が集まりやすい投稿です。</span></div>
+      <div class="quick-list">${hot.map(item => quickPostButton(item, "recruitments")).join("") || `<span class="muted">まだありません</span>`}</div>
+    </div>
+    <div class="quick-card">
+      <div><strong>ゲーム別入口</strong><span>ゲームを選ぶと募集を絞り込めます。</span></div>
+      <div class="quick-list">${games.map(([game, count]) => `<button type="button" data-game-entry="${escapeHtml(game)}">${escapeHtml(game)}<span>${escapeHtml(count)}件</span></button>`).join("")}</div>
+    </div>
+  `;
+}
+
+function quickPostButton(item, type) {
+  return `<button type="button" data-quick-post="${escapeHtml(type)}:${escapeHtml(item.id)}"><strong>${escapeHtml(item.game || item.category || "投稿")}</strong><span>${escapeHtml(item.title || item.body || "開く")}</span></button>`;
+}
+
+function renderWeeklySummary() {
+  const container = $("#weeklySummary");
+  if (!container) return;
+  const dayMs = 7 * 24 * 60 * 60 * 1000;
+  const recentRecruitments = state.recruitments.filter(item => Date.now() - Number(item.createdAt || 0) <= dayMs);
+  const recentThreads = state.threads.filter(item => Date.now() - Number(item.createdAt || 0) <= dayMs);
+  const topGame = countBy(recentRecruitments, "game")[0];
+  const topCategory = countBy(recentThreads, "category")[0];
+  container.innerHTML = `
+    <div><strong>週次まとめ</strong><span>直近7日</span></div>
+    <div class="weekly-grid">
+      <span>募集 ${escapeHtml(recentRecruitments.length)}件</span>
+      <span>フリートーク ${escapeHtml(recentThreads.length)}件</span>
+      <span>多いゲーム ${escapeHtml(topGame ? `${topGame[0]} ${topGame[1]}件` : "まだなし")}</span>
+      <span>多い話題 ${escapeHtml(topCategory ? `${topCategory[0]} ${topCategory[1]}件` : "まだなし")}</span>
+    </div>
+  `;
+}
+
+function renderWeeklyTopic() {
+  const container = $("#weeklyTopic");
+  if (!container) return;
+  container.innerHTML = `
+    <div>
+      <strong>今週のお題</strong>
+      <span>今週遊びたいゲーム、気になっている大会、攻略で詰まっていることを書いてみませんか。</span>
+    </div>
+    <button class="btn ghost" type="button" data-template="thread:weekly">お題で書く</button>
+  `;
+}
+
 function applyRecruitmentTemplate(key) {
   const template = recruitmentTemplates[key];
   if (!template) return;
@@ -964,6 +1090,7 @@ function actionButtons(item) {
     ${messageButton}
     <button class="action" data-action="reply" title="返信">↩ ${item.replies.length}</button>
     <button class="action" data-action="share" title="共有">共有</button>
+    <button class="action" data-action="copy-x" title="X告知文をコピー">X文</button>
     <button class="action" data-action="report" title="通報">通報</button>
     ${statusButton}
     ${item.canDelete ? `<button class="action delete" data-action="delete" title="削除">削除</button>` : ""}
@@ -1006,6 +1133,32 @@ function engagementSummary(post, type) {
 
 function shareUrl(type, id) {
   return `${window.location.origin}/share/${type}/${encodeURIComponent(id)}`;
+}
+
+function referralShareUrl(type, id, ref = "x") {
+  return `${shareUrl(type, id)}?ref=${encodeURIComponent(ref)}`;
+}
+
+function xShareText(type, item) {
+  const isThread = type === "threads";
+  const title = item.title || (isThread ? "フリートーク" : "ゲーム仲間募集");
+  const lines = isThread
+    ? [
+        "Red Threadで話題を出しました",
+        `「${title}」`,
+        item.category ? `カテゴリ: ${item.category}` : "",
+        referralShareUrl(type, item.id, "x"),
+        "#RedThread #ゲーム仲間募集"
+      ]
+    : [
+        "Red Threadでゲーム仲間を募集しています",
+        `ゲーム: ${item.game || "その他"}`,
+        item.rank && item.rank !== "ランク不問" ? `ランク: ${item.rank}` : "",
+        item.style ? `雰囲気: ${item.style}` : "",
+        referralShareUrl(type, item.id, "x"),
+        "#RedThread #ゲーム仲間募集"
+      ];
+  return lines.filter(Boolean).join("\n");
 }
 
 function appHash(type, id) {
@@ -1267,6 +1420,7 @@ function recruitmentCard(post) {
       </div>
       ${post.participants?.length ? `<div class="replies">${post.participants.map(participant => `<div class="reply">参加希望: ${escapeHtml(participant.name || "Player")}</div>`).join("")}</div>` : ""}
       <div class="message">${escapeHtml(post.body)}</div>
+      ${safeTagMarkup(post)}
       ${officialGuideMarkup(post, "recruitments")}
       ${recruitmentProfileMarkup(post)}
       <form class="message-form">
@@ -3224,6 +3378,9 @@ function renderAll() {
   renderServiceStatus();
   renderAds();
   renderActivitySummaries();
+  renderQuickSections();
+  renderWeeklySummary();
+  renderWeeklyTopic();
   renderRecruitmentFormOptions();
   renderView();
 }
@@ -3370,6 +3527,16 @@ async function handleCardClick(event) {
   }
   if (button.dataset.action === "share") {
     await copyShareLink(card, button);
+  }
+  if (button.dataset.action === "copy-x") {
+    const item = stateItem(type, id);
+    if (!item) return;
+    const original = button.textContent;
+    await copyText(xShareText(type, item));
+    button.textContent = "コピー済み";
+    setTimeout(() => {
+      button.textContent = original;
+    }, 1400);
   }
   if (button.dataset.action === "status") {
     const nextStatus = card.dataset.status === "closed" ? "open" : "closed";
@@ -3636,6 +3803,47 @@ $("#myDataFeed").addEventListener("click", async event => {
 });
 
 document.body.addEventListener("click", event => {
+  const guideButton = event.target.closest("[data-guide-jump]");
+  if (guideButton) {
+    const target = guideButton.dataset.guideJump;
+    if (target === "profile") {
+      switchView("myView");
+      $("#profileNameInput")?.focus();
+    }
+    if (target === "recruitment") {
+      switchView("recruitmentView");
+      $("#recruitmentLayout").classList.add("form-open");
+      updateCreateButton("recruitmentView");
+      focusCreateForm("recruitmentView");
+    }
+    if (target === "active") {
+      $("#sortInput").value = "active";
+      switchView("recruitmentView");
+      renderRecruitments();
+      $("#feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    return;
+  }
+  const gameEntry = event.target.closest("[data-game-entry]");
+  if (gameEntry) {
+    document.querySelectorAll("#gameFilter input").forEach(input => {
+      input.checked = input.value === gameEntry.dataset.gameEntry;
+    });
+    syncCheckListLabels($("#gameFilter"));
+    renderRankFilter();
+    resetFeedLimit("recruitments");
+    renderRecruitments();
+    switchView("recruitmentView");
+    $("#feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  const quickPost = event.target.closest("[data-quick-post]");
+  if (quickPost) {
+    const [quickType, quickId] = quickPost.dataset.quickPost.split(":");
+    window.location.hash = appHash(quickType, quickId);
+    focusSharedCard();
+    return;
+  }
   const loadMoreButton = event.target.closest("[data-load-more]");
   if (loadMoreButton) {
     const type = loadMoreButton.dataset.loadMore;

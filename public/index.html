@@ -109,6 +109,18 @@
       <a href="/terms.html">利用ルール</a>
     </section>
 
+    <section class="starter-guide" id="starterGuide" aria-label="初回ガイド">
+      <div>
+        <strong>はじめての使い方</strong>
+        <span>プロフィール、募集、返信の順で触ると使いやすいです。</span>
+      </div>
+      <div class="starter-actions">
+        <button type="button" data-guide-jump="profile">プロフィールを書く</button>
+        <button type="button" data-guide-jump="recruitment">募集を出す</button>
+        <button type="button" data-guide-jump="active">動きのある投稿を見る</button>
+      </div>
+    </section>
+
     <nav class="tabs" aria-label="ページ切り替え">
       <button class="tab active" type="button" data-view="recruitmentView">募集</button>
       <button class="tab" type="button" data-view="chatView">フリートーク</button>
@@ -127,6 +139,13 @@
         <aside>
           <form class="panel" id="postForm">
             <div class="panel-title"><span>募集を投稿</span></div>
+            <div class="template-row" aria-label="募集テンプレート">
+              <button class="template-button" type="button" data-template="recruitment:casual">まったり</button>
+              <button class="template-button" type="button" data-template="recruitment:beginner">初心者歓迎</button>
+              <button class="template-button" type="button" data-template="recruitment:noVoice">VCなし</button>
+              <button class="template-button" type="button" data-template="recruitment:ranked">ランク</button>
+              <button class="template-button" type="button" data-template="recruitment:practice">練習</button>
+            </div>
             <div class="two">
               <label>ゲーム
                 <select id="gameInput" required></select>
@@ -221,7 +240,9 @@
               <option value="reply">返信数順</option>
             </select>
           </div>
+          <section class="quick-section" id="recruitmentQuickSection" aria-label="募集のおすすめ入口"></section>
           <div class="summary"><strong>募集一覧</strong><span id="recruitmentCount">0件</span></div>
+          <section class="weekly-summary" id="weeklySummary" aria-label="週次まとめ"></section>
           <section class="activity-strip" id="gameActivity" aria-label="ゲーム別の募集状況"></section>
           <section class="feed" id="feed" aria-live="polite"></section>
         </main>
@@ -237,6 +258,7 @@
               <button class="template-button" type="button" data-template="thread:chat">雑談</button>
               <button class="template-button" type="button" data-template="thread:event">大会観戦</button>
               <button class="template-button" type="button" data-template="thread:strategy">攻略相談</button>
+              <button class="template-button" type="button" data-template="thread:weekly">今週のお題</button>
             </div>
             <label>タイトル<input id="chatTitleInput" maxlength="72" required placeholder="話題を入力"></label>
             <label>カテゴリ
@@ -276,6 +298,7 @@
             </select>
           </div>
           <div class="summary"><strong>フリートーク一覧</strong><span id="chatCount">0件</span></div>
+          <section class="topic-card" id="weeklyTopic" aria-label="今週のお題"></section>
           <section class="activity-strip" id="chatActivity" aria-label="カテゴリ別のフリートーク状況"></section>
           <section class="feed" id="chatFeed" aria-live="polite"></section>
         </main>

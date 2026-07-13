@@ -166,7 +166,7 @@ header .utility-link {
 header .utility-link:hover {
   color: var(--paper);
 }
-.box, .tabs, .panel, .card, .filters, .summary {
+.box, .tabs, .panel, .card, .filters, .summary, .starter-guide, .quick-card, .weekly-summary, .topic-card {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, .96);
@@ -684,6 +684,92 @@ button[aria-busy="true"] {
   border-color: var(--line);
   background: var(--ink);
   color: var(--paper);
+}
+.starter-guide,
+.topic-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin: 10px 0;
+  padding: 10px 12px;
+}
+.starter-guide strong,
+.topic-card strong,
+.quick-card strong,
+.weekly-summary strong {
+  display: block;
+  color: var(--ink);
+}
+.starter-guide span,
+.topic-card span,
+.quick-card span,
+.weekly-summary span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.starter-actions,
+.quick-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.starter-actions button,
+.quick-list button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fafaf7;
+  color: var(--ink);
+  padding: 7px 9px;
+  font-size: 12px;
+  font-weight: 900;
+}
+.quick-section {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.quick-card {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 10px;
+}
+.quick-list button {
+  display: grid;
+  gap: 2px;
+  max-width: 100%;
+  text-align: left;
+}
+.quick-list button span {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.weekly-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 9px 12px;
+}
+.weekly-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.weekly-grid span {
+  border: 1px solid #deded8;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 900;
 }
 .form-note {
   margin: 8px 0 10px;
@@ -1339,6 +1425,21 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   font-size: 13px;
   font-weight: 900;
 }
+.safe-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 14px 12px;
+}
+.safe-tags span {
+  border: 1px dashed #deded8;
+  border-radius: 999px;
+  background: #fafaf7;
+  color: var(--ink);
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 900;
+}
 .official-guide {
   display: grid;
   gap: 4px;
@@ -1621,6 +1722,16 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   }
   .beta-quickstart {
     grid-template-columns: 1fr;
+  }
+  .starter-guide,
+  .topic-card,
+  .weekly-summary,
+  .quick-section {
+    grid-template-columns: 1fr;
+  }
+  .starter-actions button,
+  .quick-list button {
+    flex: 1 1 100%;
   }
   .beta-quick-actions {
     justify-content: stretch;
