@@ -1343,6 +1343,10 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   font-size: 12px;
   line-height: 1.2;
 }
+.official-guide .link-action {
+  justify-self: start;
+  margin-top: 2px;
+}
 .poster-profile {
   margin: 0 14px 12px;
   border: 1px dashed #b8b8b0;

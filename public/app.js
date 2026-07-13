@@ -878,6 +878,45 @@ function applyThreadTemplate(key) {
   $("#chatBodyInput").focus();
 }
 
+function sampleBody(body = "") {
+  return String(body)
+    .replace(/^公式の(?:募集例|話題出し)です。\n?/, "")
+    .trim();
+}
+
+function useSamplePost(type, id) {
+  const item = stateItem(type, id);
+  if (!item || !item.isOfficial) return;
+  if (type === "threads") {
+    switchView("chatView");
+    $("#chatLayout").classList.add("form-open");
+    updateCreateButton("chatView");
+    $("#chatTitleInput").value = item.title || "";
+    $("#chatCategoryInput").value = item.category || "雑談";
+    $("#chatBodyInput").value = sampleBody(item.body);
+    saveFormDraft(threadDraftKey, threadDraftFields);
+    updateFormStatus();
+    focusCreateForm("chatView");
+    showToast("見本を入力しました", "内容を少し書き換えて投稿できます。");
+    return;
+  }
+  switchView("recruitmentView");
+  $("#recruitmentLayout").classList.add("form-open");
+  updateCreateButton("recruitmentView");
+  $("#gameInput").value = item.game || "その他";
+  renderRecruitmentFormOptions();
+  $("#platformInput").value = item.platform || "クロスプレイ";
+  $("#voiceInput").value = item.voice || "どちらでも";
+  $("#rankInput").value = item.rank || "ランク不問";
+  $("#capacityInput").value = item.capacity || 4;
+  $("#styleInput").value = item.style || "エンジョイ";
+  $("#messageInput").value = sampleBody(item.body);
+  saveFormDraft(recruitmentDraftKey, recruitmentDraftFields);
+  updateFormStatus();
+  focusCreateForm("recruitmentView");
+  showToast("見本を入力しました", "雰囲気や条件を少し書き換えて投稿できます。");
+}
+
 function actionButtons(item) {
   const liked = hasLiked(item);
   const joinButton = item.capacity && !item.isOfficial
@@ -1168,6 +1207,7 @@ function officialGuideMarkup(post, type) {
     <div class="official-guide">
       <strong>見本ガイド</strong>
       <span>${escapeHtml(text)}</span>
+      <button class="link-action" type="button" data-action="use-sample">この見本を使う</button>
     </div>
   `;
 }
@@ -3163,6 +3203,10 @@ async function handleCardClick(event) {
   if (!card) return;
   const { type, id } = card.dataset;
   const reply = event.target.closest("[data-reply-id]");
+  if (button.dataset.action === "use-sample") {
+    useSamplePost(type, id);
+    return;
+  }
   if (button.dataset.action === "report-reply" && reply) {
     const reason = prompt("返信の通報理由を入力してください", "不適切な返信");
     if (!reason) return;
