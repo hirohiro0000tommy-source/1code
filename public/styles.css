@@ -1452,7 +1452,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   gap: 6px;
   padding: 0 14px 12px;
 }
-.safe-tags span {
+.safe-tags button {
   border: 1px dashed #deded8;
   border-radius: 999px;
   background: #fafaf7;
@@ -1460,6 +1460,13 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   padding: 3px 8px;
   font-size: 12px;
   font-weight: 900;
+}
+.safe-tags button:hover,
+.safe-tags button.active {
+  border-style: solid;
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
 }
 .official-guide {
   display: grid;

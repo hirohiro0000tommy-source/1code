@@ -112,6 +112,7 @@ let toastTimer = null;
 let adminInquiriesCache = [];
 let adminBetaBacklogCache = null;
 let myDataSummaryCache = null;
+let lastXShareText = "";
 const pendingActions = new Set();
 const renderTimers = new Map();
 let cacheSaveTimer = null;
@@ -121,6 +122,7 @@ const feedLimits = {
   recruitments: feedPageSize,
   threads: feedPageSize
 };
+const safeTagFilters = new Set();
 const safeTagRules = [
   { label: "初心者歓迎", test: item => item.style === "初心者" || /初心者|初めて|復帰/u.test(`${item.body || ""} ${item.rank || ""}`) },
   { label: "VCなしOK", test: item => item.voice === "なし" || item.voice === "どちらでも" || /VCなし|聞き専|ボイチャなし/u.test(item.body || "") },
@@ -782,6 +784,7 @@ function visibleRecruitments() {
   const voices = checkedValues("#voiceFilter");
   const ranks = checkedValues("#rankFilter");
   const styles = checkedValues("#styleFilter");
+  const tags = [...safeTagFilters];
   const sort = $("#sortInput").value;
   return [...state.recruitments].filter(post => {
     const text = `${post.title} ${post.game} ${post.platform} ${post.voice} ${post.rank} ${post.style} ${post.body}`.toLowerCase();
@@ -790,7 +793,8 @@ function visibleRecruitments() {
       && (!platforms.length || platforms.includes(post.platform))
       && (!voices.length || voices.includes(post.voice))
       && (!ranks.length || ranks.includes(post.rank))
-      && (!styles.length || styles.includes(post.style));
+      && (!styles.length || styles.includes(post.style))
+      && (!tags.length || tags.every(tag => safeTags(post).includes(tag)));
   }).sort((a, b) => {
     if ((a.status === "closed") !== (b.status === "closed")) return a.status === "closed" ? 1 : -1;
     if (sort === "active") return (b.lastActivityAt || b.createdAt) - (a.lastActivityAt || a.createdAt);
@@ -844,6 +848,7 @@ function recruitmentFilterLabels() {
   checkedValues("#voiceFilter").forEach(value => labels.push({ label: "VC", value }));
   checkedValues("#rankFilter").forEach(value => labels.push({ label: "ランク", value }));
   checkedValues("#styleFilter").forEach(value => labels.push({ label: "スタイル", value }));
+  [...safeTagFilters].forEach(value => labels.push({ label: "安心タグ", value }));
   return labels;
 }
 
@@ -869,6 +874,7 @@ function clearRecruitmentFilters() {
   clearChecks("#voiceFilter");
   clearChecks("#rankFilter");
   clearChecks("#styleFilter");
+  safeTagFilters.clear();
   feedLimits.recruitments = feedPageSize;
   renderRankFilter();
   renderRecruitments();
@@ -923,7 +929,7 @@ function safeTags(item) {
 function safeTagMarkup(item) {
   const tags = safeTags(item);
   if (!tags.length) return "";
-  return `<div class="safe-tags">${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>`;
+  return `<div class="safe-tags">${tags.map(tag => `<button type="button" class="${safeTagFilters.has(tag) ? "active" : ""}" data-safe-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`).join("")}</div>`;
 }
 
 function hotRecruitments() {
@@ -3545,11 +3551,13 @@ async function handleCardClick(event) {
     const item = stateItem(type, id);
     if (!item) return;
     const original = button.textContent;
-    await copyText(xShareText(type, item));
+    lastXShareText = xShareText(type, item);
+    await copyText(lastXShareText);
     button.textContent = "コピー済み";
     setTimeout(() => {
       button.textContent = original;
     }, 1400);
+    showToast("X告知文をコピーしました", "そのまま貼り付けられます。投稿画面を開くこともできます。", `<button class="action" type="button" data-toast-action="open-x-post">Xを開く</button>`);
   }
   if (button.dataset.action === "status") {
     const nextStatus = card.dataset.status === "closed" ? "open" : "closed";
@@ -3816,6 +3824,17 @@ $("#myDataFeed").addEventListener("click", async event => {
 });
 
 document.body.addEventListener("click", async event => {
+  const safeTag = event.target.closest("[data-safe-tag]");
+  if (safeTag) {
+    const tag = safeTag.dataset.safeTag;
+    if (safeTagFilters.has(tag)) safeTagFilters.delete(tag);
+    else safeTagFilters.add(tag);
+    resetFeedLimit("recruitments");
+    switchView("recruitmentView");
+    renderRecruitments();
+    $("#feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   const guideButton = event.target.closest("[data-guide-jump]");
   if (guideButton) {
     const target = guideButton.dataset.guideJump;
@@ -4398,6 +4417,10 @@ $("#toast").addEventListener("click", async event => {
     setTimeout(() => {
       button.textContent = "共有リンクをコピー";
     }, 1400);
+  }
+  if (button.dataset.toastAction === "open-x-post") {
+    const text = lastXShareText || `${window.location.origin}/?ref=x`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank", "noopener");
   }
   if (button.dataset.toastAction === "copy-error-id") {
     await copyText(button.dataset.requestId || "");
