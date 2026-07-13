@@ -973,10 +973,29 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   color: var(--ink);
   padding: 4px 7px;
   font-size: 12px;
+  font-weight: 800;
   overflow-wrap: anywhere;
 }
 .filter-chip strong {
   color: var(--muted);
+}
+.filter-chip span {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #f0f0eb;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1;
+}
+.filter-chip:hover {
+  border-color: var(--ink);
+}
+.filter-chip:hover span {
+  background: var(--ink);
+  color: var(--paper);
 }
 .link-action {
   border: 0;

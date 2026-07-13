@@ -820,8 +820,12 @@ function visibleThreads() {
     });
 }
 
-function filterChip(label, value) {
-  return `<span class="filter-chip"><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</span>`;
+function filterChip(item, scope) {
+  return `
+    <button class="filter-chip" type="button" data-filter-remove="${escapeHtml(scope)}:${escapeHtml(item.key)}:${escapeHtml(item.value)}" title="${escapeHtml(item.value)}を外す">
+      <strong>${escapeHtml(item.label)}</strong>${escapeHtml(item.value)}<span aria-hidden="true">x</span>
+    </button>
+  `;
 }
 
 function renderFilterSummary(selector, labels, clearAction) {
@@ -834,7 +838,7 @@ function renderFilterSummary(selector, labels, clearAction) {
   }
   container.hidden = false;
   container.innerHTML = `
-    <div class="filter-summary-list">${labels.map(item => filterChip(item.label, item.value)).join("")}</div>
+    <div class="filter-summary-list">${labels.map(item => filterChip(item, clearAction)).join("")}</div>
     <button class="link-action" type="button" data-filter-clear="${escapeHtml(clearAction)}">条件を解除</button>
   `;
 }
@@ -842,21 +846,21 @@ function renderFilterSummary(selector, labels, clearAction) {
 function recruitmentFilterLabels() {
   const labels = [];
   const query = $("#searchInput").value.trim();
-  if (query) labels.push({ label: "キーワード", value: query });
-  checkedValues("#gameFilter").forEach(value => labels.push({ label: "ゲーム", value }));
-  checkedValues("#platformFilter").forEach(value => labels.push({ label: "機種", value }));
-  checkedValues("#voiceFilter").forEach(value => labels.push({ label: "VC", value }));
-  checkedValues("#rankFilter").forEach(value => labels.push({ label: "ランク", value }));
-  checkedValues("#styleFilter").forEach(value => labels.push({ label: "スタイル", value }));
-  [...safeTagFilters].forEach(value => labels.push({ label: "安心タグ", value }));
+  if (query) labels.push({ key: "query", label: "キーワード", value: query });
+  checkedValues("#gameFilter").forEach(value => labels.push({ key: "game", label: "ゲーム", value }));
+  checkedValues("#platformFilter").forEach(value => labels.push({ key: "platform", label: "機種", value }));
+  checkedValues("#voiceFilter").forEach(value => labels.push({ key: "voice", label: "VC", value }));
+  checkedValues("#rankFilter").forEach(value => labels.push({ key: "rank", label: "ランク", value }));
+  checkedValues("#styleFilter").forEach(value => labels.push({ key: "style", label: "スタイル", value }));
+  [...safeTagFilters].forEach(value => labels.push({ key: "safe", label: "安心タグ", value }));
   return labels;
 }
 
 function chatFilterLabels() {
   const labels = [];
   const query = $("#chatSearchInput").value.trim();
-  if (query) labels.push({ label: "キーワード", value: query });
-  checkedValues("#chatCategoryFilter").forEach(value => labels.push({ label: "カテゴリ", value }));
+  if (query) labels.push({ key: "query", label: "キーワード", value: query });
+  checkedValues("#chatCategoryFilter").forEach(value => labels.push({ key: "category", label: "カテゴリ", value }));
   return labels;
 }
 
@@ -865,6 +869,35 @@ function clearChecks(selector) {
     input.checked = false;
     syncCheckedLabel(input.closest("label"));
   });
+}
+
+function uncheckValue(selector, value) {
+  document.querySelectorAll(`${selector} input[type='checkbox']`).forEach(input => {
+    if (input.value === value) {
+      input.checked = false;
+      syncCheckedLabel(input.closest("label"));
+    }
+  });
+}
+
+function removeRecruitmentFilter(key, value) {
+  if (key === "query") $("#searchInput").value = "";
+  if (key === "game") uncheckValue("#gameFilter", value);
+  if (key === "platform") uncheckValue("#platformFilter", value);
+  if (key === "voice") uncheckValue("#voiceFilter", value);
+  if (key === "rank") uncheckValue("#rankFilter", value);
+  if (key === "style") uncheckValue("#styleFilter", value);
+  if (key === "safe") safeTagFilters.delete(value);
+  renderRankFilter();
+  resetFeedLimit("recruitments");
+  renderRecruitments();
+}
+
+function removeChatFilter(key, value) {
+  if (key === "query") $("#chatSearchInput").value = "";
+  if (key === "category") uncheckValue("#chatCategoryFilter", value);
+  resetFeedLimit("threads");
+  renderThreads();
 }
 
 function clearRecruitmentFilters() {
@@ -3833,6 +3866,14 @@ document.body.addEventListener("click", async event => {
     switchView("recruitmentView");
     renderRecruitments();
     $("#feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  const filterRemove = event.target.closest("[data-filter-remove]");
+  if (filterRemove) {
+    const [scope, key, ...rest] = filterRemove.dataset.filterRemove.split(":");
+    const value = rest.join(":");
+    if (scope === "recruitment") removeRecruitmentFilter(key, value);
+    if (scope === "chat") removeChatFilter(key, value);
     return;
   }
   const guideButton = event.target.closest("[data-guide-jump]");
