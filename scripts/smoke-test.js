@@ -1064,6 +1064,23 @@ async function run() {
     assert(system.system.retention?.deletedItems === 500, "system retention policy missing");
     assert(typeof system.system.uptimeSeconds === "number", "system uptime missing");
 
+    const botDrafts = await request("/api/admin/bot/drafts", { adminPin: "admin" });
+    assert(Array.isArray(botDrafts.drafts) && botDrafts.drafts.length >= 10, "official bot launch drafts missing");
+    assert(botDrafts.drafts.some(draft => draft.launchTag === "公開初日"), "official bot launch tag missing");
+    assert(botDrafts.drafts.filter(draft => draft.type === "recruitments").length >= 5, "official bot recruitment drafts missing");
+    assert(botDrafts.drafts.filter(draft => draft.type === "threads").length >= 5, "official bot thread drafts missing");
+    const botPublish = await request("/api/admin/bot/publish", {
+      method: "POST",
+      adminPin: "admin",
+      body: { draftIds: ["recruit-apex-short-no-vc", "thread-tonight-game-checkin"] }
+    });
+    assert(botPublish.published.length === 2, "official bot selected publish failed");
+    const stateWithOfficialBots = await request("/api/state");
+    assert(stateWithOfficialBots.recruitments.some(item => item.isOfficial && item.title === "Apex 30分だけカジュアル"), "official bot recruitment state missing");
+    assert(stateWithOfficialBots.threads.some(item => item.isOfficial && item.title === "今夜遊ぶゲームを書くだけの場所"), "official bot thread state missing");
+    const botDraftsAfterPublish = await request("/api/admin/bot/drafts", { adminPin: "admin" });
+    assert(botDraftsAfterPublish.drafts.some(draft => draft.id === "recruit-apex-short-no-vc" && draft.alreadyPublished), "official bot published draft state failed");
+
     const inquiry = await request("/api/inquiries", {
       method: "POST",
       body: { name: "Smoke User", contact: "smoke@example.com", category: "βフィードバック", requestId: "smoke-request-id", message: "Smoke inquiry" }

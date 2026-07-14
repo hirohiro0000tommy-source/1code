@@ -180,6 +180,9 @@ else fail("public status page", "missing");
 if (smoke.includes("/api/admin/public-launch") && smoke.includes("public launch decision status failed")) pass("public launch smoke coverage");
 else fail("public launch smoke coverage", "missing");
 
+if (server.includes("function officialBotDrafts") && server.includes("/api/admin/bot/drafts") && server.includes("/api/admin/bot/publish") && server.includes("launchTag") && server.includes("recruit-apex-short-no-vc") && server.includes("thread-tonight-game-checkin") && app.includes("bot-draft-summary") && smoke.includes("official bot launch drafts missing") && smoke.includes("official bot selected publish failed")) pass("official bot launch readiness");
+else fail("official bot launch readiness", "missing");
+
 if (smoke.includes("/api/admin/public-report") && smoke.includes("public report summary text missing")) pass("public report smoke coverage");
 else fail("public report smoke coverage", "missing");
 

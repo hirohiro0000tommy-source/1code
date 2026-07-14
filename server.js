@@ -3143,6 +3143,7 @@ function officialBotDrafts(db) {
       id: "recruit-shadowverse-beginner",
       botId: "coach",
       type: "recruitments",
+      launchTag: "公開初日",
       title: "Shadowverse/Worlds Beyond 初心者・復帰勢で対戦したい",
       game: "Shadowverse/Worlds Beyond",
       platform: "モバイル",
@@ -3156,6 +3157,7 @@ function officialBotDrafts(db) {
       id: "recruit-monster-hunter-casual",
       botId: "scout",
       type: "recruitments",
+      launchTag: "まったり",
       title: "Monster Hunter まったり素材集め",
       game: "Monster Hunter",
       platform: "クロスプレイ",
@@ -3169,6 +3171,7 @@ function officialBotDrafts(db) {
       id: "recruit-valorant-casual",
       botId: "scout",
       type: "recruitments",
+      launchTag: "初心者歓迎",
       title: "VALORANT 初心者歓迎でアンレート",
       game: "VALORANT",
       platform: "PC",
@@ -3177,6 +3180,34 @@ function officialBotDrafts(db) {
       style: "エンジョイ",
       capacity: 5,
       body: "公式の募集例です。\nアンレートや練習を、雰囲気よく遊びたい人向け。\nランクや強さより、落ち着いて遊べることを重視した募集です。"
+    },
+    {
+      id: "recruit-apex-short-no-vc",
+      botId: "scout",
+      type: "recruitments",
+      launchTag: "短時間",
+      title: "Apex 30分だけカジュアル",
+      game: "Apex",
+      platform: "クロスプレイ",
+      voice: "なし",
+      rank: "ランク不問",
+      style: "まったり",
+      capacity: 3,
+      body: "公式の募集例です。\n少しだけ遊びたいときの募集例です。VCなし、短時間、途中抜けOKのように書くと参加しやすくなります。"
+    },
+    {
+      id: "recruit-street-fighter-beginner-lounge",
+      botId: "coach",
+      type: "recruitments",
+      launchTag: "練習相手",
+      title: "STREET FIGHTER 6 初心者同士で対戦練習",
+      game: "STREET FIGHTER 6",
+      platform: "クロスプレイ",
+      voice: "どちらでも",
+      rank: "初心者",
+      style: "初心者",
+      capacity: 2,
+      body: "公式の募集例です。\nコンボ練習や対戦慣れをしたい人向けです。勝ち負けより、試したいことを書いておくと声をかけやすくなります。"
     }
   ];
   const threadDrafts = [
@@ -3184,6 +3215,7 @@ function officialBotDrafts(db) {
       id: "thread-first-game-friends",
       botId: "lobby",
       type: "threads",
+      launchTag: "公開初日",
       title: "最初に募集してみたいゲーム",
       category: "雑談",
       body: "公式の話題出しです。\nこのサイトで最初に募集してみたいゲームがあれば、気軽に書いてください。"
@@ -3192,6 +3224,7 @@ function officialBotDrafts(db) {
       id: "thread-watch-party",
       botId: "lobby",
       type: "threads",
+      launchTag: "大会観戦",
       title: "大会や配信を見ながら話す場所",
       category: "大会観戦",
       body: "公式の話題出しです。\n大会、配信、イベントの感想などをゆるく書ける場所です。"
@@ -3200,9 +3233,28 @@ function officialBotDrafts(db) {
       id: "thread-beginner-help",
       botId: "coach",
       type: "threads",
+      launchTag: "攻略相談",
       title: "初心者が聞きやすい攻略相談",
       category: "攻略相談",
       body: "公式の話題出しです。\n立ち回り、キャラ、デッキ、装備など、ちょっと聞きたいことを置いていけます。"
+    },
+    {
+      id: "thread-tonight-game-checkin",
+      botId: "lobby",
+      type: "threads",
+      launchTag: "今夜遊ぶ",
+      title: "今夜遊ぶゲームを書くだけの場所",
+      category: "雑談",
+      body: "公式の話題出しです。\n今夜遊ぶ予定のゲーム名だけでも大丈夫です。人数が集まりそうなら、そのまま募集に移れます。"
+    },
+    {
+      id: "thread-launch-feedback",
+      botId: "lobby",
+      type: "threads",
+      launchTag: "公開初日",
+      title: "使ってみた感想・直してほしいところ",
+      category: "雑談",
+      body: "公式の話題出しです。\n見づらいところ、迷ったところ、欲しい機能があれば短く書いてください。公開後の改善に使います。"
     }
   ];
   return [...recruitmentDrafts, ...threadDrafts].map(draft => ({
@@ -3643,7 +3695,7 @@ async function handleApi(req, res, url) {
     const drafts = officialBotDrafts(db).filter(draft => !draft.alreadyPublished && (!requestedIds || requestedIds.has(draft.id)));
     const published = [];
     const now = Date.now();
-    for (const draft of drafts.slice(0, 6)) {
+    for (const draft of drafts.slice(0, 12)) {
       const item = officialBotItemFromDraft(draft, now - published.length * 1000);
       const violation = draft.type === "recruitments"
         ? contentViolation(item.title, item.game, item.body)

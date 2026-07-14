@@ -1948,6 +1948,8 @@ function renderOfficialBot(botData = {}) {
   const drafts = botData.drafts || [];
   const ready = drafts.filter(draft => !draft.alreadyPublished);
   const bots = botData.bots || [];
+  const readyRecruitments = ready.filter(draft => draft.type === "recruitments").length;
+  const readyThreads = ready.filter(draft => draft.type === "threads").length;
   $("#botDraftStatus").textContent = `${ready.length}/${drafts.length}件`;
   if (!drafts.length) {
     $("#botDraftFeed").innerHTML = `<div class="empty">ボット下書きはまだありません。</div>`;
@@ -1967,7 +1969,12 @@ function renderOfficialBot(botData = {}) {
           <h2>公式ボット投稿</h2>
         </div>
       </div>
-      <div class="message">人が少ない時間に置いておく、公式の募集例と話題出しです。一般ユーザーのふりはしません。\n${escapeHtml(botNames)}</div>
+      <div class="message">公開初日に人が少ない時間でも、使い方が伝わる公式の見本投稿です。一般ユーザーのふりはしません。\n${escapeHtml(botNames)}</div>
+      <div class="bot-draft-summary">
+        <span>未投稿の募集 ${readyRecruitments}件</span>
+        <span>未投稿の話題 ${readyThreads}件</span>
+        <span>公開済み ${drafts.length - ready.length}件</span>
+      </div>
       <div class="actions">
         <button class="action primary" type="button" data-action="publish-bot-drafts" ${ready.length ? "" : "disabled"}>未投稿分を公開</button>
       </div>
@@ -1978,10 +1985,12 @@ function renderOfficialBot(botData = {}) {
       <div class="card-head">
         <div>
           <div class="meta">
+            <span class="badge sample">見本</span>
             <span class="badge">${draft.type === "threads" ? "話題" : "募集"}</span>
             <span>${escapeHtml(draft.bot?.author || botData.bot?.author || "公式")}</span>
-            <span>${draft.alreadyPublished ? "公開済み" : "未投稿"}</span>
+            <span class="${draft.alreadyPublished ? "" : "accent-text"}">${draft.alreadyPublished ? "公開済み" : "未投稿"}</span>
             <span>${escapeHtml(draft.game || draft.category || "")}</span>
+            ${draft.launchTag ? `<span>${escapeHtml(draft.launchTag)}</span>` : ""}
           </div>
           <h2>${escapeHtml(draft.title)}</h2>
         </div>
