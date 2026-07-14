@@ -1951,6 +1951,7 @@ function renderOfficialBot(botData = {}) {
   const readyRecruitments = ready.filter(draft => draft.type === "recruitments").length;
   const readyThreads = ready.filter(draft => draft.type === "threads").length;
   const coveredGames = [...new Set(drafts.map(draft => draft.game).filter(Boolean))];
+  const recommendedDraftIds = ready.slice(0, 5).map(draft => draft.id).join(",");
   $("#botDraftStatus").textContent = `${ready.length}/${drafts.length}件`;
   if (!drafts.length) {
     $("#botDraftFeed").innerHTML = `<div class="empty">ボット下書きはまだありません。</div>`;
@@ -1978,7 +1979,8 @@ function renderOfficialBot(botData = {}) {
         <span>対応ゲーム ${coveredGames.length}件</span>
       </div>
       <div class="actions">
-        <button class="action primary" type="button" data-action="publish-bot-drafts" ${ready.length ? "" : "disabled"}>未投稿分を公開</button>
+        <button class="action primary" type="button" data-action="publish-bot-recommended" data-draft-ids="${escapeHtml(recommendedDraftIds)}" ${recommendedDraftIds ? "" : "disabled"}>おすすめだけ公開</button>
+        <button class="action" type="button" data-action="publish-bot-drafts" ${ready.length ? "" : "disabled"}>未投稿分を公開</button>
       </div>
     </article>
   `;
@@ -4379,17 +4381,22 @@ $("#announcementFeed").addEventListener("submit", async event => {
 
 $("#botDraftFeed").addEventListener("click", async event => {
   const button = event.target.closest("button");
-  if (!button || !["publish-bot-drafts", "publish-bot-draft"].includes(button.dataset.action)) return;
+  if (!button || !["publish-bot-drafts", "publish-bot-draft", "publish-bot-recommended"].includes(button.dataset.action)) return;
   const card = event.target.closest("[data-bot-draft-id]");
   const actionKey = button.dataset.action === "publish-bot-draft" && card
     ? `bot:${card.dataset.botDraftId}`
+    : button.dataset.action === "publish-bot-recommended"
+      ? "bot:recommended"
     : "bot:all";
   const endPending = beginPendingAction(actionKey);
   if (!endPending) return;
   const restore = setButtonState(button, true, "公開中...");
-  const payload = button.dataset.action === "publish-bot-draft" && card
-    ? { draftIds: [card.dataset.botDraftId] }
-    : {};
+  const draftIds = button.dataset.action === "publish-bot-draft" && card
+    ? [card.dataset.botDraftId]
+    : button.dataset.action === "publish-bot-recommended"
+      ? (button.dataset.draftIds || "").split(",").filter(Boolean)
+      : [];
+  const payload = draftIds.length ? { draftIds } : {};
   try {
     const result = await api("/api/admin/bot/publish", {
       method: "POST",
