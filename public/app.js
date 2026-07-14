@@ -1950,6 +1950,7 @@ function renderOfficialBot(botData = {}) {
   const bots = botData.bots || [];
   const readyRecruitments = ready.filter(draft => draft.type === "recruitments").length;
   const readyThreads = ready.filter(draft => draft.type === "threads").length;
+  const coveredGames = [...new Set(drafts.map(draft => draft.game).filter(Boolean))];
   $("#botDraftStatus").textContent = `${ready.length}/${drafts.length}件`;
   if (!drafts.length) {
     $("#botDraftFeed").innerHTML = `<div class="empty">ボット下書きはまだありません。</div>`;
@@ -1974,13 +1975,15 @@ function renderOfficialBot(botData = {}) {
         <span>未投稿の募集 ${readyRecruitments}件</span>
         <span>未投稿の話題 ${readyThreads}件</span>
         <span>公開済み ${drafts.length - ready.length}件</span>
+        <span>対応ゲーム ${coveredGames.length}件</span>
       </div>
       <div class="actions">
         <button class="action primary" type="button" data-action="publish-bot-drafts" ${ready.length ? "" : "disabled"}>未投稿分を公開</button>
       </div>
     </article>
   `;
-  const list = drafts.map(draft => `
+  const sortedDrafts = [...drafts].sort((a, b) => Number(a.alreadyPublished) - Number(b.alreadyPublished));
+  const list = sortedDrafts.map(draft => `
     <article class="card ${draft.alreadyPublished ? "closed" : ""}" data-bot-draft-id="${escapeHtml(draft.id)}">
       <div class="card-head">
         <div>
