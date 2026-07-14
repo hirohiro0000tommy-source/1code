@@ -2021,7 +2021,35 @@ function renderAdSlots(slots = []) {
     $("#adSlotFeed").innerHTML = `<div class="empty">広告枠はまだありません。</div>`;
     return;
   }
-  $("#adSlotFeed").innerHTML = slots.map(slot => `
+  const invalidTargetCount = slots.filter(slot => {
+    if (!slot.targetUrl) return false;
+    try {
+      const parsed = new URL(slot.targetUrl);
+      return parsed.protocol !== "https:" || /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(parsed.hostname);
+    } catch {
+      return true;
+    }
+  }).length;
+  const summary = `
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <div class="meta">
+            <span class="badge">広告</span>
+            <span>公開前確認</span>
+          </div>
+          <h2>広告枠サマリー</h2>
+        </div>
+      </div>
+      <div class="bot-draft-summary">
+        <span>表示中 ${slots.filter(slot => slot.isActive).length}件</span>
+        <span>未差し替え ${slots.filter(slot => slot.isActive && slot.isPlaceholder).length}件</span>
+        <span>URL確認 ${invalidTargetCount}件</span>
+        <span>広告タグ ${slots.filter(slot => slot.html).length}件</span>
+      </div>
+    </article>
+  `;
+  $("#adSlotFeed").innerHTML = summary + slots.map(slot => `
     <article class="card" data-slot-key="${escapeHtml(slot.slotKey)}">
       <div class="card-head">
         <div>
