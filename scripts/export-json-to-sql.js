@@ -219,11 +219,12 @@ function linesForDb(db) {
 
   for (const slot of db.adSlots || []) {
     lines.push(
-      "insert into ad_slots (id, slot_key, label, placement, html, image_url, target_url, is_active, updated_at)",
-      `values (${sql(asUuid(slot.id, "ad-slot"))}, ${sql(slot.slotKey)}, ${sql(slot.label)}, ${sql(slot.placement)}, ${sql(slot.html)}, ${sql(slot.imageUrl)}, ${sql(slot.targetUrl)}, ${sql(Boolean(slot.isActive))}, ${sqlTime(slot.updatedAt || Date.now())})`,
+      "insert into ad_slots (id, slot_key, label, placement, kind, html, image_url, target_url, is_active, updated_at)",
+      `values (${sql(asUuid(slot.id, "ad-slot"))}, ${sql(slot.slotKey)}, ${sql(slot.label)}, ${sql(slot.placement)}, ${sql(slot.kind || "affiliate")}, ${sql(slot.html)}, ${sql(slot.imageUrl)}, ${sql(slot.targetUrl)}, ${sql(Boolean(slot.isActive))}, ${sqlTime(slot.updatedAt || Date.now())})`,
       "on conflict (slot_key) do update set",
       "  label = excluded.label,",
       "  placement = excluded.placement,",
+      "  kind = excluded.kind,",
       "  html = excluded.html,",
       "  image_url = excluded.image_url,",
       "  target_url = excluded.target_url,",

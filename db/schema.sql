@@ -134,6 +134,7 @@ create table if not exists ad_slots (
   slot_key text not null unique,
   label text not null,
   placement text not null check (placement in ('left_rail', 'right_rail', 'feed_inline', 'footer')),
+  kind text not null default 'affiliate' check (kind in ('affiliate', 'sponsor', 'community')),
   html text,
   image_url text,
   target_url text,
@@ -141,6 +142,10 @@ create table if not exists ad_slots (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table ad_slots add column if not exists kind text not null default 'affiliate';
+alter table ad_slots drop constraint if exists ad_slots_kind_check;
+alter table ad_slots add constraint ad_slots_kind_check check (kind in ('affiliate', 'sponsor', 'community'));
 
 create table if not exists moderation_events (
   id uuid primary key default gen_random_uuid(),

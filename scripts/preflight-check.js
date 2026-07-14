@@ -188,6 +188,8 @@ if (schema.includes("beta_feedback_type") && schema.includes("beta_feedback_prio
 else fail("schema column: inquiries beta feedback triage", "missing");
 if (schema.includes("resolution_note") && schema.includes("'削除依頼'")) pass("schema column: inquiries deletion resolution");
 else fail("schema column: inquiries deletion resolution", "missing");
+if (schema.includes("ad_slots") && schema.includes("kind in ('affiliate', 'sponsor', 'community')")) pass("schema column: ad_slots.kind");
+else fail("schema column: ad_slots.kind", "missing");
 
 const rls = fileText("db/rls.sql");
 for (const table of ["profiles", "recruitments", "threads", "replies", "likes", "reports", "inquiries", "direct_messages", "announcements", "ad_slots", "moderation_events", "deleted_items", "audit_logs"]) {

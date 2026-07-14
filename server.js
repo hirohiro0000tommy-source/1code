@@ -359,9 +359,9 @@ const initialData = {
   deletedItems: [],
   auditLogs: [],
   adSlots: [
-    { id: crypto.randomUUID(), slotKey: "left-rail", label: "左広告", placement: "left_rail", isActive: true },
-    { id: crypto.randomUUID(), slotKey: "right-rail", label: "右広告", placement: "right_rail", isActive: true },
-    { id: crypto.randomUUID(), slotKey: "feed-inline", label: "一覧内広告", placement: "feed_inline", isActive: true }
+    { id: crypto.randomUUID(), slotKey: "left-rail", label: "左広告", placement: "left_rail", kind: "affiliate", isActive: true },
+    { id: crypto.randomUUID(), slotKey: "right-rail", label: "右広告", placement: "right_rail", kind: "sponsor", isActive: true },
+    { id: crypto.randomUUID(), slotKey: "feed-inline", label: "一覧内広告", placement: "feed_inline", kind: "community", isActive: true }
   ]
 };
 
@@ -381,6 +381,17 @@ if (process.env.NODE_ENV === "production" && !envFlag(process.env.ENABLE_SEED_DA
 }
 
 const store = createStore({ root, initialData });
+const adKinds = new Set(["affiliate", "sponsor", "community"]);
+const adKindLabels = {
+  affiliate: "アフィリエイト",
+  sponsor: "スポンサー",
+  community: "告知"
+};
+
+function normalizeAdKind(value) {
+  const kind = cleanText(value, 40);
+  return adKinds.has(kind) ? kind : "affiliate";
+}
 
 async function readDb() {
   const db = await store.read();
@@ -402,6 +413,12 @@ async function readDb() {
       db.adSlots.push(slot);
     }
   }
+  db.adSlots.forEach(slot => {
+    slot.kind = normalizeAdKind(slot.kind);
+    slot.label = cleanText(slot.label, 80) || "広告";
+    slot.placement = cleanText(slot.placement, 40);
+    slot.isActive = slot.isActive !== false;
+  });
   db.recruitments.forEach(item => {
     item.likes = Array.isArray(item.likes) ? item.likes : [];
     item.replies = Array.isArray(item.replies) ? item.replies : [];
@@ -895,8 +912,11 @@ function sanitizeAdHtml(value) {
 }
 
 function publicAdSlot(slot) {
+  const kind = normalizeAdKind(slot.kind);
   return {
     ...slot,
+    kind,
+    kindLabel: adKindLabels[kind],
     targetUrl: sanitizeAdTargetUrl(slot.targetUrl || ""),
     html: sanitizeAdHtml(slot.html || "")
   };
@@ -1275,6 +1295,11 @@ function adOperationsSummary(db) {
   const invalidTargets = active.filter(slot => slot.targetUrl && !sanitizeAdTargetUrl(slot.targetUrl));
   const htmlSlots = active.filter(slot => cleanText(slot.html, 2000));
   const linkedSlots = active.filter(slot => sanitizeAdTargetUrl(slot.targetUrl));
+  const byKind = {
+    affiliate: active.filter(slot => normalizeAdKind(slot.kind) === "affiliate").length,
+    sponsor: active.filter(slot => normalizeAdKind(slot.kind) === "sponsor").length,
+    community: active.filter(slot => normalizeAdKind(slot.kind) === "community").length
+  };
   const ready = active.length > 0 && placeholder.length === 0 && invalidTargets.length === 0;
   return {
     total: slots.length,
@@ -1283,12 +1308,15 @@ function adOperationsSummary(db) {
     invalidTargets: invalidTargets.length,
     htmlSlots: htmlSlots.length,
     linkedSlots: linkedSlots.length,
+    byKind,
     ready,
     label: ready ? "広告枠OK" : active.length ? "広告枠確認" : "広告未設定",
     slots: active.map(slot => ({
       slotKey: slot.slotKey,
       label: slot.label || "広告",
       placement: slot.placement || "",
+      kind: normalizeAdKind(slot.kind),
+      kindLabel: adKindLabels[normalizeAdKind(slot.kind)],
       isPlaceholder: isPlaceholderAdSlot(slot),
       hasTarget: Boolean(sanitizeAdTargetUrl(slot.targetUrl)),
       hasHtml: Boolean(cleanText(slot.html, 2000))
@@ -4041,6 +4069,7 @@ async function handleApi(req, res, url) {
       return;
     }
     if (typeof body.label === "string") slot.label = cleanText(body.label, 80);
+    if (typeof body.kind === "string") slot.kind = normalizeAdKind(body.kind);
     if (typeof body.targetUrl === "string") slot.targetUrl = sanitizeAdTargetUrl(body.targetUrl);
     if (typeof body.html === "string") slot.html = sanitizeAdHtml(cleanText(body.html, 2000));
     if (typeof body.isActive === "boolean") slot.isActive = body.isActive;
@@ -4048,6 +4077,7 @@ async function handleApi(req, res, url) {
     addAuditLog(db, req, "update_ad_slot", {
       slotKey: slot.slotKey,
       label: slot.label,
+      kind: normalizeAdKind(slot.kind),
       isActive: slot.isActive
     });
     await writeDb(db);

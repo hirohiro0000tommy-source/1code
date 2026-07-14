@@ -61,6 +61,9 @@ function createPostgresStore() {
 
   async function ensureDb() {
     await pool.query("select 1");
+    await pool.query("alter table ad_slots add column if not exists kind text not null default 'affiliate'");
+    await pool.query("alter table ad_slots drop constraint if exists ad_slots_kind_check");
+    await pool.query("alter table ad_slots add constraint ad_slots_kind_check check (kind in ('affiliate', 'sponsor', 'community'))");
     for (const accountId of adminAccountIds) {
       await pool.query(
         `insert into profiles (provider, provider_user_id, display_name, role, status)
@@ -313,6 +316,7 @@ function createPostgresStore() {
           slotKey: row.slot_key,
           label: row.label,
           placement: row.placement,
+          kind: row.kind || "affiliate",
           html: row.html || "",
           imageUrl: row.image_url || "",
           targetUrl: row.target_url || "",
@@ -478,13 +482,14 @@ function createPostgresStore() {
       for (const slot of db.adSlots || []) {
         await client.query(
           `insert into ad_slots
-            (id, slot_key, label, placement, html, image_url, target_url, is_active, updated_at)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            (id, slot_key, label, placement, kind, html, image_url, target_url, is_active, updated_at)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
           [
             slot.id,
             slot.slotKey,
             slot.label,
             slot.placement,
+            slot.kind || "affiliate",
             slot.html || null,
             slot.imageUrl || null,
             slot.targetUrl || null,

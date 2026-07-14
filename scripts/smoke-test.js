@@ -1344,13 +1344,15 @@ async function run() {
     const adSlots = await request("/api/admin/ad-slots", { adminPin: "admin" });
     assert(adSlots.adSlots.length >= 1, "ad slots missing");
     assert(adSlots.adSlots.some(slot => slot.isPlaceholder), "placeholder ad detection failed");
+    assert(adSlots.adSlots.every(slot => ["affiliate", "sponsor", "community"].includes(slot.kind)), "ad slot kind missing");
     const firstSlot = adSlots.adSlots[0];
     const editedSlot = await request(`/api/admin/ad-slots/${firstSlot.slotKey}`, {
       method: "PATCH",
       adminPin: "admin",
-      body: { label: "Smoke ad", targetUrl: "https://partner.1code.test/smoke", html: "<script>alert(1)</script><a href=\"javascript:alert(1)\" onclick=\"alert(1)\">Smoke PR</a>" }
+      body: { label: "Smoke ad", kind: "sponsor", targetUrl: "https://partner.1code.test/smoke", html: "<script>alert(1)</script><a href=\"javascript:alert(1)\" onclick=\"alert(1)\">Smoke PR</a>" }
     });
     assert(editedSlot.adSlot.label === "Smoke ad", "ad slot edit failed");
+    assert(editedSlot.adSlot.kind === "sponsor", "ad slot kind edit failed");
     assert(editedSlot.adSlot.targetUrl === "https://partner.1code.test/smoke", "valid ad target was not preserved");
     assert(!editedSlot.adSlot.html.includes("<script"), "ad script was not sanitized");
     assert(!editedSlot.adSlot.html.includes("javascript:"), "ad javascript url was not sanitized");

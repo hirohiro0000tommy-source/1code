@@ -374,6 +374,16 @@ function isPlaceholderAdSlot(slot = {}) {
   return !targetUrl && !html || ["左広告", "右広告", "一覧内広告", "広告"].includes(label);
 }
 
+const adKindLabels = {
+  affiliate: "アフィリエイト",
+  sponsor: "スポンサー",
+  community: "告知"
+};
+
+function adKindLabel(kind) {
+  return adKindLabels[kind] || adKindLabels.affiliate;
+}
+
 function adMarkup(placement) {
   const slot = adSlot(placement);
   if (!slot || isPlaceholderAdSlot(slot)) return "";
@@ -382,7 +392,7 @@ function adMarkup(placement) {
   if (slot?.html) return `<div class="ad-card">${slot.html}</div>`;
   return `
     <div class="ad-card">
-      <span>広告 / PR</span>
+      <span>広告 / ${escapeHtml(adKindLabel(slot.kind))}</span>
       <strong>${escapeHtml(label)}</strong>
       <span>Red Threadを応援するPR枠です。</span>
       ${target !== "#" ? `<a class="btn" href="${escapeHtml(target)}" rel="sponsored noopener noreferrer" target="_blank">詳しく見る</a>` : ""}
@@ -2034,6 +2044,8 @@ function renderAdSlots(slots = []) {
       return true;
     }
   }).length;
+  const activeSlots = slots.filter(slot => slot.isActive);
+  const kindCount = kind => activeSlots.filter(slot => (slot.kind || "affiliate") === kind).length;
   const summary = `
     <article class="card">
       <div class="card-head">
@@ -2046,10 +2058,13 @@ function renderAdSlots(slots = []) {
         </div>
       </div>
       <div class="bot-draft-summary">
-        <span>表示中 ${slots.filter(slot => slot.isActive).length}件</span>
+        <span>表示中 ${activeSlots.length}件</span>
         <span>未差し替え ${slots.filter(slot => slot.isActive && slot.isPlaceholder).length}件</span>
         <span>URL確認 ${invalidTargetCount}件</span>
         <span>広告タグ ${slots.filter(slot => slot.html).length}件</span>
+        <span>スポンサー ${kindCount("sponsor")}件</span>
+        <span>アフィリエイト ${kindCount("affiliate")}件</span>
+        <span>告知 ${kindCount("community")}件</span>
       </div>
     </article>
   `;
@@ -2059,6 +2074,7 @@ function renderAdSlots(slots = []) {
         <div>
           <div class="meta">
             <span class="badge">${escapeHtml(slot.placement)}</span>
+            <span>${escapeHtml(adKindLabel(slot.kind))}</span>
             <span>${slot.isActive ? "表示中" : "非表示"}</span>
             ${slot.isPlaceholder ? `<span>未差し替え</span>` : ""}
           </div>
@@ -2069,6 +2085,13 @@ function renderAdSlots(slots = []) {
       <div class="message">${escapeHtml(slot.targetUrl || "リンク未設定")}</div>
       <form class="admin-form" data-action="save-ad">
         <label>表示名<input name="label" maxlength="80" value="${escapeHtml(slot.label)}"></label>
+        <label>種類
+          <select name="kind">
+            <option value="affiliate" ${(slot.kind || "affiliate") === "affiliate" ? "selected" : ""}>アフィリエイト</option>
+            <option value="sponsor" ${slot.kind === "sponsor" ? "selected" : ""}>スポンサー</option>
+            <option value="community" ${slot.kind === "community" ? "selected" : ""}>告知</option>
+          </select>
+        </label>
         <label>リンク<input name="targetUrl" maxlength="400" value="${escapeHtml(slot.targetUrl || "")}" placeholder="https://example.com"></label>
         <textarea name="html" maxlength="2000" placeholder="広告タグや紹介文">${escapeHtml(slot.html || "")}</textarea>
         <button class="btn dark" type="submit">保存</button>
@@ -4498,6 +4521,7 @@ $("#adSlotFeed").addEventListener("submit", async event => {
     method: "PATCH",
     body: JSON.stringify({
       label: form.get("label"),
+      kind: form.get("kind"),
       targetUrl: form.get("targetUrl"),
       html: form.get("html")
     })

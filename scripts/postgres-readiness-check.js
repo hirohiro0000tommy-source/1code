@@ -8,7 +8,7 @@ const requiredTables = {
   inquiries: ["id", "account_id", "name", "contact", "category", "request_id", "beta_feedback_type", "beta_feedback_priority", "beta_feedback_note", "resolution_note", "message", "status", "created_at", "resolved_at"],
   direct_messages: ["id", "conversation_id", "recruitment_id", "recruitment_title", "from_profile_id", "to_profile_id", "body", "status", "created_at"],
   announcements: ["id", "title", "body", "tone", "is_active", "created_at", "updated_at"],
-  ad_slots: ["id", "slot_key", "label", "placement", "html", "image_url", "target_url", "is_active", "created_at", "updated_at"],
+  ad_slots: ["id", "slot_key", "label", "placement", "kind", "html", "image_url", "target_url", "is_active", "created_at", "updated_at"],
   moderation_events: ["id", "account_id", "display_name", "action", "details", "created_at"],
   deleted_items: ["id", "kind", "payload", "deleted_by_account_id", "deleted_by_name", "deleted_at", "restored_at"],
   audit_logs: ["id", "actor_id", "actor_name", "action", "details", "created_at"]
