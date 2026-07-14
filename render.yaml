@@ -22,6 +22,12 @@ services:
         value: false
       - key: PUBLIC_WRITE_PAUSED
         value: false
+      - key: HOT_TOPIC_BOT_ENABLED
+        value: false
+      - key: HOT_TOPIC_BOT_INTERVAL_MINUTES
+        value: 360
+      - key: HOT_TOPIC_BOT_DAILY_LIMIT
+        value: 2
       - key: ENABLE_SEED_DATA
         value: false
       - key: SESSION_SECRET

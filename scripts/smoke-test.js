@@ -1071,9 +1071,15 @@ async function run() {
     assert(botDrafts.drafts.some(draft => draft.launchTag === "公開初日"), "official bot launch tag missing");
     assert(botDrafts.drafts.filter(draft => draft.type === "recruitments").length >= 8, "official bot recruitment drafts missing");
     assert(botDrafts.drafts.filter(draft => draft.type === "threads").length >= 5, "official bot thread drafts missing");
+    assert(botDrafts.drafts.some(draft => draft.source === "hotTopic" && draft.bot?.id === "trend"), "hot topic bot drafts missing");
     assert(botDrafts.drafts.some(draft => draft.game === "Overwatch"), "official bot overwatch draft missing");
     assert(botDrafts.drafts.some(draft => draft.game === "Splatoon"), "official bot splatoon draft missing");
     assert(botDrafts.drafts.some(draft => draft.game === "Pokemon Champions"), "official bot pokemon draft missing");
+    const hotTopicRun = await request("/api/admin/bot/hot-topics/run", { method: "POST", adminPin: "admin" });
+    assert(Array.isArray(hotTopicRun.published), "hot topic bot run response missing");
+    assert(hotTopicRun.published.length >= 1, "hot topic bot should publish at least one topic");
+    const stateWithHotTopics = await request("/api/state");
+    assert(stateWithHotTopics.threads.some(item => item.isOfficial && item.author === "トレンド"), "hot topic bot thread state missing");
     const botPublish = await request("/api/admin/bot/publish", {
       method: "POST",
       adminPin: "admin",

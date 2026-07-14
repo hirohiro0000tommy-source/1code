@@ -38,6 +38,9 @@ MODERATOR_ACCOUNT_IDS=
 BETA_ACCESS_CODE=generated-beta-code
 BETA_WRITE_PAUSED=false
 PUBLIC_WRITE_PAUSED=false
+HOT_TOPIC_BOT_ENABLED=false
+HOT_TOPIC_BOT_INTERVAL_MINUTES=360
+HOT_TOPIC_BOT_DAILY_LIMIT=2
 ENABLE_SEED_DATA=false
 SESSION_SECRET=generated-session-secret
 DISCORD_LOGIN_ENABLED=false
@@ -59,6 +62,8 @@ COMMIT_SHA=
 - `BETA_ACCESS_CODE` is shared only with invited testers.
 - `BETA_WRITE_PAUSED=false` before inviting testers. Set it to `true` only for an emergency pause.
 - `PUBLIC_WRITE_PAUSED=false` before public launch. Set it to `true` only when public posting must be paused.
+- `HOT_TOPIC_BOT_ENABLED=false` is safest for the first public share. Set it to `true` only after the manual hot topic button feels right.
+- `HOT_TOPIC_BOT_DAILY_LIMIT` keeps automatic topic posts from crowding out real users.
 - `ENABLE_SEED_DATA=false` in production so local sample posts are not shown publicly.
 - `DISCORD_CLIENT_ID` is the numeric Discord application client ID, and `DISCORD_CLIENT_SECRET` is the real client secret. Do not leave `your-discord-client-id`, `your-discord-client-secret`, or `...` placeholders.
 - Discord redirect URL is `${PUBLIC_BASE_URL}/auth/discord/callback`.

@@ -1960,6 +1960,7 @@ function renderOfficialBot(botData = {}) {
   const bots = botData.bots || [];
   const readyRecruitments = ready.filter(draft => draft.type === "recruitments").length;
   const readyThreads = ready.filter(draft => draft.type === "threads").length;
+  const readyHotTopics = ready.filter(draft => draft.source === "hotTopic");
   const coveredGames = [...new Set(drafts.map(draft => draft.game).filter(Boolean))];
   const recommendedDrafts = [
     ...ready.filter(draft => draft.type === "recruitments").slice(0, 3),
@@ -1990,11 +1991,13 @@ function renderOfficialBot(botData = {}) {
       <div class="bot-draft-summary">
         <span>未投稿の募集 ${readyRecruitments}件</span>
         <span>未投稿の話題 ${readyThreads}件</span>
+        <span>ホット話題 ${readyHotTopics.length}件</span>
         <span>公開済み ${drafts.length - ready.length}件</span>
         <span>対応ゲーム ${coveredGames.length}件</span>
       </div>
       <div class="actions">
         <button class="action primary" type="button" data-action="publish-bot-recommended" data-draft-ids="${escapeHtml(recommendedDraftIds)}" ${recommendedDraftIds ? "" : "disabled"}>おすすめだけ公開</button>
+        <button class="action" type="button" data-action="run-hot-topic-bot" ${readyHotTopics.length ? "" : "disabled"}>ホット話題を立てる</button>
         <button class="action" type="button" data-action="publish-bot-drafts" ${ready.length ? "" : "disabled"}>未投稿分を公開</button>
       </div>
     </article>
@@ -2011,6 +2014,7 @@ function renderOfficialBot(botData = {}) {
           <div class="meta">
             <span class="badge sample">見本</span>
             ${recommendedDraftSet.has(draft.id) ? `<span class="badge">おすすめ</span>` : ""}
+            ${draft.source === "hotTopic" ? `<span class="badge official">ホット話題</span>` : ""}
             <span class="badge">${draft.type === "threads" ? "話題" : "募集"}</span>
             <span>${escapeHtml(draft.bot?.author || botData.bot?.author || "公式")}</span>
             <span class="${draft.alreadyPublished ? "" : "accent-text"}">${draft.alreadyPublished ? "公開済み" : "未投稿"}</span>
@@ -4442,12 +4446,14 @@ $("#announcementFeed").addEventListener("submit", async event => {
 
 $("#botDraftFeed").addEventListener("click", async event => {
   const button = event.target.closest("button");
-  if (!button || !["publish-bot-drafts", "publish-bot-draft", "publish-bot-recommended"].includes(button.dataset.action)) return;
+  if (!button || !["publish-bot-drafts", "publish-bot-draft", "publish-bot-recommended", "run-hot-topic-bot"].includes(button.dataset.action)) return;
   const card = event.target.closest("[data-bot-draft-id]");
   const actionKey = button.dataset.action === "publish-bot-draft" && card
     ? `bot:${card.dataset.botDraftId}`
     : button.dataset.action === "publish-bot-recommended"
       ? "bot:recommended"
+    : button.dataset.action === "run-hot-topic-bot"
+      ? "bot:hot-topic"
     : "bot:all";
   const endPending = beginPendingAction(actionKey);
   if (!endPending) return;
@@ -4459,14 +4465,14 @@ $("#botDraftFeed").addEventListener("click", async event => {
       : [];
   const payload = draftIds.length ? { draftIds } : {};
   try {
-    const result = await api("/api/admin/bot/publish", {
+    const result = await api(button.dataset.action === "run-hot-topic-bot" ? "/api/admin/bot/hot-topics/run" : "/api/admin/bot/publish", {
       method: "POST",
       body: JSON.stringify(payload)
     });
     const count = result.published?.length || 0;
     showToast(
-      count ? "公式ボットを公開しました" : "公開済みです",
-      count ? `${count}件を追加しました。` : "追加できる未投稿の見本はありません。"
+      count ? "ボット投稿を公開しました" : "公開済みです",
+      count ? `${count}件を追加しました。` : "追加できる未投稿の話題はありません。"
     );
     await loadState();
     await loadAdminData();

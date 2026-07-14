@@ -21,6 +21,9 @@ const writePaused = betaWritePaused || publicWritePaused;
 const discordLoginEnabled = process.env.DISCORD_LOGIN_ENABLED ? envFlag(process.env.DISCORD_LOGIN_ENABLED) : true;
 const adminAccountIds = new Set(String(process.env.ADMIN_ACCOUNT_IDS || "").split(",").map(value => value.trim()).filter(Boolean));
 const moderatorAccountIds = new Set(String(process.env.MODERATOR_ACCOUNT_IDS || "").split(",").map(value => value.trim()).filter(Boolean));
+const hotTopicBotEnabled = envFlag(process.env.HOT_TOPIC_BOT_ENABLED);
+const hotTopicBotIntervalMs = Math.max(30, Number(process.env.HOT_TOPIC_BOT_INTERVAL_MINUTES || 360)) * 60 * 1000;
+const hotTopicBotDailyLimit = Math.max(1, Math.min(6, Number(process.env.HOT_TOPIC_BOT_DAILY_LIMIT || 2)));
 const rateWindowMs = 60 * 1000;
 const duplicateWindowMs = 10 * 60 * 1000;
 const rateBuckets = new Map();
@@ -99,6 +102,20 @@ const officialBots = [
       playTime: "",
       style: "初心者",
       bio: "初心者が聞きやすい攻略相談のきっかけを置く公式ボットです。"
+    }
+  },
+  {
+    id: "trend",
+    accountId: "bot:trend",
+    author: "トレンド",
+    role: "話題提供",
+    profile: {
+      displayName: "トレンド",
+      discordHandle: "",
+      games: "VALORANT, Apex, Monster Hunter, Shadowverse/Worlds Beyond",
+      playTime: "",
+      style: "まったり",
+      bio: "ゲームごとの話題を置いて、フリートークのきっかけを作る公式ボットです。"
     }
   }
 ];
@@ -3188,6 +3205,64 @@ function duplicateThread(db, item, ownerAccountId) {
   );
 }
 
+const hotTopicGames = [
+  "Shadowverse/Worlds Beyond",
+  "Pokemon Champions",
+  "Monster Hunter",
+  "Apex",
+  "VALORANT",
+  "STREET FIGHTER 6",
+  "Overwatch",
+  "Splatoon"
+];
+
+const hotTopicAngles = [
+  {
+    category: "雑談",
+    tag: "今週の話題",
+    title: game => `${game} 最近どう？`,
+    body: game => `${game}を最近遊んでいる人向けの雑談スレです。\n今の環境、遊びやすさ、気になっているモードやキャラがあれば気軽に書いてください。`
+  },
+  {
+    category: "攻略相談",
+    tag: "攻略相談",
+    title: game => `${game} いま練習していること`,
+    body: game => `${game}で今練習していること、詰まっているところを置けるスレです。\n初心者の質問でも、上手い人の小ネタでも大丈夫です。`
+  },
+  {
+    category: "大会観戦",
+    tag: "大会観戦",
+    title: game => `${game} 大会・配信の見どころ`,
+    body: game => `${game}の大会、配信、イベントを見ていて気になった場面を話すスレです。\n注目選手、構成、アプデ後の変化などをゆるくどうぞ。`
+  }
+];
+
+function dayNumber(time = Date.now()) {
+  return Math.floor(time / (24 * 60 * 60 * 1000));
+}
+
+function hotTopicDrafts(db, now = Date.now()) {
+  const day = dayNumber(now);
+  const activeGames = new Set([
+    ...hotTopicGames,
+    ...(db.recruitments || []).map(item => item.game).filter(Boolean)
+  ]);
+  return [...activeGames].slice(0, 12).map((game, index) => {
+    const angle = hotTopicAngles[(day + index) % hotTopicAngles.length];
+    return {
+      id: `hot-${String(game).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${day}`,
+      botId: "trend",
+      type: "threads",
+      source: "hotTopic",
+      launchTag: angle.tag,
+      title: angle.title(game),
+      category: angle.category,
+      game,
+      body: angle.body(game)
+    };
+  });
+}
+
 function officialBotDrafts(db) {
   const recruitmentDrafts = [
     {
@@ -3350,7 +3425,7 @@ function officialBotDrafts(db) {
       body: "見づらいところ、迷ったところ、欲しい機能があれば短く書いてください。\n公開後の改善に使います。"
     }
   ];
-  return [...recruitmentDrafts, ...threadDrafts].map(draft => ({
+  return [...recruitmentDrafts, ...threadDrafts, ...hotTopicDrafts(db)].map(draft => ({
     ...draft,
     bot: publicOfficialBot(botForDraft(draft)),
     alreadyPublished: botDraftAlreadyPublished(db, draft)
@@ -3425,6 +3500,52 @@ function officialBotItemFromDraft(draft, createdAt = Date.now()) {
     likes: [],
     replies: []
   };
+}
+
+function publishBotDrafts(db, drafts, req, max = 16) {
+  const published = [];
+  const now = Date.now();
+  for (const draft of drafts.slice(0, max)) {
+    if (botDraftAlreadyPublished(db, draft)) continue;
+    const item = officialBotItemFromDraft(draft, now - published.length * 1000);
+    const violation = draft.type === "recruitments"
+      ? contentViolation(item.title, item.game, item.body)
+      : contentViolation(item.title, item.body);
+    if (violation) {
+      addModerationEvent(db, req, "bot_content_blocked", { draftId: draft.id, type: draft.type, reason: violation });
+      continue;
+    }
+    if (draft.type === "recruitments") db.recruitments.unshift(item);
+    else db.threads.unshift(item);
+    published.push({ id: item.id, draftId: draft.id, type: draft.type, title: item.title, source: draft.source || "official" });
+  }
+  return published;
+}
+
+async function runHotTopicBot(reason = "interval") {
+  if (writePaused) return { ok: false, skipped: "write_paused", published: [] };
+  const db = await readDb();
+  const req = { headers: { "x-account-id": "bot:trend", "x-display-name": "トレンド" } };
+  const now = Date.now();
+  const dayStart = dayNumber(now) * 24 * 60 * 60 * 1000;
+  const alreadyToday = (db.threads || []).filter(item =>
+    item.ownerAccountId === "bot:trend"
+    && item.createdAt >= dayStart
+  ).length;
+  const room = Math.max(0, hotTopicBotDailyLimit - alreadyToday);
+  const drafts = officialBotDrafts(db)
+    .filter(draft => draft.source === "hotTopic" && !draft.alreadyPublished)
+    .slice(0, room);
+  if (!drafts.length) return { ok: true, skipped: room ? "no_drafts" : "daily_limit", published: [] };
+  const published = publishBotDrafts(db, drafts, req, room);
+  addAuditLog(db, req, "hot_topic_bot_publish", {
+    reason,
+    requested: drafts.length,
+    published: published.length,
+    titles: published.map(item => item.title)
+  });
+  await writeDb(db);
+  return { ok: true, published };
 }
 
 function duplicateReply(item, body, ownerAccountId) {
@@ -3786,22 +3907,7 @@ async function handleApi(req, res, url) {
     const body = await readBody(req);
     const requestedIds = Array.isArray(body.draftIds) ? new Set(body.draftIds.map(value => cleanText(value, 120)).filter(Boolean)) : null;
     const drafts = officialBotDrafts(db).filter(draft => !draft.alreadyPublished && (!requestedIds || requestedIds.has(draft.id)));
-    const published = [];
-    const now = Date.now();
-    for (const draft of drafts.slice(0, 16)) {
-      if (botDraftAlreadyPublished(db, draft)) continue;
-      const item = officialBotItemFromDraft(draft, now - published.length * 1000);
-      const violation = draft.type === "recruitments"
-        ? contentViolation(item.title, item.game, item.body)
-        : contentViolation(item.title, item.body);
-      if (violation) {
-        addModerationEvent(db, req, "bot_content_blocked", { draftId: draft.id, type: draft.type, reason: violation });
-        continue;
-      }
-      if (draft.type === "recruitments") db.recruitments.unshift(item);
-      else db.threads.unshift(item);
-      published.push({ id: item.id, draftId: draft.id, type: draft.type, title: item.title });
-    }
+    const published = publishBotDrafts(db, drafts, req, 16);
     addAuditLog(db, req, "official_bot_publish", {
       requested: requestedIds ? requestedIds.size : "all",
       published: published.length,
@@ -3809,6 +3915,13 @@ async function handleApi(req, res, url) {
     });
     await writeDb(db);
     sendJson(res, 201, { ok: true, published, drafts: officialBotDrafts(db) });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/admin/bot/hot-topics/run") {
+    if (!adminOnly(req, res)) return;
+    const result = await runHotTopicBot("manual");
+    sendJson(res, 201, { ...result, drafts: officialBotDrafts(await readDb()) });
     return;
   }
 
@@ -4933,6 +5046,18 @@ validateRuntimeConfig();
 
 server.listen(port, async () => {
   await store.ensureDb();
+  if (hotTopicBotEnabled) {
+    runHotTopicBot("startup").catch(error => {
+      runtimeMetrics.lastErrorAt = Date.now();
+      runtimeMetrics.lastError = `hot-topic-bot: ${error.message}`;
+    });
+    setInterval(() => {
+      runHotTopicBot("interval").catch(error => {
+        runtimeMetrics.lastErrorAt = Date.now();
+        runtimeMetrics.lastError = `hot-topic-bot: ${error.message}`;
+      });
+    }, hotTopicBotIntervalMs).unref();
+  }
   console.log(`Red Thread running at http://localhost:${port}`);
 });
 
