@@ -2363,6 +2363,8 @@ function publicLaunchDecision(db) {
   const backupAgeHours = lastBackupExport ? Math.round((Date.now() - lastBackupExport.createdAt) / (60 * 60 * 1000)) : null;
   const seedAuthors = new Set(["RuneCraft", "NeonSamurai", "LobbyHost", "Watcher", "DeckHelper"]);
   const seedPosts = [...(db.recruitments || []), ...(db.threads || [])].filter(item => seedAuthors.has(item.author));
+  const botDrafts = officialBotDrafts(db);
+  const publishedBotDrafts = botDrafts.filter(draft => draft.alreadyPublished);
   const blockers = [];
   const warnings = [];
   const checks = [];
@@ -2384,6 +2386,7 @@ function publicLaunchDecision(db) {
   addCheck("投稿停止", !writePaused, writePaused ? publicWritePaused ? "PUBLIC_WRITE_PAUSED=true" : "BETA_WRITE_PAUSED=true" : "通常", "blocker");
   addCheck("一般公開モード", !betaAccessCode, betaAccessCode ? "参加コードが有効です" : "誰でも投稿可能", "blocker");
   addCheck("シード投稿", seedPosts.length === 0 && !envFlag(process.env.ENABLE_SEED_DATA), seedPosts.length ? `サンプル投稿 ${seedPosts.length}件` : envFlag(process.env.ENABLE_SEED_DATA) ? "ENABLE_SEED_DATA=true" : "なし", "blocker");
+  addCheck("公式見本", publishedBotDrafts.length >= 2, publishedBotDrafts.length ? `公開済み ${publishedBotDrafts.length}/${botDrafts.length}件` : `未公開 / 下書き ${botDrafts.length}件`);
   addCheck("未対応通報", openReports.length === 0, openReports.length ? `${openReports.length}件` : "なし", "blocker");
   addCheck("未対応お問い合わせ", openInquiries.length === 0, openInquiries.length ? `${openInquiries.length}件` : "なし");
   addCheck("バックアップ", Boolean(lastBackupExport) && backupAgeHours <= 24 * 7, lastBackupExport ? `${backupAgeHours}時間前` : "未取得", "blocker");
@@ -2456,6 +2459,8 @@ function publicLaunchDecision(db) {
       placeholderAds: placeholderAds.length,
       invalidAdTargets: ads.invalidTargets,
       seedPosts: seedPosts.length,
+      officialBotDrafts: botDrafts.length,
+      officialBotPublished: publishedBotDrafts.length,
       lastBackupAt: lastBackupExport?.createdAt || null,
       backupAgeHours
     }

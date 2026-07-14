@@ -114,7 +114,7 @@ else fail("public release checklist admin UI", "missing");
 if (index.includes("deploymentHandoffStatus") && index.includes("deploymentHandoffFeed") && app.includes("renderDeploymentHandoff") && app.includes("copy-deployment-handoff") && app.includes("実行順") && app.includes("安全な環境変数チェック")) pass("deployment handoff admin UI");
 else fail("deployment handoff admin UI", "missing");
 
-if (server.includes("一般公開モード") && server.includes("シード投稿") && server.includes("データベースURL") && server.includes("未対応通報") && server.includes("バックアップ") && server.includes("広告枠") && server.includes("広告URL")) pass("public launch blockers");
+if (server.includes("一般公開モード") && server.includes("シード投稿") && server.includes("公式見本") && server.includes("officialBotPublished") && app.includes("公式見本") && smoke.includes("public launch official sample check missing") && server.includes("データベースURL") && server.includes("未対応通報") && server.includes("バックアップ") && server.includes("広告枠") && server.includes("広告URL")) pass("public launch blockers");
 else fail("public launch blockers", "missing");
 
 if (server.includes("NODE_ENV === \"production\"") && server.includes("initialData.recruitments = []") && server.includes("initialData.threads = []") && server.includes("ENABLE_SEED_DATA")) pass("production demo data gate");

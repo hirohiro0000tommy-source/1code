@@ -2696,6 +2696,7 @@ function renderPublicLaunch(launch) {
         <div class="detail"><span>未対応通報</span><strong>${escapeHtml(launch.counts?.openReports || 0)}</strong></div>
         <div class="detail"><span>未対応問い合わせ</span><strong>${escapeHtml(launch.counts?.openInquiries || 0)}</strong></div>
         <div class="detail"><span>シード投稿</span><strong>${escapeHtml(launch.counts?.seedPosts || 0)}</strong></div>
+        <div class="detail"><span>公式見本</span><strong>${escapeHtml(launch.counts?.officialBotPublished || 0)}/${escapeHtml(launch.counts?.officialBotDrafts || 0)}</strong></div>
         <div class="detail"><span>広告未差替</span><strong>${escapeHtml(launch.counts?.placeholderAds || 0)}</strong></div>
         <div class="detail"><span>お知らせ</span><strong>${escapeHtml(launch.counts?.activeAnnouncements || 0)}</strong></div>
         <div class="detail"><span>バックアップ</span><strong>${launch.counts?.backupAgeHours === null || launch.counts?.backupAgeHours === undefined ? "未取得" : `${escapeHtml(launch.counts.backupAgeHours)}h前`}</strong></div>

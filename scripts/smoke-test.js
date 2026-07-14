@@ -1185,6 +1185,9 @@ async function run() {
     assert(Array.isArray(publicLaunch.launch.checks) && publicLaunch.launch.checks.some(check => check.label === "一般公開モード"), "public launch decision checks failed");
     assert(publicLaunch.launch.checks.some(check => check.label === "データベースURL"), "public launch database url check missing");
     assert(publicLaunch.launch.checks.some(check => check.label === "シード投稿"), "public launch seed check missing");
+    assert(publicLaunch.launch.checks.some(check => check.label === "公式見本"), "public launch official sample check missing");
+    assert(publicLaunch.launch.counts.officialBotDrafts >= 10, "public launch official sample draft count failed");
+    assert(publicLaunch.launch.counts.officialBotPublished >= 2, "public launch official sample published count failed");
     assert(publicLaunch.launch.checks.some(check => check.label === "広告枠"), "public launch ad slot check missing");
     assert(publicLaunch.launch.checks.some(check => check.label === "広告URL"), "public launch ad target check missing");
     assert(typeof publicLaunch.launch.counts.placeholderAds === "number", "public launch placeholder ad count failed");
