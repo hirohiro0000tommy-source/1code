@@ -2994,11 +2994,29 @@ function homeHtml(html) {
     .replace('"url": "/"', `"url": "${homeUrl}"`);
 }
 
+function shareDescription(item, type) {
+  const isThread = type === "threads";
+  const replies = Array.isArray(item.replies) ? item.replies.length : 0;
+  const body = truncate(stripTags(item.body || ""), 120);
+  const details = isThread
+    ? [
+      item.category ? `カテゴリ:${item.category}` : "",
+      replies ? `返信:${replies}件` : "返信募集中"
+    ]
+    : [
+      item.game ? `ゲーム:${item.game}` : "",
+      item.rank ? `ランク:${item.rank}` : "",
+      item.style ? `スタイル:${item.style}` : "",
+      item.capacity ? `募集人数:${item.capacity}人` : ""
+    ];
+  return truncate([...details.filter(Boolean), body].filter(Boolean).join(" / ") || item.title || "Red Thread", 180);
+}
+
 function shareHtml(item, type) {
   const isThread = type === "threads";
   const label = isThread ? "フリートーク" : "募集";
   const title = `${item.title || label} | Red Thread`;
-  const description = truncate(item.body || item.title || "Red Thread", 150);
+  const description = shareDescription(item, type);
   const canonical = absoluteUrl(`/share/${type}/${encodeURIComponent(item.id)}`);
   const appUrl = absoluteUrl(`/#${type}:${encodeURIComponent(item.id)}`);
   const imageUrl = absoluteUrl("/og-image.svg");

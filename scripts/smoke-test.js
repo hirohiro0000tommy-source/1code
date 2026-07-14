@@ -756,6 +756,7 @@ async function run() {
     assert(recruitmentShare.body.includes("Smoke recruitment"), "recruitment share page missing title");
     assert(recruitmentShare.body.includes(`/#recruitments:${recruitment.id}`), "recruitment share page missing app link");
     assert(recruitmentShare.body.includes("og:image"), "recruitment share page missing og image");
+    assert(recruitmentShare.body.includes("ゲーム:Apex") && recruitmentShare.body.includes("スタイル:エンジョイ") && recruitmentShare.body.includes("募集人数:1人"), "recruitment share page missing recruitment details");
     assert(recruitmentShare.body.includes("summary_large_image"), "recruitment share page missing twitter card");
     assert(recruitmentShare.body.includes("application/ld+json") && recruitmentShare.body.includes("DiscussionForumPosting"), "recruitment share page missing structured data");
     assert(recruitmentShare.headers["content-security-policy"], "share page csp missing");
@@ -995,6 +996,7 @@ async function run() {
     const threadShare = await requestRaw(`/share/threads/${thread.id}`);
     assert(threadShare.body.includes("Smoke thread"), "thread share page missing title");
     assert(threadShare.body.includes(`/#threads:${thread.id}`), "thread share page missing app link");
+    assert(threadShare.body.includes("カテゴリ:攻略相談") && threadShare.body.includes("返信募集中"), "thread share page missing thread details");
 
     const sitemap = await requestRaw("/sitemap.xml");
     assert(sitemap.headers["content-type"]?.includes("application/xml"), "sitemap content type failed");
