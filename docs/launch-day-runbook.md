@@ -44,8 +44,9 @@ npm run deploy:verify
 8. Open `一般公開判定` and confirm no `停止` items.
 9. Open `公開直前チェック` and copy the memo.
 10. Open `インシデント共有` and confirm it is not `要対応`.
-11. Create or enable a short public announcement.
-12. Manually test one recruitment, one free-talk thread, one reply, one like, one DM, one report, and one inquiry.
+11. Open `公式ボット投稿`, publish the launch-day examples, and confirm the public feed shows `見本` and `公式` labels.
+12. Create or enable a short public announcement.
+13. Manually test one recruitment, one free-talk thread, one reply, one like, one DM, one report, and one inquiry.
 
 ## First public share
 
@@ -58,6 +59,7 @@ For the first 30 minutes:
 - Watch `公開運用レポート`.
 - Watch `/healthz`, `/readyz`, `/status`, `/status.json`, and `/api/health`.
 - Keep the hosting dashboard open.
+- Confirm real user posts are not confused with `見本` posts; official examples should remain clearly labeled.
 - Do not increase traffic while errors, reports, DM reports, deletion requests, or login problems are unresolved.
 
 ## Emergency brake

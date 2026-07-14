@@ -12,8 +12,9 @@ Use this during beta and the first public launch week.
 6. If `未対応通報`, `未対応DM通報`, or `対応待ち24h+` is above 0, handle moderation before inviting more users.
 7. Check `バックアップ状況`; if it is `未取得` or `要更新`, run `バックアップ取得` and compare the displayed `照合ID`.
 8. Check `公開運用レポート` for traffic, 5xx, 429, silent posts, `広告未差替`, and `広告URL確認`. For repeated 429 reports, use the response `Retry-After` value and the admin recent 429 list to decide whether users should wait or a limit needs adjustment.
-9. Check `β改善バックログ` before adding new features.
-10. Open `/status` and run `npm run deploy:verify` with `LIVE_BASE_URL` when the site is deployed. This also confirms the public status responses include `x-request-id` for support tracing.
+9. Check `公式ボット投稿`; use clearly labeled examples only when the feed needs a visible starting point.
+10. Check `β改善バックログ` before adding new features.
+11. Open `/status` and run `npm run deploy:verify` with `LIVE_BASE_URL` when the site is deployed. This also confirms the public status responses include `x-request-id` for support tracing.
 
 ## First 30-minute watch
 
@@ -22,7 +23,8 @@ Use `管理` -> `公開運用レポート` -> `公開直後の監視` during the
 1. Keep `/healthz`, `/readyz`, `/status.json`, and `公開運用レポート` open.
 2. In the first 10 minutes, confirm one recruitment, one free-talk thread, one reply, one like, one join, and one DM.
 3. In the first 30 minutes, watch reports, DM reports, inquiries, 5xx, 429, and `広告URL確認`.
-4. If you are unsure whether the site is safe to keep writable, set `PUBLIC_WRITE_PAUSED=true` and keep browsing, reports, inquiries, and admin actions available.
+4. Confirm official examples remain marked as `見本` and `公式`, especially after real users start posting.
+5. If you are unsure whether the site is safe to keep writable, set `PUBLIC_WRITE_PAUSED=true` and keep browsing, reports, inquiries, and admin actions available.
 
 ## Go slow conditions
 

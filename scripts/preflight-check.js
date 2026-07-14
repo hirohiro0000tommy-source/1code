@@ -407,11 +407,11 @@ if (packageJson.scripts?.["release:final"] && finalReleaseCheck.includes("Final 
 else fail("final release command", "missing");
 
 const launchToday = fileText("scripts/launch-today.js");
-if (packageJson.scripts?.["launch:today"] && launchToday.includes("Red Thread launch-today command") && launchToday.includes("final-release-check.js") && launchToday.includes("deploy-env-plan.js") && launchToday.includes("generate-launch-packet.js") && launchToday.includes("LIVE_BASE_URL") && launchToday.includes("Manual external steps required") && launchToday.includes("公開設定ハンドオフ") && launchToday.includes("Share to a small group first")) pass("today launch command");
+if (packageJson.scripts?.["launch:today"] && launchToday.includes("Red Thread launch-today command") && launchToday.includes("final-release-check.js") && launchToday.includes("deploy-env-plan.js") && launchToday.includes("generate-launch-packet.js") && launchToday.includes("LIVE_BASE_URL") && launchToday.includes("Manual external steps required") && launchToday.includes("公開設定ハンドオフ") && launchToday.includes("公式ボット投稿") && launchToday.includes("Share to a small group first")) pass("today launch command");
 else fail("today launch command", "missing");
 
 const launchPacket = fileText("scripts/generate-launch-packet.js");
-if (packageJson.scripts?.["launch:packet"] && launchPacket.includes("Red Thread launch packet") && launchPacket.includes("launch-packet.md") && launchPacket.includes("does not include secret values") && launchPacket.includes("DATABASE_URL") && launchPacket.includes("yes, do not paste value") && launchPacket.includes("External setup order") && launchPacket.includes("PUBLIC_WRITE_PAUSED=true")) pass("launch packet command");
+if (packageJson.scripts?.["launch:packet"] && launchPacket.includes("Red Thread launch packet") && launchPacket.includes("launch-packet.md") && launchPacket.includes("does not include secret values") && launchPacket.includes("DATABASE_URL") && launchPacket.includes("yes, do not paste value") && launchPacket.includes("External setup order") && launchPacket.includes("公式ボット投稿") && launchPacket.includes("PUBLIC_WRITE_PAUSED=true")) pass("launch packet command");
 else fail("launch packet command", "missing");
 
 const productionConfigCheck = fileText("scripts/production-config-check.js");
