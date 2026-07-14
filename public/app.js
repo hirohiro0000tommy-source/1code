@@ -1951,7 +1951,8 @@ function renderOfficialBot(botData = {}) {
   const readyRecruitments = ready.filter(draft => draft.type === "recruitments").length;
   const readyThreads = ready.filter(draft => draft.type === "threads").length;
   const coveredGames = [...new Set(drafts.map(draft => draft.game).filter(Boolean))];
-  const recommendedDraftIds = ready.slice(0, 5).map(draft => draft.id).join(",");
+  const recommendedDraftSet = new Set(ready.slice(0, 5).map(draft => draft.id));
+  const recommendedDraftIds = [...recommendedDraftSet].join(",");
   $("#botDraftStatus").textContent = `${ready.length}/${drafts.length}件`;
   if (!drafts.length) {
     $("#botDraftFeed").innerHTML = `<div class="empty">ボット下書きはまだありません。</div>`;
@@ -1984,13 +1985,18 @@ function renderOfficialBot(botData = {}) {
       </div>
     </article>
   `;
-  const sortedDrafts = [...drafts].sort((a, b) => Number(a.alreadyPublished) - Number(b.alreadyPublished));
+  const sortedDrafts = [...drafts].sort((a, b) => {
+    const publishState = Number(a.alreadyPublished) - Number(b.alreadyPublished);
+    if (publishState) return publishState;
+    return Number(recommendedDraftSet.has(b.id)) - Number(recommendedDraftSet.has(a.id));
+  });
   const list = sortedDrafts.map(draft => `
     <article class="card ${draft.alreadyPublished ? "closed" : ""}" data-bot-draft-id="${escapeHtml(draft.id)}">
       <div class="card-head">
         <div>
           <div class="meta">
             <span class="badge sample">見本</span>
+            ${recommendedDraftSet.has(draft.id) ? `<span class="badge">おすすめ</span>` : ""}
             <span class="badge">${draft.type === "threads" ? "話題" : "募集"}</span>
             <span>${escapeHtml(draft.bot?.author || botData.bot?.author || "公式")}</span>
             <span class="${draft.alreadyPublished ? "" : "accent-text"}">${draft.alreadyPublished ? "公開済み" : "未投稿"}</span>
