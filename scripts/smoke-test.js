@@ -1080,6 +1080,12 @@ async function run() {
     assert(stateWithOfficialBots.threads.some(item => item.isOfficial && item.title === "今夜遊ぶゲームを書くだけの場所"), "official bot thread state missing");
     const botDraftsAfterPublish = await request("/api/admin/bot/drafts", { adminPin: "admin" });
     assert(botDraftsAfterPublish.drafts.some(draft => draft.id === "recruit-apex-short-no-vc" && draft.alreadyPublished), "official bot published draft state failed");
+    const duplicateBotPublish = await request("/api/admin/bot/publish", {
+      method: "POST",
+      adminPin: "admin",
+      body: { draftIds: ["recruit-apex-short-no-vc", "thread-tonight-game-checkin"] }
+    });
+    assert(duplicateBotPublish.published.length === 0, "official bot duplicate publish should be idempotent");
 
     const inquiry = await request("/api/inquiries", {
       method: "POST",

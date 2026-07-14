@@ -3696,6 +3696,7 @@ async function handleApi(req, res, url) {
     const published = [];
     const now = Date.now();
     for (const draft of drafts.slice(0, 12)) {
+      if (botDraftAlreadyPublished(db, draft)) continue;
       const item = officialBotItemFromDraft(draft, now - published.length * 1000);
       const violation = draft.type === "recruitments"
         ? contentViolation(item.title, item.game, item.body)
