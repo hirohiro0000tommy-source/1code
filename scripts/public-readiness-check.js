@@ -150,7 +150,7 @@ else fail("docker health check", "missing");
 if (server.includes("strict-transport-security") && server.includes("cross-origin-opener-policy") && liveCheck.includes("home hsts") && liveCheck.includes("home opener policy") && liveCheck.includes("home content security policy") && liveCheck.includes("home permissions policy") && liveCheck.includes("home content type options")) pass("production security headers");
 else fail("production security headers", "missing");
 
-if (index.includes("application/ld+json") && index.includes("\"@type\": \"WebSite\"") && server.includes("DiscussionForumPosting") && server.includes("function homeHtml") && smoke.includes("home canonical absolute url missing") && smoke.includes("share page missing structured data")) pass("public SEO structured data");
+if (index.includes("application/ld+json") && index.includes("\"@type\": \"WebSite\"") && server.includes("DiscussionForumPosting") && server.includes("function homeHtml") && server.includes("function shareDescription") && smoke.includes("home canonical absolute url missing") && smoke.includes("share page missing structured data") && smoke.includes("recruitment share page missing recruitment details") && smoke.includes("thread share page missing thread details")) pass("public SEO structured data");
 else fail("public SEO structured data", "missing");
 
 if (server.includes("function sitemapXml") && server.includes("/guidelines.html") && server.includes("/share/${item.type}") && smoke.includes("sitemap recruitment share missing") && smoke.includes("sitemap guidelines missing")) pass("public dynamic sitemap");

@@ -566,7 +566,7 @@ else fail("postgres moderator role sync", "missing");
 if (server.includes("summary_large_image") && server.includes("og:image")) pass("share OGP image");
 else fail("share OGP image", "missing");
 
-if (server.includes("DiscussionForumPosting") && server.includes("jsonLdScript") && smoke.includes("share page missing structured data")) pass("share structured data");
+if (server.includes("DiscussionForumPosting") && server.includes("jsonLdScript") && server.includes("function shareDescription") && smoke.includes("share page missing structured data") && smoke.includes("recruitment share page missing recruitment details") && smoke.includes("thread share page missing thread details")) pass("share structured data");
 else fail("share structured data", "missing");
 
 if (server.includes("/reject")) pass("report rejection route");
