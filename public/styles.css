@@ -12,9 +12,17 @@
   --soft: #ededE8;
   --hairline: rgba(17, 17, 17, .08);
   --shadow: 0 10px 28px rgba(17, 17, 17, .08);
+  --ease-smooth: cubic-bezier(.22, 1, .36, 1);
+  --ease-spring: cubic-bezier(.2, 1.2, .22, 1);
+  --motion-fast: 160ms;
+  --motion-base: 260ms;
+  --motion-slow: 420ms;
 }
 
 * { box-sizing: border-box; }
+html {
+  scroll-behavior: smooth;
+}
 body {
   margin: 0;
   min-height: 100vh;
@@ -171,6 +179,11 @@ header .utility-link:hover {
   border-radius: 8px;
   background: rgba(255, 255, 255, .96);
   box-shadow: 0 1px 0 rgba(255, 255, 255, .75), var(--shadow);
+  transition:
+    border-color var(--motion-base) var(--ease-smooth),
+    box-shadow var(--motion-base) var(--ease-smooth),
+    background-color var(--motion-base) var(--ease-smooth),
+    transform var(--motion-base) var(--ease-smooth);
 }
 .box { margin-top: 14px; padding: 12px; }
 .app-footer {
@@ -526,6 +539,8 @@ header .utility-link:hover {
   color: #fff;
   padding: 10px 12px;
   box-shadow: 0 8px 22px rgba(0, 0, 0, .16);
+  animation: toastIn var(--motion-slow) var(--ease-spring);
+  will-change: transform, opacity;
 }
 .toast.error {
   border-color: #5c1f1f;
@@ -581,6 +596,22 @@ header .utility-link:hover {
   padding: 8px 12px;
   font-weight: 800;
   text-decoration: none;
+  transition:
+    transform var(--motion-base) var(--ease-spring),
+    box-shadow var(--motion-base) var(--ease-smooth),
+    background var(--motion-base) var(--ease-smooth),
+    border-color var(--motion-base) var(--ease-smooth),
+    color var(--motion-base) var(--ease-smooth),
+    opacity var(--motion-fast) ease;
+  will-change: transform;
+}
+.tab:hover, .btn:hover, .action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(17, 17, 17, .10);
+}
+.tab:active, .btn:active, .action:active {
+  transform: translateY(0) scale(.98);
+  transition-duration: 80ms;
 }
 .tab[disabled], .btn[disabled], .action[disabled],
 button[aria-busy="true"] {
@@ -612,7 +643,10 @@ button[aria-busy="true"] {
   color: var(--ink);
 }
 .view { display: none; margin-top: 16px; }
-.view.active { display: block; }
+.view.active {
+  display: block;
+  animation: viewIn var(--motion-slow) var(--ease-smooth);
+}
 .page-shell.active {
   display: block;
 }
@@ -649,12 +683,16 @@ button[aria-busy="true"] {
   grid-template-columns: 330px 1fr;
   gap: 14px;
   align-items: start;
+  transition: grid-template-columns var(--motion-slow) var(--ease-smooth), gap var(--motion-base) var(--ease-smooth);
 }
 .layout:not(.form-open) {
   grid-template-columns: 1fr;
 }
 .layout:not(.form-open) aside {
   display: none;
+}
+.layout.form-open aside {
+  animation: panelSlideIn var(--motion-slow) var(--ease-smooth);
 }
 .panel { padding: 14px; }
 .panel-title {
@@ -1277,7 +1315,11 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   font-size: 24px;
   line-height: 1;
 }
-.feed { display: grid; gap: 10px; }
+.feed {
+  display: grid;
+  gap: 10px;
+  animation: feedIn var(--motion-slow) var(--ease-smooth);
+}
 .load-more {
   display: flex;
   justify-content: center;
@@ -1295,7 +1337,13 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
 .card {
   position: relative;
   overflow: hidden;
-  transition: transform .16s ease, box-shadow .16s ease;
+  animation: cardIn var(--motion-slow) var(--ease-smooth);
+  transition:
+    transform var(--motion-base) var(--ease-spring),
+    box-shadow var(--motion-base) var(--ease-smooth),
+    opacity var(--motion-base) var(--ease-smooth),
+    background-color var(--motion-base) var(--ease-smooth);
+  will-change: transform;
 }
 .card::before {
   content: "";
@@ -1306,7 +1354,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
     repeating-linear-gradient(180deg, var(--ink) 0 10px, transparent 10px 16px);
 }
 .card:hover {
-  transform: translateY(-1px);
+  transform: translateY(-3px);
   box-shadow: 0 14px 34px rgba(17, 17, 17, .11);
 }
 .card.closed {
@@ -1329,6 +1377,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
 .card.shared-focus {
   outline: 3px solid var(--ink);
   outline-offset: 3px;
+  animation: focusPulse 1.2s var(--ease-smooth) 2;
 }
 .card-head {
   display: grid;
@@ -1815,4 +1864,84 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   .filters, .details, .two { grid-template-columns: 1fr; }
   #gameFilter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .action.delete { margin-left: 0; }
+}
+
+@keyframes viewIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes feedIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes panelSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes focusPulse {
+  0%, 100% {
+    box-shadow: 0 14px 34px rgba(17, 17, 17, .11);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(201, 53, 66, .18), 0 18px 42px rgba(17, 17, 17, .14);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
 }
