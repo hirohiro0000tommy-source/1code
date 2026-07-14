@@ -4377,16 +4377,33 @@ $("#botDraftFeed").addEventListener("click", async event => {
   const button = event.target.closest("button");
   if (!button || !["publish-bot-drafts", "publish-bot-draft"].includes(button.dataset.action)) return;
   const card = event.target.closest("[data-bot-draft-id]");
+  const actionKey = button.dataset.action === "publish-bot-draft" && card
+    ? `bot:${card.dataset.botDraftId}`
+    : "bot:all";
+  const endPending = beginPendingAction(actionKey);
+  if (!endPending) return;
+  const restore = setButtonState(button, true, "公開中...");
   const payload = button.dataset.action === "publish-bot-draft" && card
     ? { draftIds: [card.dataset.botDraftId] }
     : {};
-  const result = await api("/api/admin/bot/publish", {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
-  showToast("公式ボットを公開しました", `${result.published?.length || 0}件を追加しました。`);
-  await loadState();
-  await loadAdminData();
+  try {
+    const result = await api("/api/admin/bot/publish", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    const count = result.published?.length || 0;
+    showToast(
+      count ? "公式ボットを公開しました" : "公開済みです",
+      count ? `${count}件を追加しました。` : "追加できる未投稿の見本はありません。"
+    );
+    await loadState();
+    await loadAdminData();
+  } catch (error) {
+    showErrorToast(error);
+  } finally {
+    restore();
+    endPending();
+  }
 });
 
 $("#announcementFeed").addEventListener("click", async event => {
