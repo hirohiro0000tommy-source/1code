@@ -1951,7 +1951,11 @@ function renderOfficialBot(botData = {}) {
   const readyRecruitments = ready.filter(draft => draft.type === "recruitments").length;
   const readyThreads = ready.filter(draft => draft.type === "threads").length;
   const coveredGames = [...new Set(drafts.map(draft => draft.game).filter(Boolean))];
-  const recommendedDraftSet = new Set(ready.slice(0, 5).map(draft => draft.id));
+  const recommendedDrafts = [
+    ...ready.filter(draft => draft.type === "recruitments").slice(0, 3),
+    ...ready.filter(draft => draft.type === "threads").slice(0, 2)
+  ].slice(0, 5);
+  const recommendedDraftSet = new Set(recommendedDrafts.map(draft => draft.id));
   const recommendedDraftIds = [...recommendedDraftSet].join(",");
   $("#botDraftStatus").textContent = `${ready.length}/${drafts.length}件`;
   if (!drafts.length) {
@@ -1972,7 +1976,7 @@ function renderOfficialBot(botData = {}) {
           <h2>公式ボット投稿</h2>
         </div>
       </div>
-      <div class="message">公開初日に使い方が伝わる、公式の見本投稿です。まずはおすすめだけ公開し、足りない時だけ追加してください。一般ユーザーのふりはしません。\n${escapeHtml(botNames)}</div>
+      <div class="message">公開初日に使い方が伝わる、公式の見本投稿です。まずは募集3件・話題2件のおすすめだけ公開し、足りない時だけ追加してください。一般ユーザーのふりはしません。\n${escapeHtml(botNames)}</div>
       <div class="bot-draft-summary">
         <span>未投稿の募集 ${readyRecruitments}件</span>
         <span>未投稿の話題 ${readyThreads}件</span>
