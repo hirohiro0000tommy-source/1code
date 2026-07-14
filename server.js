@@ -3156,7 +3156,7 @@ function officialBotDrafts(db) {
       rank: "初心者",
       style: "初心者",
       capacity: 2,
-      body: "公式の募集例です。\n初心者・復帰勢同士で、デッキを試しながら軽く対戦したい人向け。\n実際に募集するときは、この文章をまねして短く書けば大丈夫です。"
+      body: "初心者・復帰勢同士で、デッキを試しながら軽く対戦したいです。\n勝ち負けより、感想を話しながら遊べる方だと嬉しいです。"
     },
     {
       id: "recruit-monster-hunter-casual",
@@ -3170,7 +3170,7 @@ function officialBotDrafts(db) {
       rank: "ランク不問",
       style: "まったり",
       capacity: 4,
-      body: "公式の募集例です。\n素材集めやクエスト消化を、急がずまったり遊びたい人向け。\n失敗しても気にしない雰囲気の募集に使えます。"
+      body: "素材集めやクエスト消化を、急がずまったり進めたいです。\n失敗しても気にしない感じで遊べる方、気軽にどうぞ。"
     },
     {
       id: "recruit-valorant-casual",
@@ -3184,7 +3184,7 @@ function officialBotDrafts(db) {
       rank: "ランク不問",
       style: "エンジョイ",
       capacity: 5,
-      body: "公式の募集例です。\nアンレートや練習を、雰囲気よく遊びたい人向け。\nランクや強さより、落ち着いて遊べることを重視した募集です。"
+      body: "アンレートや練習を、雰囲気よく遊びたいです。\nランクや強さより、落ち着いて遊べる方だと助かります。"
     },
     {
       id: "recruit-apex-short-no-vc",
@@ -3198,7 +3198,7 @@ function officialBotDrafts(db) {
       rank: "ランク不問",
       style: "まったり",
       capacity: 3,
-      body: "公式の募集例です。\n少しだけ遊びたいときの募集例です。VCなし、短時間、途中抜けOKのように書くと参加しやすくなります。"
+      body: "30分くらいだけカジュアルを回したいです。\nVCなし、途中抜けOKです。軽く遊べる方がいたらぜひ。"
     },
     {
       id: "recruit-street-fighter-beginner-lounge",
@@ -3212,7 +3212,7 @@ function officialBotDrafts(db) {
       rank: "初心者",
       style: "初心者",
       capacity: 2,
-      body: "公式の募集例です。\nコンボ練習や対戦慣れをしたい人向けです。勝ち負けより、試したいことを書いておくと声をかけやすくなります。"
+      body: "コンボ練習や対戦慣れをしたいです。\n勝ち負けより、試したいことを試しながら遊べる方を探しています。"
     },
     {
       id: "recruit-overwatch-role-queue",
@@ -3226,7 +3226,7 @@ function officialBotDrafts(db) {
       rank: "ランク不問",
       style: "エンジョイ",
       capacity: 5,
-      body: "公式の募集例です。\nロールを相談しながらクイックで遊びたい人向けです。得意ロールや練習したいロールを書いておくと集まりやすくなります。"
+      body: "ロールを相談しながらクイックで遊びたいです。\n得意ロールや練習したいロールを書いてもらえると合わせやすいです。"
     },
     {
       id: "recruit-splatoon-salmon-run",
@@ -3240,7 +3240,7 @@ function officialBotDrafts(db) {
       rank: "ランク不問",
       style: "まったり",
       capacity: 4,
-      body: "公式の募集例です。\n数回だけサーモンランを回したいときの募集例です。VCなし、失敗しても気にしない雰囲気を先に書くと入りやすくなります。"
+      body: "数回だけサーモンランを回したいです。\nVCなし、失敗しても気にしない感じで遊べる方を募集します。"
     },
     {
       id: "recruit-pokemon-champions-practice",
@@ -3254,7 +3254,7 @@ function officialBotDrafts(db) {
       rank: "初心者",
       style: "初心者",
       capacity: 2,
-      body: "公式の募集例です。\n対戦に慣れたい人向けです。試したい構築や、初心者同士で遊びたいことを短く書くと声をかけやすくなります。"
+      body: "対戦に慣れたいので、練習相手を探しています。\n試したい構築がある方や、初心者同士で遊びたい方も歓迎です。"
     }
   ];
   const threadDrafts = [
@@ -3265,7 +3265,7 @@ function officialBotDrafts(db) {
       launchTag: "公開初日",
       title: "最初に募集してみたいゲーム",
       category: "雑談",
-      body: "公式の話題出しです。\nこのサイトで最初に募集してみたいゲームがあれば、気軽に書いてください。"
+      body: "このサイトで最初に募集してみたいゲームがあれば、気軽に書いてください。"
     },
     {
       id: "thread-watch-party",
@@ -3274,7 +3274,7 @@ function officialBotDrafts(db) {
       launchTag: "大会観戦",
       title: "大会や配信を見ながら話す場所",
       category: "大会観戦",
-      body: "公式の話題出しです。\n大会、配信、イベントの感想などをゆるく書ける場所です。"
+      body: "大会、配信、イベントの感想などをゆるく書ける場所です。"
     },
     {
       id: "thread-beginner-help",
@@ -3283,7 +3283,7 @@ function officialBotDrafts(db) {
       launchTag: "攻略相談",
       title: "初心者が聞きやすい攻略相談",
       category: "攻略相談",
-      body: "公式の話題出しです。\n立ち回り、キャラ、デッキ、装備など、ちょっと聞きたいことを置いていけます。"
+      body: "立ち回り、キャラ、デッキ、装備など、ちょっと聞きたいことを置いていけます。"
     },
     {
       id: "thread-tonight-game-checkin",
@@ -3292,7 +3292,7 @@ function officialBotDrafts(db) {
       launchTag: "今夜遊ぶ",
       title: "今夜遊ぶゲームを書くだけの場所",
       category: "雑談",
-      body: "公式の話題出しです。\n今夜遊ぶ予定のゲーム名だけでも大丈夫です。人数が集まりそうなら、そのまま募集に移れます。"
+      body: "今夜遊ぶ予定のゲーム名だけでも大丈夫です。\n人数が集まりそうなら、そのまま募集に移れます。"
     },
     {
       id: "thread-launch-feedback",
@@ -3301,7 +3301,7 @@ function officialBotDrafts(db) {
       launchTag: "公開初日",
       title: "使ってみた感想・直してほしいところ",
       category: "雑談",
-      body: "公式の話題出しです。\n見づらいところ、迷ったところ、欲しい機能があれば短く書いてください。公開後の改善に使います。"
+      body: "見づらいところ、迷ったところ、欲しい機能があれば短く書いてください。\n公開後の改善に使います。"
     }
   ];
   return [...recruitmentDrafts, ...threadDrafts].map(draft => ({
