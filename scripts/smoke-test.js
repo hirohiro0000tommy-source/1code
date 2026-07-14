@@ -1065,10 +1065,13 @@ async function run() {
     assert(typeof system.system.uptimeSeconds === "number", "system uptime missing");
 
     const botDrafts = await request("/api/admin/bot/drafts", { adminPin: "admin" });
-    assert(Array.isArray(botDrafts.drafts) && botDrafts.drafts.length >= 10, "official bot launch drafts missing");
+    assert(Array.isArray(botDrafts.drafts) && botDrafts.drafts.length >= 13, "official bot launch drafts missing");
     assert(botDrafts.drafts.some(draft => draft.launchTag === "公開初日"), "official bot launch tag missing");
-    assert(botDrafts.drafts.filter(draft => draft.type === "recruitments").length >= 5, "official bot recruitment drafts missing");
+    assert(botDrafts.drafts.filter(draft => draft.type === "recruitments").length >= 8, "official bot recruitment drafts missing");
     assert(botDrafts.drafts.filter(draft => draft.type === "threads").length >= 5, "official bot thread drafts missing");
+    assert(botDrafts.drafts.some(draft => draft.game === "Overwatch"), "official bot overwatch draft missing");
+    assert(botDrafts.drafts.some(draft => draft.game === "Splatoon"), "official bot splatoon draft missing");
+    assert(botDrafts.drafts.some(draft => draft.game === "Pokemon Champions"), "official bot pokemon draft missing");
     const botPublish = await request("/api/admin/bot/publish", {
       method: "POST",
       adminPin: "admin",
@@ -1186,7 +1189,7 @@ async function run() {
     assert(publicLaunch.launch.checks.some(check => check.label === "データベースURL"), "public launch database url check missing");
     assert(publicLaunch.launch.checks.some(check => check.label === "シード投稿"), "public launch seed check missing");
     assert(publicLaunch.launch.checks.some(check => check.label === "公式見本"), "public launch official sample check missing");
-    assert(publicLaunch.launch.counts.officialBotDrafts >= 10, "public launch official sample draft count failed");
+    assert(publicLaunch.launch.counts.officialBotDrafts >= 13, "public launch official sample draft count failed");
     assert(publicLaunch.launch.counts.officialBotPublished >= 2, "public launch official sample published count failed");
     assert(publicLaunch.launch.checks.some(check => check.label === "広告枠"), "public launch ad slot check missing");
     assert(publicLaunch.launch.checks.some(check => check.label === "広告URL"), "public launch ad target check missing");

@@ -3213,6 +3213,48 @@ function officialBotDrafts(db) {
       style: "初心者",
       capacity: 2,
       body: "公式の募集例です。\nコンボ練習や対戦慣れをしたい人向けです。勝ち負けより、試したいことを書いておくと声をかけやすくなります。"
+    },
+    {
+      id: "recruit-overwatch-role-queue",
+      botId: "scout",
+      type: "recruitments",
+      launchTag: "ロール相談",
+      title: "Overwatch ロール合わせてクイック",
+      game: "Overwatch",
+      platform: "クロスプレイ",
+      voice: "どちらでも",
+      rank: "ランク不問",
+      style: "エンジョイ",
+      capacity: 5,
+      body: "公式の募集例です。\nロールを相談しながらクイックで遊びたい人向けです。得意ロールや練習したいロールを書いておくと集まりやすくなります。"
+    },
+    {
+      id: "recruit-splatoon-salmon-run",
+      botId: "scout",
+      type: "recruitments",
+      launchTag: "短時間",
+      title: "Splatoon サーモンランを少しだけ",
+      game: "Splatoon",
+      platform: "Switch",
+      voice: "なし",
+      rank: "ランク不問",
+      style: "まったり",
+      capacity: 4,
+      body: "公式の募集例です。\n数回だけサーモンランを回したいときの募集例です。VCなし、失敗しても気にしない雰囲気を先に書くと入りやすくなります。"
+    },
+    {
+      id: "recruit-pokemon-champions-practice",
+      botId: "coach",
+      type: "recruitments",
+      launchTag: "練習相手",
+      title: "Pokemon Champions 対戦練習したい",
+      game: "Pokemon Champions",
+      platform: "クロスプレイ",
+      voice: "なし",
+      rank: "初心者",
+      style: "初心者",
+      capacity: 2,
+      body: "公式の募集例です。\n対戦に慣れたい人向けです。試したい構築や、初心者同士で遊びたいことを短く書くと声をかけやすくなります。"
     }
   ];
   const threadDrafts = [
@@ -3700,7 +3742,7 @@ async function handleApi(req, res, url) {
     const drafts = officialBotDrafts(db).filter(draft => !draft.alreadyPublished && (!requestedIds || requestedIds.has(draft.id)));
     const published = [];
     const now = Date.now();
-    for (const draft of drafts.slice(0, 12)) {
+    for (const draft of drafts.slice(0, 16)) {
       if (botDraftAlreadyPublished(db, draft)) continue;
       const item = officialBotItemFromDraft(draft, now - published.length * 1000);
       const violation = draft.type === "recruitments"
