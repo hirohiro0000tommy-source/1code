@@ -1971,7 +1971,7 @@ function renderOfficialBot(botData = {}) {
           <h2>公式ボット投稿</h2>
         </div>
       </div>
-      <div class="message">公開初日に人が少ない時間でも、使い方が伝わる公式の見本投稿です。一般ユーザーのふりはしません。\n${escapeHtml(botNames)}</div>
+      <div class="message">公開初日に使い方が伝わる、公式の見本投稿です。まずはおすすめだけ公開し、足りない時だけ追加してください。一般ユーザーのふりはしません。\n${escapeHtml(botNames)}</div>
       <div class="bot-draft-summary">
         <span>未投稿の募集 ${readyRecruitments}件</span>
         <span>未投稿の話題 ${readyThreads}件</span>

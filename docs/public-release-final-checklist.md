@@ -74,7 +74,7 @@ Also open the site manually and confirm:
 - `/sitemap.xml` includes the home page, guidelines, terms, privacy, and public share pages.
 - `/status.json` shows the expected public mode and release identity.
 - Discord login returns to the site.
-- `公式ボット投稿` can publish launch-day examples, and public cards show `見本` and `公式` labels.
+- `公式ボット投稿` can publish `おすすめだけ公開` launch-day examples, and public cards show `見本` and `公式` labels.
 - Recruitment post, free-talk thread, reply, like, and DM work.
 - Report and inquiry submission work.
 - `管理` opens for the configured admin account.
@@ -85,7 +85,7 @@ Also open the site manually and confirm:
 ## First 30 minutes after sharing
 
 - Watch `管理` -> `運用ダイジェスト`.
-- If the feed is quiet, use only clearly labeled official examples; do not post as ordinary users.
+- If the feed is quiet, use `おすすめだけ公開` first. Add more clearly labeled official examples only when the feed still needs them; do not post as ordinary users.
 - Watch `広告未差替` and `広告URL確認`; pause ad rollout if either changes unexpectedly.
 - Watch `/api/health`.
 - Keep `PUBLIC_WRITE_PAUSED=true` ready as the emergency brake.

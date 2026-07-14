@@ -41,7 +41,7 @@ line("6. Set Discord redirect URL to PUBLIC_BASE_URL + /auth/discord/callback.")
 line("7. Log in once with Discord, set ADMIN_ACCOUNT_IDS, then run npm run admin:roles:write and apply the generated SQL.");
 line("8. Export the first production backup from 管理 before inviting users.");
 line("9. Open 管理 -> 公開設定ハンドオフ, 一般公開判定, 公開直前チェック, and インシデント共有.");
-line("10. Open 公式ボット投稿, publish launch-day examples, and confirm 見本 / 公式 labels.");
+line("10. Open 公式ボット投稿, click おすすめだけ公開 first, and confirm 見本 / 公式 labels. Use 未投稿分を公開 only if the feed still needs examples.");
 line("11. Share to a small group first, then watch 運用ダイジェスト and 公開運用レポート.");
 
 if (process.env.LIVE_BASE_URL || process.env.PUBLIC_BASE_URL) {

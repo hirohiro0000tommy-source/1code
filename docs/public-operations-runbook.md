@@ -12,7 +12,7 @@ Use this during beta and the first public launch week.
 6. If `未対応通報`, `未対応DM通報`, or `対応待ち24h+` is above 0, handle moderation before inviting more users.
 7. Check `バックアップ状況`; if it is `未取得` or `要更新`, run `バックアップ取得` and compare the displayed `照合ID`.
 8. Check `公開運用レポート` for traffic, 5xx, 429, silent posts, `広告未差替`, and `広告URL確認`. For repeated 429 reports, use the response `Retry-After` value and the admin recent 429 list to decide whether users should wait or a limit needs adjustment.
-9. Check `公式ボット投稿`; use clearly labeled examples only when the feed needs a visible starting point.
+9. Check `公式ボット投稿`; use `おすすめだけ公開` first, and add more clearly labeled examples only when the feed needs a visible starting point.
 10. Check `β改善バックログ` before adding new features.
 11. Open `/status` and run `npm run deploy:verify` with `LIVE_BASE_URL` when the site is deployed. This also confirms the public status responses include `x-request-id` for support tracing.
 

@@ -116,10 +116,10 @@ else fail("web beta launch quickstart", "missing");
 if (operatorHandoff.includes("Permission needed") && operatorHandoff.includes("BETA_ACCESS_CODE") && operatorHandoff.includes("BETA_WRITE_PAUSED") && operatorHandoff.includes("広告URL確認") && operatorHandoff.includes("5-minute operation") && operatorHandoff.includes("Emergency pause") && operatorHandoff.includes("優先対応キュー")) pass("operator handoff");
 else fail("operator handoff", "missing");
 
-if (publicOperationsRunbook.includes("Daily 5-minute check") && publicOperationsRunbook.includes("First 30-minute watch") && publicOperationsRunbook.includes("公開直後の監視") && publicOperationsRunbook.includes("運用ダイジェスト") && publicOperationsRunbook.includes("広告URL確認") && publicOperationsRunbook.includes("PUBLIC_WRITE_PAUSED") && publicOperationsRunbook.includes("deploy:verify") && publicOperationsRunbook.includes("x-request-id") && publicOperationsRunbook.includes("Response targets")) pass("public operations runbook");
+if (publicOperationsRunbook.includes("Daily 5-minute check") && publicOperationsRunbook.includes("First 30-minute watch") && publicOperationsRunbook.includes("公開直後の監視") && publicOperationsRunbook.includes("運用ダイジェスト") && publicOperationsRunbook.includes("広告URL確認") && publicOperationsRunbook.includes("おすすめだけ公開") && publicOperationsRunbook.includes("PUBLIC_WRITE_PAUSED") && publicOperationsRunbook.includes("deploy:verify") && publicOperationsRunbook.includes("x-request-id") && publicOperationsRunbook.includes("Response targets")) pass("public operations runbook");
 else fail("public operations runbook", "missing");
 
-if (launchDayRunbook.includes("Stop points") && launchDayRunbook.includes("Before deployment") && launchDayRunbook.includes("After deployment") && launchDayRunbook.includes("Emergency brake") && launchDayRunbook.includes("PUBLIC_WRITE_PAUSED=true")) pass("launch day runbook");
+if (launchDayRunbook.includes("Stop points") && launchDayRunbook.includes("Before deployment") && launchDayRunbook.includes("After deployment") && launchDayRunbook.includes("おすすめだけ公開") && launchDayRunbook.includes("Emergency brake") && launchDayRunbook.includes("PUBLIC_WRITE_PAUSED=true")) pass("launch day runbook");
 else fail("launch day runbook", "missing");
 
 if (externalServiceWorkOrder.includes("Supabase or Postgres") && externalServiceWorkOrder.includes("Hosting environment") && externalServiceWorkOrder.includes("Discord Developer Portal") && externalServiceWorkOrder.includes("First login and staff SQL") && externalServiceWorkOrder.includes("Small public share") && externalServiceWorkOrder.includes("Stop before secrets") && externalServiceWorkOrder.includes("npm run deploy:verify") && externalServiceWorkOrder.includes("npm run admin:roles:write")) pass("external service work order");
@@ -407,11 +407,11 @@ if (packageJson.scripts?.["release:final"] && finalReleaseCheck.includes("Final 
 else fail("final release command", "missing");
 
 const launchToday = fileText("scripts/launch-today.js");
-if (packageJson.scripts?.["launch:today"] && launchToday.includes("Red Thread launch-today command") && launchToday.includes("final-release-check.js") && launchToday.includes("deploy-env-plan.js") && launchToday.includes("generate-launch-packet.js") && launchToday.includes("LIVE_BASE_URL") && launchToday.includes("Manual external steps required") && launchToday.includes("公開設定ハンドオフ") && launchToday.includes("公式ボット投稿") && launchToday.includes("Share to a small group first")) pass("today launch command");
+if (packageJson.scripts?.["launch:today"] && launchToday.includes("Red Thread launch-today command") && launchToday.includes("final-release-check.js") && launchToday.includes("deploy-env-plan.js") && launchToday.includes("generate-launch-packet.js") && launchToday.includes("LIVE_BASE_URL") && launchToday.includes("Manual external steps required") && launchToday.includes("公開設定ハンドオフ") && launchToday.includes("公式ボット投稿") && launchToday.includes("おすすめだけ公開") && launchToday.includes("Share to a small group first")) pass("today launch command");
 else fail("today launch command", "missing");
 
 const launchPacket = fileText("scripts/generate-launch-packet.js");
-if (packageJson.scripts?.["launch:packet"] && launchPacket.includes("Red Thread launch packet") && launchPacket.includes("launch-packet.md") && launchPacket.includes("does not include secret values") && launchPacket.includes("DATABASE_URL") && launchPacket.includes("yes, do not paste value") && launchPacket.includes("External setup order") && launchPacket.includes("公式ボット投稿") && launchPacket.includes("PUBLIC_WRITE_PAUSED=true")) pass("launch packet command");
+if (packageJson.scripts?.["launch:packet"] && launchPacket.includes("Red Thread launch packet") && launchPacket.includes("launch-packet.md") && launchPacket.includes("does not include secret values") && launchPacket.includes("DATABASE_URL") && launchPacket.includes("yes, do not paste value") && launchPacket.includes("External setup order") && launchPacket.includes("公式ボット投稿") && launchPacket.includes("おすすめだけ公開") && launchPacket.includes("PUBLIC_WRITE_PAUSED=true")) pass("launch packet command");
 else fail("launch packet command", "missing");
 
 const productionConfigCheck = fileText("scripts/production-config-check.js");

@@ -80,7 +80,7 @@ const packet = [
   "7. Log in once with Discord, set `ADMIN_ACCOUNT_IDS`, then run `npm run admin:roles:write` and apply `db/generated-admin-roles.sql`.",
   "8. Export the first production backup from `管理` before inviting users.",
   "9. Open `管理` -> `公開設定ハンドオフ`, `一般公開判定`, `公開直前チェック`, and `インシデント共有`.",
-  "10. Open `公式ボット投稿`, publish launch-day examples, and confirm `見本` / `公式` labels.",
+  "10. Open `公式ボット投稿`, click `おすすめだけ公開` first, and confirm `見本` / `公式` labels. Use `未投稿分を公開` only if the feed still needs examples.",
   "11. Share to a small group first, then watch `運用ダイジェスト` and `公開運用レポート`.",
   "",
   "## Commands",
