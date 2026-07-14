@@ -1,6 +1,6 @@
-# 1code launch packet
+# Red Thread launch packet
 
-Generated: 2026-07-03T13:11:01.901Z
+Generated: 2026-07-14T02:10:42.526Z
 
 This packet is safe to keep locally or paste into a private operator note. It intentionally does not include secret values.
 
@@ -37,7 +37,8 @@ This packet is safe to keep locally or paste into a private operator note. It in
 7. Log in once with Discord, set `ADMIN_ACCOUNT_IDS`, then run `npm run admin:roles:write` and apply `db/generated-admin-roles.sql`.
 8. Export the first production backup from `管理` before inviting users.
 9. Open `管理` -> `公開設定ハンドオフ`, `一般公開判定`, `公開直前チェック`, and `インシデント共有`.
-10. Share to a small group first, then watch `運用ダイジェスト` and `公開運用レポート`.
+10. Open `公式ボット投稿`, publish launch-day examples, and confirm `見本` / `公式` labels.
+11. Share to a small group first, then watch `運用ダイジェスト` and `公開運用レポート`.
 
 ## Commands
 
