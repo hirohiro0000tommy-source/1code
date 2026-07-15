@@ -1172,8 +1172,9 @@ function useSamplePost(type, id) {
 
 function actionButtons(item) {
   const liked = hasLiked(item);
+  const joined = !!item.viewerJoined;
   const joinButton = item.capacity && !item.isOfficial
-    ? `<button class="action primary" data-action="join">${item.viewerJoined ? "参加取消" : "参加希望"}</button>`
+    ? `<button class="action primary ${joined ? "active" : ""}" data-action="join" aria-pressed="${joined ? "true" : "false"}">${joined ? "参加中" : "参加希望"}</button>`
     : "";
   const messageButton = item.canMessage
     ? `<button class="action" data-action="message" title="募集者へメッセージ">メッセージ</button>`
@@ -1182,7 +1183,7 @@ function actionButtons(item) {
     ? `<button class="action" data-action="status">${item.status === "closed" ? "再開" : "締切"}</button>`
     : "";
   return `
-    <button class="action" data-action="like" title="${liked ? "いいね解除" : "いいね"}">${liked ? "♥" : "♡"} ${item.likeCount}</button>
+    <button class="action ${liked ? "active" : ""}" data-action="like" title="${liked ? "いいね解除" : "いいね"}" aria-pressed="${liked ? "true" : "false"}">${liked ? "♥" : "♡"} ${item.likeCount}</button>
     ${joinButton}
     ${messageButton}
     <button class="action" data-action="reply" title="返信">↩ ${item.replies.length}</button>
@@ -1192,6 +1193,11 @@ function actionButtons(item) {
     ${statusButton}
     ${item.canDelete ? `<button class="action delete" data-action="delete" title="削除">削除</button>` : ""}
   `;
+}
+
+function reactionCount(post) {
+  const liked = hasLiked(post);
+  return `<div class="count ${liked ? "liked" : ""}" title="${liked ? "いいね済み" : "いいね"}">${liked ? "♥" : "♡"}${post.likeCount || 0}</div>`;
 }
 
 function replyMarkup(reply) {
@@ -1513,7 +1519,7 @@ function recruitmentCard(post) {
           </div>
           <h2>${escapeHtml(post.title)}</h2>
         </div>
-        <div class="count">♡${post.likeCount}</div>
+        ${reactionCount(post)}
       </div>
       <div class="details">
         <div class="detail"><span>ランク帯</span><strong>${escapeHtml(post.rank || "ランク不問")}</strong></div>
@@ -1556,7 +1562,7 @@ function threadCard(post) {
           </div>
           <h2>${escapeHtml(post.title)}</h2>
         </div>
-        <div class="count">♡${post.likeCount}</div>
+        ${reactionCount(post)}
       </div>
       <div class="message">${escapeHtml(post.body)}</div>
       ${officialGuideMarkup(post, "threads")}
