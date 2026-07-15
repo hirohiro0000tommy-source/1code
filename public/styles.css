@@ -953,7 +953,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
 }
 .filter-summary {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   border: 1px solid var(--line-muted);
@@ -961,6 +961,17 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   background: var(--surface-subtle);
   padding: 8px;
   margin-bottom: 10px;
+}
+.filter-summary-head {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+}
+.filter-summary-head span {
+  color: var(--muted);
 }
 .filter-summary[hidden] {
   display: none;

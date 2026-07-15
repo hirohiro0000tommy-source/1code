@@ -856,7 +856,7 @@ function filterChip(item, scope) {
   `;
 }
 
-function renderFilterSummary(selector, labels, clearAction) {
+function renderFilterSummary(selector, labels, clearAction, resultCount = 0, totalCount = 0) {
   const container = $(selector);
   if (!container) return;
   if (!labels.length) {
@@ -865,7 +865,12 @@ function renderFilterSummary(selector, labels, clearAction) {
     return;
   }
   container.hidden = false;
+  const countText = totalCount ? `${resultCount}/${totalCount}件` : `${resultCount}件`;
   container.innerHTML = `
+    <div class="filter-summary-head">
+      <strong>絞り込み中</strong>
+      <span>${escapeHtml(countText)}</span>
+    </div>
     <div class="filter-summary-list">${labels.map(item => filterChip(item, clearAction)).join("")}</div>
     <button class="link-action" type="button" data-filter-clear="${escapeHtml(clearAction)}">条件を解除</button>
   `;
@@ -919,6 +924,7 @@ function removeRecruitmentFilter(key, value) {
   renderRankFilter();
   resetFeedLimit("recruitments");
   renderRecruitments();
+  $("#feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function removeChatFilter(key, value) {
@@ -926,6 +932,7 @@ function removeChatFilter(key, value) {
   if (key === "category") uncheckValue("#chatCategoryFilter", value);
   resetFeedLimit("threads");
   renderThreads();
+  $("#chatFeed")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function clearRecruitmentFilters() {
@@ -939,6 +946,7 @@ function clearRecruitmentFilters() {
   feedLimits.recruitments = feedPageSize;
   renderRankFilter();
   renderRecruitments();
+  $("#feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function clearChatFilters() {
@@ -946,6 +954,7 @@ function clearChatFilters() {
   clearChecks("#chatCategoryFilter");
   feedLimits.threads = feedPageSize;
   renderThreads();
+  $("#chatFeed")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function countBy(items, key) {
@@ -1583,7 +1592,7 @@ function renderRecruitments() {
   const allItems = visibleRecruitments();
   const items = visibleFeedItems("recruitments", allItems);
   const filtered = recruitmentFilterLabels();
-  renderFilterSummary("#recruitmentFilterSummary", filtered, "recruitment");
+  renderFilterSummary("#recruitmentFilterSummary", filtered, "recruitment", allItems.length, state.recruitments.length);
   $("#recruitmentCount").textContent = filtered.length ? `${allItems.length}/${state.recruitments.length}件` : `${allItems.length}件`;
   if (!items.length) {
     $("#feed").innerHTML = `
@@ -1603,7 +1612,7 @@ function renderThreads() {
   const allItems = visibleThreads();
   const items = visibleFeedItems("threads", allItems);
   const filtered = chatFilterLabels();
-  renderFilterSummary("#chatFilterSummary", filtered, "chat");
+  renderFilterSummary("#chatFilterSummary", filtered, "chat", allItems.length, state.threads.length);
   $("#chatCount").textContent = filtered.length ? `${allItems.length}/${state.threads.length}件` : `${allItems.length}件`;
   if (!items.length) {
     $("#chatFeed").innerHTML = `
