@@ -8,7 +8,8 @@
   --accent-deep: #8f1724;
   --accent-soft: #fff4f3;
   --muted: #686868;
-  --line: #242424;
+  --line: #d8d8d2;
+  --line-strong: #202020;
   --soft: #ececea;
   --hairline: rgba(17, 17, 17, .10);
   --shadow: 0 8px 20px rgba(17, 17, 17, .055);
@@ -60,7 +61,7 @@ header {
   align-items: flex-end;
   justify-content: space-between;
   margin-bottom: 14px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
   background: #111;
   color: var(--paper);
@@ -108,8 +109,8 @@ header::after {
   width: 8px;
   height: 27px;
 }
-h1 { margin: 0; font-size: clamp(30px, 5vw, 48px); line-height: 1; }
-h2 { margin: 8px 0 0; font-size: 20px; line-height: 1.28; }
+h1 { margin: 0; font-size: clamp(28px, 4vw, 42px); line-height: 1; }
+h2 { margin: 6px 0 0; font-size: 18px; line-height: 1.32; }
 header p { margin: 6px 0 0; color: #d9d9d2; font-size: 14px; }
 .utility-links {
   display: flex;
@@ -546,7 +547,7 @@ header .utility-link:hover {
 }
 .tab, .btn, .action {
   min-height: 38px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
   background: var(--paper);
   color: var(--ink);
@@ -886,7 +887,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
 .detail-toggle {
   width: fit-content;
   min-height: 34px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
   background: var(--paper);
   color: var(--ink);
@@ -919,7 +920,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
 }
 .filter-tab {
   min-height: 30px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
   background: var(--paper);
   color: var(--ink);
@@ -1329,7 +1330,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
-  padding: 14px 14px 8px;
+  padding: 12px 12px 8px;
 }
 .meta {
   display: flex;
@@ -1344,7 +1345,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   align-items: center;
   min-height: 24px;
   border-radius: 999px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   background: var(--ink);
   color: var(--paper);
   padding: 3px 8px;
@@ -1391,7 +1392,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  padding: 0 14px 10px;
+  padding: 0 12px 10px;
 }
 .detail {
   border: 1px solid #deded8;
@@ -1456,7 +1457,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   color: #a13a18;
 }
 .message {
-  padding: 0 14px 12px;
+  padding: 0 12px 12px;
   line-height: 1.6;
   white-space: pre-wrap;
 }
@@ -1660,9 +1661,9 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   color: var(--ink);
 }
 .actions {
-  padding: 10px 14px;
+  padding: 10px 12px;
   border-top: 1px solid #e4e4df;
-  background: #fff5f4;
+  background: #fff;
 }
 .reply-form {
   display: none;
