@@ -734,6 +734,10 @@ button[aria-busy="true"] {
   gap: 8px;
   padding: 10px;
 }
+.quick-card-head {
+  display: grid;
+  gap: 2px;
+}
 .quick-list button {
   display: grid;
   gap: 2px;
@@ -1734,12 +1738,21 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   min-height: 150px;
 }
 .empty {
+  display: grid;
+  gap: 6px;
   border: 1px solid var(--line-muted);
   border-radius: 8px;
   padding: 28px;
   text-align: center;
   color: var(--muted);
   background: var(--surface-subtle);
+}
+.empty strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+.empty span {
+  line-height: 1.55;
 }
 .empty-actions {
   display: flex;

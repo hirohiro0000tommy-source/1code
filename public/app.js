@@ -1022,9 +1022,9 @@ function renderQuickSections() {
   if (!today.length && !hot.length && !games.length) {
     container.innerHTML = `
       <div class="quick-card guide">
-        <div><strong>募集の入口</strong><span>最初の投稿が増えると、ここに今日遊べる募集や人気ゲームが出ます。</span></div>
+        <div class="quick-card-head"><strong>募集の入口</strong><span>まずは募集を書くか、紹介リンクで人を呼べます。</span></div>
         <div class="quick-list">
-          <button type="button" data-guide-jump="recruitment"><strong>募集を書く</strong><span>テンプレートから始められます</span></button>
+          <button type="button" data-guide-jump="recruitment"><strong>募集を投稿</strong><span>ゲームと本文だけで始められます</span></button>
           <button type="button" data-guide-jump="referral"><strong>紹介する</strong><span>XやDiscordに貼れるURL</span></button>
         </div>
       </div>
@@ -1033,16 +1033,23 @@ function renderQuickSections() {
   }
   container.innerHTML = `
     <div class="quick-card">
-      <div><strong>今日遊べる募集</strong><span>${today.length ? "直近で動きがある募集です。" : "動きが出たらここに表示されます。"}</span></div>
+      <div class="quick-card-head"><strong>今日遊べる募集</strong><span>${today.length ? "直近で動きがある募集です。" : "動きが出たらここに表示されます。"}</span></div>
       <div class="quick-list">${today.map(item => quickPostButton(item, "recruitments")).join("") || `<span class="muted">まだありません</span>`}</div>
     </div>
     <div class="quick-card">
-      <div><strong>人気・動きあり</strong><span>反応が集まりやすい投稿です。</span></div>
+      <div class="quick-card-head"><strong>人気・動きあり</strong><span>反応が集まりやすい投稿です。</span></div>
       <div class="quick-list">${hot.map(item => quickPostButton(item, "recruitments")).join("") || `<span class="muted">まだありません</span>`}</div>
     </div>
     <div class="quick-card">
-      <div><strong>ゲーム別入口</strong><span>ゲームを選ぶと募集を絞り込めます。</span></div>
-      <div class="quick-list">${games.map(([game, count]) => `<button type="button" data-game-entry="${escapeHtml(game)}">${escapeHtml(game)}<span>${escapeHtml(count)}件</span></button>`).join("")}</div>
+      <div class="quick-card-head"><strong>ゲーム別入口</strong><span>ゲームを選ぶと募集を絞り込めます。</span></div>
+      <div class="quick-list">${games.map(([game, count]) => `<button type="button" data-game-entry="${escapeHtml(game)}"><strong>${escapeHtml(game)}</strong><span>${escapeHtml(count)}件の募集</span></button>`).join("")}</div>
+    </div>
+    <div class="quick-card guide">
+      <div class="quick-card-head"><strong>募集する</strong><span>条件が決まっていなくても、本文だけで軽く出せます。</span></div>
+      <div class="quick-list">
+        <button type="button" data-guide-jump="recruitment"><strong>募集を投稿</strong><span>入力欄を開く</span></button>
+        <button type="button" data-guide-jump="referral"><strong>紹介リンク</strong><span>人を呼び込む</span></button>
+      </div>
     </div>
   `;
 }
@@ -1579,7 +1586,13 @@ function renderRecruitments() {
   renderFilterSummary("#recruitmentFilterSummary", filtered, "recruitment");
   $("#recruitmentCount").textContent = filtered.length ? `${allItems.length}/${state.recruitments.length}件` : `${allItems.length}件`;
   if (!items.length) {
-    $("#feed").innerHTML = `<div class="empty">${filtered.length ? "この条件の募集はまだありません。条件を少しゆるめると見つかるかも。" : "まだ募集はありません。最初の募集を書いてみませんか。"}<div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="recruitment">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を投稿</button></div></div>`;
+    $("#feed").innerHTML = `
+      <div class="empty">
+        <strong>${filtered.length ? "条件に合う募集はまだありません" : "まだ募集はありません"}</strong>
+        <span>${filtered.length ? "条件を少しゆるめるか、自分で募集を出すと見つかりやすくなります。" : "最初の募集を書いて、人が入りやすい流れを作りましょう。"}</span>
+        <div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="recruitment">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を投稿</button></div>
+      </div>
+    `;
     return;
   }
   const cards = items.map(recruitmentCard);
@@ -1593,7 +1606,13 @@ function renderThreads() {
   renderFilterSummary("#chatFilterSummary", filtered, "chat");
   $("#chatCount").textContent = filtered.length ? `${allItems.length}/${state.threads.length}件` : `${allItems.length}件`;
   if (!items.length) {
-    $("#chatFeed").innerHTML = `<div class="empty">${filtered.length ? "この条件のフリートークはまだありません。カテゴリを変えると見つかるかも。" : "まだフリートークはありません。ちょっとした話題からどうぞ。"}<div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="chat">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-thread">スレッドを投稿</button></div></div>`;
+    $("#chatFeed").innerHTML = `
+      <div class="empty">
+        <strong>${filtered.length ? "条件に合うフリートークはまだありません" : "まだフリートークはありません"}</strong>
+        <span>${filtered.length ? "カテゴリを変えるか、新しい話題を立ててみてください。" : "雑談、大会観戦、攻略相談など、軽い話題から始められます。"}</span>
+        <div class="empty-actions">${filtered.length ? `<button class="btn empty-action" type="button" data-filter-clear="chat">条件を解除</button>` : ""}<button class="btn dark empty-action" type="button" data-empty-action="open-thread">スレッドを投稿</button></div>
+      </div>
+    `;
     return;
   }
   const cards = items.map(threadCard);
