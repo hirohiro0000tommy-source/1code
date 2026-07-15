@@ -1643,7 +1643,16 @@ function renderReminder() {
   const total = recruitmentItems.length + threadItems.length;
   $("#reminderCount").textContent = `${total}件`;
   if (!total) {
-    $("#reminderFeed").innerHTML = `<div class="empty">まだ、いいねや返信をした投稿はありません。</div>`;
+    $("#reminderFeed").innerHTML = `
+      <div class="empty">
+        <strong>リマインダーはまだありません</strong>
+        <span>いいねや返信をした募集・フリートークがここにまとまります。</span>
+        <div class="empty-actions">
+          <button class="btn dark empty-action" type="button" data-empty-action="open-recruitment-list">募集を見る</button>
+          <button class="btn empty-action" type="button" data-empty-action="open-thread-list">フリートークを見る</button>
+        </div>
+      </div>
+    `;
     return;
   }
   $("#reminderFeed").innerHTML = `
@@ -1657,7 +1666,13 @@ function renderMessages() {
   $("#messageCount").textContent = `${conversations.length}件`;
   renderMessageNavBadge();
   if (!conversations.length) {
-    $("#messageFeed").innerHTML = `<div class="empty">まだメッセージはありません。気になる募集から声をかけられます。<button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を見る</button></div>`;
+    $("#messageFeed").innerHTML = `
+      <div class="empty">
+        <strong>まだメッセージはありません</strong>
+        <span>気になる募集から募集者へメッセージを送れます。</span>
+        <div class="empty-actions"><button class="btn dark empty-action" type="button" data-empty-action="open-recruitment-list">募集を見る</button></div>
+      </div>
+    `;
     return;
   }
   $("#messageFeed").innerHTML = conversations.map(messageCard).join("");
@@ -1755,7 +1770,16 @@ function renderMyPage() {
   const total = ownedRecruitments.length + joinedRecruitments.length + ownedThreads.length;
   $("#myCount").textContent = `${total}件`;
   if (!total) {
-    $("#myFeed").innerHTML = `<div class="empty">自分の募集、参加希望、フリートークはまだありません。</div>`;
+    $("#myFeed").innerHTML = `
+      <div class="empty">
+        <strong>自分の活動はまだありません</strong>
+        <span>募集を投稿したり、参加希望を送るとここにまとまります。</span>
+        <div class="empty-actions">
+          <button class="btn dark empty-action" type="button" data-empty-action="open-recruitment">募集を投稿</button>
+          <button class="btn empty-action" type="button" data-empty-action="open-recruitment-list">募集を見る</button>
+        </div>
+      </div>
+    `;
     return;
   }
   $("#myFeed").innerHTML = `
@@ -4087,10 +4111,18 @@ document.body.addEventListener("click", async event => {
     $("#recruitmentLayout").classList.add("form-open");
     updateCreateButton("recruitmentView");
   }
+  if (button.dataset.emptyAction === "open-recruitment-list") {
+    switchView("recruitmentView");
+    $("#feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
   if (button.dataset.emptyAction === "open-thread") {
     switchView("chatView");
     $("#chatLayout").classList.add("form-open");
     updateCreateButton("chatView");
+  }
+  if (button.dataset.emptyAction === "open-thread-list") {
+    switchView("chatView");
+    $("#chatFeed")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 });
 
