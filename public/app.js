@@ -678,8 +678,26 @@ function updateFormStatus() {
   const messageLength = $("#messageInput")?.value.trim().length || 0;
   const chatTitleLength = $("#chatTitleInput")?.value.trim().length || 0;
   const chatBodyLength = $("#chatBodyInput")?.value.trim().length || 0;
-  if (recruitmentStatus) recruitmentStatus.textContent = `本文 ${messageLength}/500`;
-  if (chatStatus) chatStatus.textContent = `タイトル ${chatTitleLength}/72 / 本文 ${chatBodyLength}/500`;
+  if (recruitmentStatus) {
+    const ready = messageLength > 0;
+    setFormStatus(
+      recruitmentStatus,
+      ready ? `本文 ${messageLength}/500 / 投稿できます` : `本文 ${messageLength}/500 / 本文を入力すると投稿できます`,
+      ready ? "ready" : "warn"
+    );
+  }
+  if (chatStatus) {
+    const missing = [];
+    if (!chatTitleLength) missing.push("タイトル");
+    if (!chatBodyLength) missing.push("本文");
+    setFormStatus(
+      chatStatus,
+      missing.length
+        ? `タイトル ${chatTitleLength}/72 / 本文 ${chatBodyLength}/500 / ${missing.join("と")}を入力してください`
+        : `タイトル ${chatTitleLength}/72 / 本文 ${chatBodyLength}/500 / 投稿できます`,
+      missing.length ? "warn" : "ready"
+    );
+  }
 }
 
 function switchView(viewId) {
@@ -1369,9 +1387,15 @@ function setButtonState(button, busy, label = "処理中...") {
   return () => setButtonState(button, false);
 }
 
-function setStatusText(selector, text) {
+function setStatusText(selector, text, tone = "") {
   const element = $(selector);
-  if (element) element.textContent = text;
+  if (element) setFormStatus(element, text, tone);
+}
+
+function setFormStatus(element, text, tone = "") {
+  element.textContent = text;
+  element.classList.remove("ready", "warn", "busy");
+  if (tone) element.classList.add(tone);
 }
 
 function showErrorToast(error) {
@@ -3805,7 +3829,8 @@ $("#postForm").addEventListener("submit", async event => {
   event.preventDefault();
   const form = event.currentTarget;
   const restore = setSubmitState(form, true, "投稿中...");
-  setStatusText("#recruitmentFormStatus", "投稿中... 一覧へ反映しています");
+  let submitted = false;
+  setStatusText("#recruitmentFormStatus", "投稿中... 一覧へ反映しています", "busy");
   const game = $("#gameInput").value;
   const rank = $("#rankInput").value || "ランク不問";
   const style = $("#styleInput").value;
@@ -3829,7 +3854,8 @@ $("#postForm").addEventListener("submit", async event => {
     localStorage.removeItem(recruitmentDraftKey);
     $("#recruitmentLayout").classList.remove("form-open");
     updateCreateButton("recruitmentView");
-    setStatusText("#recruitmentFormStatus", "投稿しました。一覧へ反映しました");
+    submitted = true;
+    setStatusText("#recruitmentFormStatus", "投稿しました。一覧へ反映しました", "ready");
     upsertStateItem("recruitments", created);
     renderBetaChecklist();
     window.location.hash = appHash("recruitments", created.id);
@@ -3839,7 +3865,7 @@ $("#postForm").addEventListener("submit", async event => {
     showErrorToast(error);
   } finally {
     restore();
-    updateFormStatus();
+    if (!submitted) updateFormStatus();
   }
 });
 
@@ -3847,7 +3873,8 @@ $("#chatForm").addEventListener("submit", async event => {
   event.preventDefault();
   const form = event.currentTarget;
   const restore = setSubmitState(form, true, "投稿中...");
-  setStatusText("#chatFormStatus", "投稿中... 一覧へ反映しています");
+  let submitted = false;
+  setStatusText("#chatFormStatus", "投稿中... 一覧へ反映しています", "busy");
   const payload = {
     title: $("#chatTitleInput").value.trim(),
     category: $("#chatCategoryInput").value,
@@ -3860,7 +3887,8 @@ $("#chatForm").addEventListener("submit", async event => {
     localStorage.removeItem(threadDraftKey);
     $("#chatLayout").classList.remove("form-open");
     updateCreateButton("chatView");
-    setStatusText("#chatFormStatus", "投稿しました。一覧へ反映しました");
+    submitted = true;
+    setStatusText("#chatFormStatus", "投稿しました。一覧へ反映しました", "ready");
     upsertStateItem("threads", created);
     renderBetaChecklist();
     window.location.hash = appHash("threads", created.id);
@@ -3870,7 +3898,7 @@ $("#chatForm").addEventListener("submit", async event => {
     showErrorToast(error);
   } finally {
     restore();
-    updateFormStatus();
+    if (!submitted) updateFormStatus();
   }
 });
 

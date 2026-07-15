@@ -802,6 +802,15 @@ button[aria-busy="true"] {
   font-weight: 800;
   letter-spacing: 0;
 }
+.form-status.ready {
+  color: var(--ink);
+}
+.form-status.warn {
+  color: var(--muted);
+}
+.form-status.busy {
+  color: var(--accent);
+}
 label {
   display: grid;
   gap: 5px;
