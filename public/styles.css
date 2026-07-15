@@ -1325,8 +1325,13 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   background: var(--accent);
 }
 .card.shared-focus {
-  outline: 3px solid var(--ink);
-  outline-offset: 3px;
+  border-color: var(--line-strong);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(201, 53, 66, .16), var(--shadow);
+  transform: translateY(-1px);
+}
+.card.shared-focus::before {
+  background: var(--accent);
 }
 .card-head {
   display: grid;
