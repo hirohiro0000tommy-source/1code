@@ -440,6 +440,7 @@ function renderServiceStatus() {
   container.innerHTML = `
     <strong>${escapeHtml(status.label || "運用状況")}</strong>
     <span>${escapeHtml(status.message || "")}</span>
+    <a href="/status" aria-label="サービス状態ページを開く">状態を見る</a>
   `;
 }
 

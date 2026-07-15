@@ -395,8 +395,16 @@ header .utility-link:hover {
   font-weight: 800;
 }
 .service-status span {
+  flex: 1 1 220px;
   color: var(--muted);
   line-height: 1.5;
+}
+.service-status a {
+  margin-left: auto;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: underline;
 }
 .service-status.paused {
   background: #fff;
