@@ -1213,23 +1213,25 @@ function replyMarkup(reply) {
 }
 
 function activityBadge(post) {
-  if (!post.lastReplyAt) return "";
-  return `<span class="badge light">返信 ${timeAgo(post.lastReplyAt)}</span>`;
+  const dayMs = 24 * 60 * 60 * 1000;
+  if (post.lastReplyAt) return `<span class="badge light">返信 ${timeAgo(post.lastReplyAt)}</span>`;
+  if (Date.now() - Number(post.createdAt || 0) <= dayMs) return `<span class="badge light">新着</span>`;
+  return "";
 }
 
 function engagementSummary(post, type) {
-  const latestAt = post.lastReplyAt || post.createdAt;
+  const activity = post.lastReplyAt ? `最近の返信 ${timeAgo(post.lastReplyAt)}` : `投稿 ${timeAgo(post.createdAt)}`;
   const items = type === "recruitments"
     ? [
         post.isOfficial ? "公式例" : `参加 ${post.participantCount || 0}/${post.capacity || 4}`,
         `返信 ${post.replies?.length || 0}`,
         `いいね ${post.likeCount || 0}`,
-        `更新 ${timeAgo(latestAt)}`
+        activity
       ]
     : [
         `返信 ${post.replies?.length || 0}`,
         `いいね ${post.likeCount || 0}`,
-        `更新 ${timeAgo(latestAt)}`
+        activity
       ];
   return `<div class="card-summary">${items.map(item => `<span>${escapeHtml(item)}</span>`).join("")}</div>`;
 }
