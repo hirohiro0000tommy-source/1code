@@ -3645,10 +3645,6 @@ function discordRedirectUri() {
 }
 
 function ensureDiscordConfig(res) {
-  if (!discordLoginEnabled) {
-    sendText(res, 503, "Discord OAuth is disabled for this beta.");
-    return false;
-  }
   if (discordConfigState().ok) return true;
   sendText(res, 500, "Discord OAuth is not configured.");
   return false;
