@@ -32,6 +32,8 @@ DISCORD_CLIENT_ID=123456789012345678
 DISCORD_CLIENT_SECRET=replace-with-real-discord-client-secret
 ```
 
+If the hosting dashboard still has `DISCORD_LOGIN_ENABLED=false` from an earlier beta, set it to `true`. The server also allows Discord login when both real Discord credentials are present, so a stale disabled flag does not block the login test.
+
 ## Behavior
 
 - Login is optional.
