@@ -47,7 +47,7 @@ services:
       - key: COMMIT_SHA
         sync: false
       - key: DISCORD_LOGIN_ENABLED
-        value: false
+        value: true
       - key: DISCORD_CLIENT_ID
         sync: false
       - key: DISCORD_CLIENT_SECRET

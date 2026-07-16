@@ -27,6 +27,7 @@ Set these values on the hosting service:
 ```text
 PUBLIC_BASE_URL=https://your-domain.example
 SESSION_SECRET=replace-with-a-long-random-string
+DISCORD_LOGIN_ENABLED=true
 DISCORD_CLIENT_ID=123456789012345678
 DISCORD_CLIENT_SECRET=replace-with-real-discord-client-secret
 ```
