@@ -1453,6 +1453,18 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   overflow-wrap: anywhere;
   font-size: 13px;
 }
+.participation-hint {
+  margin: 0 12px 10px;
+  border: 1px solid var(--line-muted);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+  color: var(--muted);
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.5;
+}
 .status-list {
   list-style: none;
   display: grid;

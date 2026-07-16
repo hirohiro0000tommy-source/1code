@@ -1003,6 +1003,18 @@ function safeTagMarkup(item) {
   return `<div class="safe-tags">${tags.map(tag => `<button type="button" class="${safeTagFilters.has(tag) ? "active" : ""}" data-safe-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`).join("")}</div>`;
 }
 
+function participationHint(item) {
+  const tags = safeTags(item);
+  if (item.status === "closed") return "この募集は締め切られています。似た条件で探してみてください。";
+  if (Number(item.participantCount || 0) >= Number(item.capacity || 4)) return "定員に近い募集です。返信前に状況を確認すると安心です。";
+  if (tags.includes("初心者歓迎")) return "はじめてでも入りやすい募集です。遊びたい時間やランクを短く返信してみましょう。";
+  if (tags.includes("VCなしOK")) return "VCなしでも参加しやすい募集です。聞き専やチャット希望も伝えやすいです。";
+  if (tags.includes("短時間OK")) return "短時間でも入りやすい募集です。何戦くらい遊べるか書くと伝わりやすいです。";
+  if (tags.includes("まったり")) return "雰囲気重視の募集です。軽く挨拶してから参加希望を送れます。";
+  if (tags.includes("ガチ")) return "目的がはっきりした募集です。ランクや経験を書いて返信すると噛み合いやすいです。";
+  return "気になる募集は、ランクや希望スタイルを一言添えて返信できます。";
+}
+
 function hotRecruitments() {
   return [...state.recruitments]
     .filter(item => item.status !== "closed")
@@ -1548,6 +1560,7 @@ function recruitmentCard(post) {
         <div class="detail"><span>参加</span><strong>${post.participantCount || 0}/${escapeHtml(post.capacity || 4)}</strong></div>
         <div class="detail"><span>スタイル</span><strong>${escapeHtml(post.style)}</strong></div>
       </div>
+      <div class="participation-hint">${escapeHtml(participationHint(post))}</div>
       ${post.participants?.length ? `<div class="replies">${post.participants.map(participant => `<div class="reply">参加希望: ${escapeHtml(participant.name || "Player")}</div>`).join("")}</div>` : ""}
       ${postBodyMarkup(post)}
       ${safeTagMarkup(post)}
