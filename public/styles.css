@@ -1096,6 +1096,15 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   font-size: 13px;
   margin-top: 3px;
 }
+.notification-panel .btn[data-state="enabled"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.notification-panel .btn[data-state="blocked"],
+.notification-panel .btn[data-state="unsupported"] {
+  opacity: .55;
+}
 .activity-strip {
   display: flex;
   flex-wrap: wrap;

@@ -116,6 +116,7 @@ let myDataSummaryCache = null;
 let lastXShareText = "";
 let notificationReady = false;
 let backgroundSyncRunning = false;
+let notificationLastCheckedAt = 0;
 const pendingActions = new Set();
 const renderTimers = new Map();
 let cacheSaveTimer = null;
@@ -161,26 +162,31 @@ function renderNotificationSettings() {
   const button = $("#notificationButton");
   const status = $("#notificationStatus");
   if (!button || !status) return;
+  const lastChecked = notificationLastCheckedAt ? ` / 最終確認 ${timeAgo(notificationLastCheckedAt)}` : "";
   if (!browserNotificationsSupported()) {
     button.disabled = true;
     button.textContent = "未対応";
+    button.dataset.state = "unsupported";
     status.textContent = "このブラウザでは通知を使えません。";
     return;
   }
   if (Notification.permission === "denied") {
     button.disabled = true;
     button.textContent = "通知ブロック中";
+    button.dataset.state = "blocked";
     status.textContent = "ブラウザ設定で通知がブロックされています。";
     return;
   }
   if (browserNotificationsEnabled()) {
     button.disabled = false;
     button.textContent = "通知オン";
-    status.textContent = "返信やDMの新着をブラウザで知らせます。";
+    button.dataset.state = "enabled";
+    status.textContent = `返信やDMの新着をブラウザで知らせます${lastChecked}`;
     return;
   }
   button.disabled = false;
   button.textContent = "通知を許可";
+  button.dataset.state = "disabled";
   status.textContent = "許可すると、サイトを開いている間に新着通知を受け取れます。";
 }
 
@@ -248,6 +254,11 @@ function notifyStateChanges(previousState, nextState) {
   events.forEach(event => notifyBrowser(event.title, event.body, event.tag));
 }
 
+function isEditingInput() {
+  const element = document.activeElement;
+  return !!element && ["INPUT", "TEXTAREA", "SELECT"].includes(element.tagName);
+}
+
 function cleanPreview(value, max = 80) {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   return text.length > max ? `${text.slice(0, max)}...` : text;
@@ -274,10 +285,13 @@ async function toggleBrowserNotifications() {
 
 async function backgroundSyncState() {
   if (backgroundSyncRunning) return;
-  if (!browserNotificationsEnabled() && document.hidden) return;
+  if (!browserNotificationsEnabled()) return;
+  if (isEditingInput()) return;
   backgroundSyncRunning = true;
   try {
     await loadState();
+    notificationLastCheckedAt = Date.now();
+    renderNotificationSettings();
   } catch {
     // Background refresh is best effort; visible actions still report errors.
   } finally {
