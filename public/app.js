@@ -4,6 +4,7 @@ const clientAccountKey = "partyfinder.client.account.v1";
 const clientProfileKey = "partyfinder.client.profile.v1";
 const betaAccessKey = "partyfinder.beta.access.v1";
 const betaFeedbackSentKey = "partyfinder.beta.feedback.sent.v1";
+const browserNotificationKey = "partyfinder.browser.notifications.v1";
 const stateCacheKeyPrefix = "partyfinder.state.cache.v1";
 const featuredGames = ["Shadowverse/Worlds Beyond", "Pokemon Champions", "Monster Hunter", "Apex", "VALORANT", "STREET FIGHTER 6", "Overwatch", "Splatoon", "その他"];
 const styleOptions = ["初心者", "まったり", "エンジョイ", "ガチ"];
@@ -113,6 +114,8 @@ let adminInquiriesCache = [];
 let adminBetaBacklogCache = null;
 let myDataSummaryCache = null;
 let lastXShareText = "";
+let notificationReady = false;
+let backgroundSyncRunning = false;
 const pendingActions = new Set();
 const renderTimers = new Map();
 let cacheSaveTimer = null;
@@ -142,6 +145,144 @@ function lastMessageSeenAt() {
 function markMessagesSeen() {
   localStorage.setItem(messageSeenKey(), String(Date.now()));
   renderMessageNavBadge();
+}
+
+function browserNotificationsSupported() {
+  return "Notification" in window;
+}
+
+function browserNotificationsEnabled() {
+  return browserNotificationsSupported()
+    && Notification.permission === "granted"
+    && localStorage.getItem(browserNotificationKey) === "1";
+}
+
+function renderNotificationSettings() {
+  const button = $("#notificationButton");
+  const status = $("#notificationStatus");
+  if (!button || !status) return;
+  if (!browserNotificationsSupported()) {
+    button.disabled = true;
+    button.textContent = "未対応";
+    status.textContent = "このブラウザでは通知を使えません。";
+    return;
+  }
+  if (Notification.permission === "denied") {
+    button.disabled = true;
+    button.textContent = "通知ブロック中";
+    status.textContent = "ブラウザ設定で通知がブロックされています。";
+    return;
+  }
+  if (browserNotificationsEnabled()) {
+    button.disabled = false;
+    button.textContent = "通知オン";
+    status.textContent = "返信やDMの新着をブラウザで知らせます。";
+    return;
+  }
+  button.disabled = false;
+  button.textContent = "通知を許可";
+  status.textContent = "許可すると、サイトを開いている間に新着通知を受け取れます。";
+}
+
+function notifyBrowser(title, body, tag) {
+  if (!browserNotificationsEnabled()) return;
+  try {
+    const notification = new Notification(title, {
+      body,
+      tag,
+      icon: "/icon.svg",
+      badge: "/icon.svg"
+    });
+    notification.onclick = () => {
+      window.focus();
+      switchView("myView");
+      notification.close();
+    };
+  } catch {
+    // Browser notification failures should never block normal site use.
+  }
+}
+
+function itemNotificationKey(type, itemId, replyId) {
+  return `${type}:${itemId}:${replyId}`;
+}
+
+function replyNotificationEvents(previousItems = [], nextItems = [], type = "recruitments") {
+  const previousReplyIds = new Set();
+  previousItems.forEach(item => {
+    (item.replies || []).forEach(reply => previousReplyIds.add(itemNotificationKey(type, item.id, reply.id)));
+  });
+  return nextItems.flatMap(item => {
+    if (!item.viewerOwned) return [];
+    return (item.replies || [])
+      .filter(reply => !reply.viewerOwned && !previousReplyIds.has(itemNotificationKey(type, item.id, reply.id)))
+      .map(reply => ({
+        title: type === "threads" ? "フリートークに返信がありました" : "募集に返信がありました",
+        body: `${reply.author || "Player"}: ${cleanPreview(reply.body || "返信が届きました。")}`,
+        tag: itemNotificationKey(type, item.id, reply.id)
+      }));
+  });
+}
+
+function messageNotificationEvents(previousMessages = [], nextMessages = []) {
+  const previousMessageIds = new Set();
+  previousMessages.forEach(conversation => {
+    (conversation.messages || []).forEach(message => previousMessageIds.add(`message:${message.id}`));
+  });
+  return nextMessages.flatMap(conversation => (conversation.messages || [])
+    .filter(message => !message.viewerOwned && !previousMessageIds.has(`message:${message.id}`))
+    .map(message => ({
+      title: "メッセージが届きました",
+      body: `${message.author || conversation.otherName || "Player"}: ${cleanPreview(message.body || "新着メッセージがあります。")}`,
+      tag: `message:${message.id}`
+    })));
+}
+
+function notifyStateChanges(previousState, nextState) {
+  if (!notificationReady || !browserNotificationsEnabled()) return;
+  const events = [
+    ...replyNotificationEvents(previousState.recruitments || [], nextState.recruitments || [], "recruitments"),
+    ...replyNotificationEvents(previousState.threads || [], nextState.threads || [], "threads"),
+    ...messageNotificationEvents(previousState.messages || [], nextState.messages || [])
+  ].slice(0, 3);
+  events.forEach(event => notifyBrowser(event.title, event.body, event.tag));
+}
+
+function cleanPreview(value, max = 80) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text.length > max ? `${text.slice(0, max)}...` : text;
+}
+
+async function toggleBrowserNotifications() {
+  if (!browserNotificationsSupported()) return;
+  if (browserNotificationsEnabled()) {
+    localStorage.removeItem(browserNotificationKey);
+    renderNotificationSettings();
+    showToast("通知をオフにしました", "マイページからいつでもオンにできます。");
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission === "granted") {
+    localStorage.setItem(browserNotificationKey, "1");
+    renderNotificationSettings();
+    showToast("通知をオンにしました", "返信やDMの新着をブラウザで知らせます。");
+    return;
+  }
+  renderNotificationSettings();
+  showToast("通知を許可できませんでした", "ブラウザの通知設定を確認してください。", "", "error");
+}
+
+async function backgroundSyncState() {
+  if (backgroundSyncRunning) return;
+  if (!browserNotificationsEnabled() && document.hidden) return;
+  backgroundSyncRunning = true;
+  try {
+    await loadState();
+  } catch {
+    // Background refresh is best effort; visible actions still report errors.
+  } finally {
+    backgroundSyncRunning = false;
+  }
 }
 
 function stateCacheKey() {
@@ -449,7 +590,10 @@ function renderServiceStatus() {
 
 async function loadState() {
   const data = await api("/api/state");
+  const previousState = cloneStateItem(state) || { recruitments: [], threads: [], messages: [] };
+  notifyStateChanges(previousState, data);
   state = data;
+  notificationReady = true;
   normalizeViewerFlags();
   saveCachedState();
   renderAll();
@@ -3614,6 +3758,7 @@ function renderView(viewId = activeViewId()) {
 function renderAll() {
   renderAccount();
   renderMessageNavBadge();
+  renderNotificationSettings();
   renderBetaAccess();
   renderBetaChecklist();
   renderAnnouncements();
@@ -4810,6 +4955,9 @@ $("#profileApplyNameButton").addEventListener("click", () => {
   renderMyPage();
   showToast("表示名を反映しました", "募集者プロフィールにもこの名前を使えます。");
 });
+$("#notificationButton").addEventListener("click", () => {
+  toggleBrowserNotifications().catch(showErrorToast);
+});
 $("#betaAccessForm").addEventListener("submit", async event => {
   event.preventDefault();
   betaAccess.code = $("#betaAccessInput").value.trim();
@@ -4885,6 +5033,10 @@ window.addEventListener("unhandledrejection", event => {
 window.addEventListener("error", event => {
   showErrorToast(event.error || new Error(event.message));
 });
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) backgroundSyncState();
+});
+setInterval(backgroundSyncState, 45000);
 
 init().catch(error => {
   showErrorToast(error);
