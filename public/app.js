@@ -1516,6 +1516,15 @@ function officialGuideMarkup(post, type) {
   `;
 }
 
+function postBodyMarkup(post) {
+  const body = String(post.body || "");
+  const shouldCollapse = body.length > 170 || body.split("\n").length > 4;
+  return `
+    <div class="message ${shouldCollapse ? "collapsible" : ""}">${escapeHtml(body)}</div>
+    ${shouldCollapse ? `<button class="link-action body-toggle" type="button" data-action="toggle-body">全文を表示</button>` : ""}
+  `;
+}
+
 function recruitmentCard(post) {
   return `
     <article class="card ${post.status === "closed" ? "closed" : ""} ${post.isOfficial ? "official-card" : ""}" data-type="recruitments" data-id="${post.id}" data-status="${post.status || "open"}">
@@ -1540,7 +1549,7 @@ function recruitmentCard(post) {
         <div class="detail"><span>スタイル</span><strong>${escapeHtml(post.style)}</strong></div>
       </div>
       ${post.participants?.length ? `<div class="replies">${post.participants.map(participant => `<div class="reply">参加希望: ${escapeHtml(participant.name || "Player")}</div>`).join("")}</div>` : ""}
-      <div class="message">${escapeHtml(post.body)}</div>
+      ${postBodyMarkup(post)}
       ${safeTagMarkup(post)}
       ${officialGuideMarkup(post, "recruitments")}
       ${recruitmentProfileMarkup(post)}
@@ -1576,7 +1585,7 @@ function threadCard(post) {
         </div>
         ${reactionCount(post)}
       </div>
-      <div class="message">${escapeHtml(post.body)}</div>
+      ${postBodyMarkup(post)}
       ${officialGuideMarkup(post, "threads")}
       <div class="replies">${post.replies.map(replyMarkup).join("")}</div>
       ${engagementSummary(post, "threads")}
@@ -3646,6 +3655,13 @@ async function handleCardClick(event) {
   const reply = event.target.closest("[data-reply-id]");
   if (button.dataset.action === "use-sample") {
     useSamplePost(type, id);
+    return;
+  }
+  if (button.dataset.action === "toggle-body") {
+    const message = card.querySelector(".message.collapsible");
+    const expanded = card.classList.toggle("body-expanded");
+    if (message) message.classList.toggle("expanded", expanded);
+    button.textContent = expanded ? "折りたたむ" : "全文を表示";
     return;
   }
   if (button.dataset.action === "report-reply" && reply) {

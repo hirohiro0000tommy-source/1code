@@ -1503,6 +1503,29 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   line-height: 1.6;
   white-space: pre-wrap;
 }
+.message.collapsible {
+  position: relative;
+  max-height: 7.4em;
+  overflow: hidden;
+}
+.message.collapsible::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2.8em;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--paper) 74%);
+  pointer-events: none;
+}
+.message.collapsible.expanded {
+  max-height: none;
+}
+.message.collapsible.expanded::after {
+  display: none;
+}
+.body-toggle {
+  width: fit-content;
+  margin: -4px 12px 12px;
+}
 .message.warning-text {
   color: #5c1f1f;
   font-size: 13px;
