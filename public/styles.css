@@ -78,58 +78,6 @@ header::after {
   height: 3px;
   background: var(--accent);
 }
-.logo {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border: 1px solid rgba(255, 255, 255, .65);
-  border-radius: 8px;
-  background: var(--paper);
-  box-shadow: inset 0 0 0 2px var(--ink);
-}
-.logo::before,
-.logo::after,
-.logo span {
-  content: "";
-  position: absolute;
-}
-.logo::before {
-  left: 10px;
-  top: 11px;
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--ink);
-  border-radius: 10px 10px 13px 13px;
-  background: #b9854d;
-  box-shadow:
-    -5px -6px 0 -1px #b9854d,
-    5px -6px 0 -1px #b9854d,
-    -6px -7px 0 0 var(--ink),
-    6px -7px 0 0 var(--ink);
-}
-.logo::after {
-  left: 17px;
-  top: 27px;
-  width: 14px;
-  height: 9px;
-  border-radius: 8px 8px 9px 9px;
-  background: #fff;
-  box-shadow: 0 3px 0 -1px var(--ink);
-}
-.logo span {
-  left: 14px;
-  top: 22px;
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: var(--ink);
-  box-shadow:
-    15px 0 0 var(--ink),
-    7px 8px 0 -1px var(--ink),
-    7px -7px 0 2px #fff;
-}
 h1 { margin: 0; font-size: clamp(28px, 4vw, 42px); line-height: 1; }
 h2 { margin: 6px 0 0; font-size: 18px; line-height: 1.32; }
 header p { margin: 6px 0 0; color: #d9d9d2; font-size: 14px; }
