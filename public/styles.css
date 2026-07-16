@@ -16,10 +16,10 @@
   --hairline: rgba(17, 17, 17, .10);
   --shadow: 0 6px 16px rgba(17, 17, 17, .045);
   --ease-smooth: cubic-bezier(.22, 1, .36, 1);
-  --ease-spring: cubic-bezier(.2, 1.2, .22, 1);
-  --motion-fast: 160ms;
-  --motion-base: 260ms;
-  --motion-slow: 420ms;
+  --ease-spring: cubic-bezier(.22, 1, .36, 1);
+  --motion-fast: 90ms;
+  --motion-base: 140ms;
+  --motion-slow: 180ms;
 }
 
 * { box-sizing: border-box; }
@@ -457,7 +457,7 @@ header .utility-link:hover {
   min-height: 44px;
   padding: 10px 16px;
   font-size: 15px;
-  transition: transform .16s ease, box-shadow .16s ease, background .16s ease, color .16s ease;
+  transition: transform var(--motion-fast) ease, background var(--motion-fast) ease, color var(--motion-fast) ease;
 }
 .tabs .create-tab {
   margin-left: auto;
@@ -565,13 +565,11 @@ header .utility-link:hover {
   font-weight: 800;
   text-decoration: none;
   transition:
-    transform var(--motion-base) var(--ease-spring),
-    box-shadow var(--motion-base) var(--ease-smooth),
-    background var(--motion-base) var(--ease-smooth),
-    border-color var(--motion-base) var(--ease-smooth),
-    color var(--motion-base) var(--ease-smooth),
+    transform var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease,
     opacity var(--motion-fast) ease;
-  will-change: transform;
 }
 .tab:hover, .btn:hover, .action:hover {
   transform: translateY(-1px);
@@ -650,7 +648,7 @@ button[aria-busy="true"] {
   grid-template-columns: 330px 1fr;
   gap: 14px;
   align-items: start;
-  transition: grid-template-columns var(--motion-slow) var(--ease-smooth), gap var(--motion-base) var(--ease-smooth);
+  transition: none;
 }
 .layout:not(.form-open) {
   grid-template-columns: 1fr;
@@ -838,7 +836,7 @@ input, textarea, select {
   color: var(--ink);
   padding: 10px;
   outline: none;
-  transition: box-shadow .16s ease, border-color .16s ease;
+  transition: box-shadow var(--motion-fast) ease, border-color var(--motion-fast) ease;
 }
 input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 3px rgba(17, 17, 17, .12);
@@ -1068,7 +1066,7 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
-  transition: background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
+  transition: background var(--motion-fast) ease, border-color var(--motion-fast) ease, color var(--motion-fast) ease;
 }
 .check-list label:has(input:checked),
 .check-list label.checked {
@@ -1327,10 +1325,10 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   position: relative;
   overflow: hidden;
   transition:
-    transform var(--motion-base) var(--ease-smooth),
-    box-shadow var(--motion-base) var(--ease-smooth),
-    opacity var(--motion-base) var(--ease-smooth),
-    background-color var(--motion-base) var(--ease-smooth);
+    transform var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    opacity var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
 }
 .card::before {
   content: "";
@@ -1452,18 +1450,6 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   margin-top: 3px;
   overflow-wrap: anywhere;
   font-size: 13px;
-}
-.participation-hint {
-  margin: 0 12px 10px;
-  border: 1px solid var(--line-muted);
-  border-left: 3px solid var(--accent);
-  border-radius: 8px;
-  background: var(--surface-subtle);
-  color: var(--muted);
-  padding: 8px 10px;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.5;
 }
 .status-list {
   list-style: none;

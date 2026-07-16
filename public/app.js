@@ -196,7 +196,7 @@ function beginPendingAction(key) {
   return () => pendingActions.delete(key);
 }
 
-function debounceRender(key, fn, delay = 90) {
+function debounceRender(key, fn, delay = 45) {
   clearTimeout(renderTimers.get(key));
   renderTimers.set(key, setTimeout(() => {
     renderTimers.delete(key);
@@ -1003,18 +1003,6 @@ function safeTagMarkup(item) {
   return `<div class="safe-tags">${tags.map(tag => `<button type="button" class="${safeTagFilters.has(tag) ? "active" : ""}" data-safe-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`).join("")}</div>`;
 }
 
-function participationHint(item) {
-  const tags = safeTags(item);
-  if (item.status === "closed") return "この募集は締め切られています。似た条件で探してみてください。";
-  if (Number(item.participantCount || 0) >= Number(item.capacity || 4)) return "定員に近い募集です。返信前に状況を確認すると安心です。";
-  if (tags.includes("初心者歓迎")) return "はじめてでも入りやすい募集です。遊びたい時間やランクを短く返信してみましょう。";
-  if (tags.includes("VCなしOK")) return "VCなしでも参加しやすい募集です。聞き専やチャット希望も伝えやすいです。";
-  if (tags.includes("短時間OK")) return "短時間でも入りやすい募集です。何戦くらい遊べるか書くと伝わりやすいです。";
-  if (tags.includes("まったり")) return "雰囲気重視の募集です。軽く挨拶してから参加希望を送れます。";
-  if (tags.includes("ガチ")) return "目的がはっきりした募集です。ランクや経験を書いて返信すると噛み合いやすいです。";
-  return "気になる募集は、ランクや希望スタイルを一言添えて返信できます。";
-}
-
 function hotRecruitments() {
   return [...state.recruitments]
     .filter(item => item.status !== "closed")
@@ -1042,15 +1030,7 @@ function renderQuickSections() {
   const hot = hotRecruitments();
   const games = countBy(state.recruitments.filter(item => item.status !== "closed"), "game").slice(0, 6);
   if (!today.length && !hot.length && !games.length) {
-    container.innerHTML = `
-      <div class="quick-card guide">
-        <div class="quick-card-head"><strong>募集の入口</strong><span>まずは募集を書くか、紹介リンクで人を呼べます。</span></div>
-        <div class="quick-list">
-          <button type="button" data-guide-jump="recruitment"><strong>募集を投稿</strong><span>ゲームと本文だけで始められます</span></button>
-          <button type="button" data-guide-jump="referral"><strong>紹介する</strong><span>XやDiscordに貼れるURL</span></button>
-        </div>
-      </div>
-    `;
+    container.innerHTML = "";
     return;
   }
   container.innerHTML = `
@@ -1065,13 +1045,6 @@ function renderQuickSections() {
     <div class="quick-card">
       <div class="quick-card-head"><strong>ゲーム別入口</strong><span>ゲームを選ぶと募集を絞り込めます。</span></div>
       <div class="quick-list">${games.map(([game, count]) => `<button type="button" data-game-entry="${escapeHtml(game)}"><strong>${escapeHtml(game)}</strong><span>${escapeHtml(count)}件の募集</span></button>`).join("")}</div>
-    </div>
-    <div class="quick-card guide">
-      <div class="quick-card-head"><strong>募集する</strong><span>条件が決まっていなくても、本文だけで軽く出せます。</span></div>
-      <div class="quick-list">
-        <button type="button" data-guide-jump="recruitment"><strong>募集を投稿</strong><span>入力欄を開く</span></button>
-        <button type="button" data-guide-jump="referral"><strong>紹介リンク</strong><span>人を呼び込む</span></button>
-      </div>
     </div>
   `;
 }
@@ -1560,7 +1533,6 @@ function recruitmentCard(post) {
         <div class="detail"><span>参加</span><strong>${post.participantCount || 0}/${escapeHtml(post.capacity || 4)}</strong></div>
         <div class="detail"><span>スタイル</span><strong>${escapeHtml(post.style)}</strong></div>
       </div>
-      <div class="participation-hint">${escapeHtml(participationHint(post))}</div>
       ${post.participants?.length ? `<div class="replies">${post.participants.map(participant => `<div class="reply">参加希望: ${escapeHtml(participant.name || "Player")}</div>`).join("")}</div>` : ""}
       ${postBodyMarkup(post)}
       ${safeTagMarkup(post)}
