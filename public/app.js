@@ -1244,14 +1244,22 @@ function referralShareUrl(type, id, ref = "x") {
   return `${shareUrl(type, id)}?ref=${encodeURIComponent(ref)}`;
 }
 
+function sharePreview(text, max = 70) {
+  const compact = String(text || "").replace(/\s+/g, " ").trim();
+  if (!compact) return "";
+  return compact.length > max ? `${compact.slice(0, max - 1)}...` : compact;
+}
+
 function xShareText(type, item) {
   const isThread = type === "threads";
   const title = item.title || (isThread ? "フリートーク" : "ゲーム仲間募集");
+  const preview = sharePreview(item.body);
   const lines = isThread
     ? [
         "Red Threadで話題を出しました",
         `「${title}」`,
         item.category ? `カテゴリ: ${item.category}` : "",
+        preview ? `内容: ${preview}` : "",
         referralShareUrl(type, item.id, "x"),
         "#RedThread #ゲーム仲間募集"
       ]
@@ -1260,6 +1268,8 @@ function xShareText(type, item) {
         `ゲーム: ${item.game || "その他"}`,
         item.rank && item.rank !== "ランク不問" ? `ランク: ${item.rank}` : "",
         item.style ? `雰囲気: ${item.style}` : "",
+        item.capacity ? `募集人数: ${item.participantCount || 0}/${item.capacity}` : "",
+        preview ? `内容: ${preview}` : "",
         referralShareUrl(type, item.id, "x"),
         "#RedThread #ゲーム仲間募集"
       ];
@@ -1483,7 +1493,7 @@ function showPostCreatedToast(type, item) {
   showToast(
     `${label}を投稿しました`,
     "XやDiscordで募集を見せたいときに使えます。",
-    `<button class="action" type="button" data-toast-action="copy-share" data-type="${escapeHtml(type)}" data-id="${escapeHtml(item.id)}" data-title="${escapeHtml(item.title || label)}">共有リンクをコピー</button>${feedbackAction}`
+    `<button class="action" type="button" data-toast-action="copy-share" data-type="${escapeHtml(type)}" data-id="${escapeHtml(item.id)}" data-title="${escapeHtml(item.title || label)}">共有リンクをコピー</button><button class="action" type="button" data-toast-action="copy-x-text" data-type="${escapeHtml(type)}" data-id="${escapeHtml(item.id)}">X告知文</button>${feedbackAction}`
   );
 }
 
@@ -4659,6 +4669,16 @@ $("#toast").addEventListener("click", async event => {
     button.textContent = "コピー済み";
     setTimeout(() => {
       button.textContent = "共有リンクをコピー";
+    }, 1400);
+  }
+  if (button.dataset.toastAction === "copy-x-text") {
+    const item = stateItem(button.dataset.type, button.dataset.id);
+    const text = item ? xShareText(button.dataset.type, item) : `${window.location.origin}/?ref=x`;
+    lastXShareText = text;
+    await copyText(text);
+    button.textContent = "コピー済み";
+    setTimeout(() => {
+      button.textContent = "X告知文";
     }, 1400);
   }
   if (button.dataset.toastAction === "open-x-post") {
