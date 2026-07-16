@@ -644,8 +644,11 @@ function sanitizeAuthorProfile(profile = {}, fallbackName = "") {
   return {
     displayName: cleanText(profile.displayName || fallbackName, 40),
     discordHandle: cleanText(profile.discordHandle, 40),
+    age: cleanText(profile.age, 20) || "未設定",
+    gender: cleanText(profile.gender, 20) || "未設定",
     games: cleanText(profile.games, 120),
     playTime: cleanText(profile.playTime, 50),
+    voice: cleanText(profile.voice, 20) || "未設定",
     style: normalizeProfileStyle(cleanText(profile.style, 40)),
     bio: cleanText(profile.bio, 240)
   };

@@ -227,8 +227,11 @@ function defaultProfile() {
   return {
     displayName: "",
     discordHandle: "",
+    age: "未設定",
+    gender: "未設定",
     games: "",
     playTime: "",
+    voice: "未設定",
     style: "未設定",
     bio: ""
   };
@@ -557,8 +560,11 @@ function publicProfile(profile = profileValues()) {
   return {
     displayName: normalized.displayName || (account.name === "Anonymous" ? "Anonymous" : account.name),
     discordHandle: normalized.discordHandle,
+    age: normalized.age || "未設定",
+    gender: normalized.gender || "未設定",
     games: normalized.games,
     playTime: "",
+    voice: normalized.voice || "未設定",
     style: normalized.style || "未設定",
     bio: normalized.bio
   };
@@ -584,11 +590,20 @@ function renderProfile() {
   $("#profileDiscord").textContent = discordHandle ? `Discord: ${discordHandle}` : "Discord未設定";
   $("#profileDiscord").hidden = !discordHandle;
   const games = profileGames(profile);
-  $("#profileGameTags").innerHTML = games.length
-    ? games.map(game => `<span>${escapeHtml(game)}</span>`).join("")
-    : `<span>ゲーム未設定</span>`;
+  const profileTags = [
+    profile.age && profile.age !== "未設定" ? `年齢: ${profile.age}` : "",
+    profile.gender && profile.gender !== "未設定" ? `性別: ${profile.gender}` : "",
+    profile.voice && profile.voice !== "未設定" ? `VC: ${profile.voice}` : "",
+    ...games
+  ].filter(Boolean);
+  $("#profileGameTags").innerHTML = profileTags.length
+    ? profileTags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")
+    : `<span>プロフィール未設定</span>`;
   $("#profileNameInput").value = profile.displayName || (account.name === "Anonymous" ? "" : account.name);
   $("#profileDiscordInput").value = profile.discordHandle || "";
+  $("#profileAgeInput").value = profile.age || "未設定";
+  $("#profileGenderInput").value = profile.gender || "未設定";
+  $("#profileVoiceInput").value = profile.voice || "未設定";
   renderProfileGameOptions(games);
   $("#profileStyleInput").value = profile.style || "未設定";
   $("#profileBioInput").value = profile.bio;
@@ -1272,6 +1287,13 @@ function recruitmentProfileMarkup(post) {
   const style = profile.style || "未設定";
   const discordHandle = (profile.discordHandle || "").trim();
   const bio = profile.bio || "プロフィールはまだありません。";
+  const profileMeta = [
+    style && style !== "未設定" ? style : "",
+    profile.age && profile.age !== "未設定" ? `年齢: ${profile.age}` : "",
+    profile.gender && profile.gender !== "未設定" ? `性別: ${profile.gender}` : "",
+    profile.voice && profile.voice !== "未設定" ? `VC: ${profile.voice}` : "",
+    discordHandle ? "Discord登録あり" : ""
+  ].filter(Boolean);
   return `
     <details class="poster-profile">
       <summary>
@@ -1281,8 +1303,7 @@ function recruitmentProfileMarkup(post) {
       <div class="poster-profile-body">
         <strong>${escapeHtml(displayName)}</strong>
         <div class="poster-profile-meta">
-          <span>${escapeHtml(style)}</span>
-          ${discordHandle ? `<span>Discord登録あり</span>` : ""}
+          ${profileMeta.map(item => `<span>${escapeHtml(item)}</span>`).join("")}
         </div>
         ${games.length ? `<div class="profile-tags">${games.map(game => `<span>${escapeHtml(game)}</span>`).join("")}</div>` : ""}
         <p>${escapeHtml(bio)}</p>
@@ -4764,8 +4785,11 @@ $("#profileForm").addEventListener("submit", event => {
   const profile = {
     displayName: $("#profileNameInput").value.trim(),
     discordHandle: $("#profileDiscordInput").value.trim(),
+    age: $("#profileAgeInput").value,
+    gender: $("#profileGenderInput").value,
     games: checkedValues("#profileGamesInput").join(", "),
     playTime: "",
+    voice: $("#profileVoiceInput").value,
     style: $("#profileStyleInput").value,
     bio: $("#profileBioInput").value.trim()
   };
