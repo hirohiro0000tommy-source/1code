@@ -3645,8 +3645,9 @@ function discordRedirectUri() {
 }
 
 function ensureDiscordConfig(res) {
-  if (discordConfigState().ok) return true;
-  sendText(res, 500, "Discord OAuth is not configured.");
+  const discord = discordConfigState();
+  if (discord.ok) return true;
+  sendText(res, 500, `Discord OAuth is not configured: ${discord.detail}.`);
   return false;
 }
 
