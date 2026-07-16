@@ -94,22 +94,41 @@ header::after {
 .logo span {
   content: "";
   position: absolute;
-  background: var(--ink);
-  border-radius: 2px;
 }
 .logo::before {
-  top: 9px;
-  width: 27px;
-  height: 5px;
+  left: 10px;
+  top: 11px;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--ink);
+  border-radius: 10px 10px 13px 13px;
+  background: #b9854d;
+  box-shadow:
+    -5px -6px 0 -1px #b9854d,
+    5px -6px 0 -1px #b9854d,
+    -6px -7px 0 0 var(--ink),
+    6px -7px 0 0 var(--ink);
 }
 .logo::after {
-  bottom: 9px;
-  width: 27px;
-  height: 5px;
+  left: 17px;
+  top: 27px;
+  width: 14px;
+  height: 9px;
+  border-radius: 8px 8px 9px 9px;
+  background: #fff;
+  box-shadow: 0 3px 0 -1px var(--ink);
 }
 .logo span {
-  width: 8px;
-  height: 27px;
+  left: 14px;
+  top: 22px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ink);
+  box-shadow:
+    15px 0 0 var(--ink),
+    7px 8px 0 -1px var(--ink),
+    7px -7px 0 2px #fff;
 }
 h1 { margin: 0; font-size: clamp(28px, 4vw, 42px); line-height: 1; }
 h2 { margin: 6px 0 0; font-size: 18px; line-height: 1.32; }
