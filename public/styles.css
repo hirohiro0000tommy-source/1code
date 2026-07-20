@@ -379,6 +379,14 @@ header .utility-link:hover {
 .service-status.paused strong {
   color: var(--ink-deep);
 }
+.service-status.offline,
+.service-status.degraded {
+  border-left: 4px solid var(--accent);
+}
+.service-status.offline strong,
+.service-status.degraded strong {
+  color: var(--ink);
+}
 .safety-strip {
   display: flex;
   flex-wrap: wrap;

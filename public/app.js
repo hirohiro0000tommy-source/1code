@@ -117,6 +117,11 @@ let lastXShareText = "";
 let notificationReady = false;
 let backgroundSyncRunning = false;
 let notificationLastCheckedAt = 0;
+let connectivity = {
+  offline: typeof navigator !== "undefined" ? !navigator.onLine : false,
+  degraded: false,
+  message: ""
+};
 const pendingActions = new Set();
 const renderTimers = new Map();
 let cacheSaveTimer = null;
@@ -126,6 +131,8 @@ const feedLimits = {
   recruitments: feedPageSize,
   threads: feedPageSize
 };
+const apiTimeoutMs = 12000;
+const apiRetryDelayMs = 500;
 const safeTagFilters = new Set();
 const safeTagRules = [
   { label: "初心者歓迎", test: item => item.style === "初心者" || /初心者|初めて|復帰/u.test(`${item.body || ""} ${item.rank || ""}`) },
@@ -464,11 +471,42 @@ function headers() {
   };
 }
 
-async function api(path, options = {}) {
-  const res = await fetch(path, {
-    ...options,
-    headers: { ...headers(), ...(options.headers || {}) }
-  });
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function apiMethod(options = {}) {
+  return String(options.method || "GET").toUpperCase();
+}
+
+function shouldRetryApi(error, options = {}) {
+  if (apiMethod(options) !== "GET") return false;
+  if (error.name === "AbortError" || error.code === "TIMEOUT") return true;
+  if (!error.status) return true;
+  return [502, 503, 504].includes(Number(error.status));
+}
+
+function setConnectivityStatus(next = {}) {
+  connectivity = { ...connectivity, ...next };
+  renderServiceStatus();
+}
+
+async function fetchWithTimeout(path, options = {}, timeoutMs = apiTimeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(path, {
+      ...options,
+      headers: { ...headers(), ...(options.headers || {}) },
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function apiOnce(path, options = {}) {
+  const res = await fetchWithTimeout(path, options, options.timeoutMs || apiTimeoutMs);
   const requestId = res.headers.get("x-request-id") || "";
   let data = {};
   try {
@@ -485,6 +523,40 @@ async function api(path, options = {}) {
     throw error;
   }
   return data;
+}
+
+async function api(path, options = {}) {
+  try {
+    const data = await apiOnce(path, options);
+    if (connectivity.offline || connectivity.degraded) {
+      setConnectivityStatus({ offline: false, degraded: false, message: "" });
+    }
+    return data;
+  } catch (error) {
+    if (shouldRetryApi(error, options)) {
+      await delay(options.retryDelayMs || apiRetryDelayMs);
+      try {
+        const data = await apiOnce(path, options);
+        setConnectivityStatus({ offline: false, degraded: false, message: "" });
+        return data;
+      } catch (retryError) {
+        setConnectivityStatus({
+          offline: typeof navigator !== "undefined" ? !navigator.onLine : false,
+          degraded: true,
+          message: retryError.name === "AbortError" || retryError.code === "TIMEOUT"
+            ? "通信がタイムアウトしました。表示中の内容を保ったまま再試行できます。"
+            : "通信が不安定です。表示中の内容を保ったまま再試行できます。"
+        });
+        throw retryError;
+      }
+    }
+    setConnectivityStatus({
+      offline: typeof navigator !== "undefined" ? !navigator.onLine : false,
+      degraded: !error.status,
+      message: typeof navigator !== "undefined" && !navigator.onLine ? "オフラインです。接続が戻るまで投稿や更新はできません。" : ""
+    });
+    throw error;
+  }
 }
 
 function escapeHtml(value) {
@@ -588,6 +660,16 @@ function renderAnnouncements() {
 function renderServiceStatus() {
   const status = state.publicStatus;
   const container = $("#serviceStatus");
+  if (connectivity.offline || connectivity.degraded) {
+    container.hidden = false;
+    container.className = `service-status ${connectivity.offline ? "offline" : "degraded"}`;
+    container.innerHTML = `
+      <strong>${connectivity.offline ? "オフライン" : "通信確認中"}</strong>
+      <span>${escapeHtml(connectivity.message || "通信が不安定です。表示中の内容は残しています。")}</span>
+      <button class="utility-link" type="button" data-action="retry-state">再読み込み</button>
+    `;
+    return;
+  }
   if (!status || status.mode === "open") {
     container.hidden = true;
     container.innerHTML = "";
@@ -1604,7 +1686,11 @@ function setFormStatus(element, text, tone = "") {
 function showErrorToast(error) {
   const requestId = error?.requestId || "";
   const suspensionExpires = error?.expiresAt ? ` / ${new Date(error.expiresAt).toLocaleDateString("ja-JP")}まで` : "";
-  const message = error?.message === "this account is suspended"
+  const message = error?.name === "AbortError"
+    ? "通信がタイムアウトしました。少し待ってからもう一度お試しください。"
+    : typeof navigator !== "undefined" && !navigator.onLine
+      ? "オフラインです。接続を確認してください。"
+      : error?.message === "this account is suspended"
     ? `利用制限中のため操作できません。理由: ${error.reason || "moderation"}${suspensionExpires}`
     : error?.message || "通信に失敗しました。時間をおいて再度お試しください。";
   const shortId = requestId ? requestId.slice(0, 8) : "";
@@ -4221,6 +4307,13 @@ $("#myDataFeed").addEventListener("click", async event => {
 });
 
 document.body.addEventListener("click", async event => {
+  const retryState = event.target.closest("[data-action='retry-state']");
+  if (retryState) {
+    retryState.disabled = true;
+    retryState.textContent = "再読み込み中...";
+    await loadState().catch(showErrorToast);
+    return;
+  }
   const safeTag = event.target.closest("[data-safe-tag]");
   if (safeTag) {
     const tag = safeTag.dataset.safeTag;
@@ -5053,6 +5146,21 @@ window.addEventListener("error", event => {
 });
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) backgroundSyncState();
+});
+window.addEventListener("offline", () => {
+  setConnectivityStatus({
+    offline: true,
+    degraded: false,
+    message: "オフラインです。接続が戻るまで投稿や更新はできません。"
+  });
+});
+window.addEventListener("online", () => {
+  setConnectivityStatus({
+    offline: false,
+    degraded: true,
+    message: "接続が戻りました。最新の投稿を確認しています。"
+  });
+  loadState().catch(showErrorToast);
 });
 setInterval(backgroundSyncState, 45000);
 
