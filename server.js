@@ -624,7 +624,6 @@ function readBody(req) {
     const contentLength = Number(req.headers["content-length"] || 0);
     if (contentLength > 1_000_000) {
       reject(httpError(413, "request body too large"));
-      req.destroy();
       return;
     }
     let body = "";

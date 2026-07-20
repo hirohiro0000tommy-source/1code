@@ -52,12 +52,20 @@ function request(pathname, options = {}) {
 }
 
 function requestRaw(pathname, options = {}) {
+  const rawBody = options.rawBody || "";
   return new Promise((resolve, reject) => {
     const req = http.request({
       hostname: "127.0.0.1",
       port: options.port || port,
       path: pathname,
-      method: options.method || "GET"
+      method: options.method || "GET",
+      headers: {
+        ...(rawBody ? {
+          "content-type": options.contentType || "application/json",
+          "content-length": Buffer.byteLength(rawBody)
+        } : {}),
+        ...(options.headers || {})
+      }
     }, res => {
       let raw = "";
       res.on("data", chunk => {
@@ -72,7 +80,7 @@ function requestRaw(pathname, options = {}) {
       });
     });
     req.on("error", reject);
-    req.end();
+    req.end(rawBody);
   });
 }
 
@@ -182,6 +190,18 @@ async function run() {
     const securityTxt = await requestRaw("/.well-known/security.txt");
     assert(securityTxt.body.includes("Contact:"), "security txt contact missing");
     assert(securityTxt.body.includes("Expires:"), "security txt expires missing");
+    const invalidJson = await requestRaw("/api/recruitments", {
+      method: "POST",
+      rawBody: "{not-json",
+      allowError: true
+    });
+    assert(invalidJson.statusCode === 400 && invalidJson.body.includes("invalid json body"), "invalid json should return 400");
+    const oversizedBody = await requestRaw("/api/recruitments", {
+      method: "POST",
+      rawBody: JSON.stringify({ body: "x".repeat(1_000_100) }),
+      allowError: true
+    });
+    assert(oversizedBody.statusCode === 413 && oversizedBody.body.includes("request body too large"), "oversized json should return 413");
 
     const me = await request("/api/me");
     assert(me.account === null, "guest session should be empty");
