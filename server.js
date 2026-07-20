@@ -612,8 +612,21 @@ function sessionAccount(req) {
   }
 }
 
+function httpError(status, message, expose = true) {
+  const error = new Error(message);
+  error.status = status;
+  error.expose = expose;
+  return error;
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
+    const contentLength = Number(req.headers["content-length"] || 0);
+    if (contentLength > 1_000_000) {
+      reject(httpError(413, "request body too large"));
+      req.destroy();
+      return;
+    }
     let body = "";
     let tooLarge = false;
     req.on("data", chunk => {
@@ -621,7 +634,7 @@ function readBody(req) {
       body += chunk;
       if (body.length > 1_000_000) {
         tooLarge = true;
-        reject(new Error("request too large"));
+        reject(httpError(413, "request body too large"));
         req.destroy();
       }
     });
@@ -630,9 +643,10 @@ function readBody(req) {
       try {
         resolve(body ? JSON.parse(body) : {});
       } catch (error) {
-        reject(error);
+        reject(httpError(400, "invalid json body"));
       }
     });
+    req.on("error", error => reject(error));
   });
 }
 
@@ -5038,8 +5052,10 @@ const server = http.createServer(async (req, res) => {
     runtimeMetrics.lastErrorAt = Date.now();
     runtimeMetrics.lastError = `${res.locals.requestId}: ${error.message}`;
     res.locals.error = error.message;
-    const publicError = process.env.NODE_ENV === "production" ? "internal server error" : error.message;
-    sendJson(res, 500, { error: publicError, requestId: res.locals.requestId });
+    const status = Number(error.status || 500);
+    const safeStatus = status >= 400 && status < 600 ? status : 500;
+    const publicError = error.expose || process.env.NODE_ENV !== "production" ? error.message : "internal server error";
+    sendJson(res, safeStatus, { error: publicError, requestId: res.locals.requestId });
   }
 });
 
