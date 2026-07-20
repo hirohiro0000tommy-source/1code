@@ -27,6 +27,10 @@ const hotTopicBotIntervalMs = Math.max(30, Number(process.env.HOT_TOPIC_BOT_INTE
 const hotTopicBotDailyLimit = Math.max(1, Math.min(6, Number(process.env.HOT_TOPIC_BOT_DAILY_LIMIT || 2)));
 const rateWindowMs = 60 * 1000;
 const duplicateWindowMs = 10 * 60 * 1000;
+const maxRequestBodyBytes = Math.max(32_000, Math.min(2_000_000, Number(process.env.MAX_REQUEST_BODY_BYTES || 1_000_000)));
+const serverRequestTimeoutMs = Math.max(10_000, Math.min(120_000, Number(process.env.SERVER_REQUEST_TIMEOUT_MS || 30_000)));
+const serverHeadersTimeoutMs = Math.max(5_000, Math.min(serverRequestTimeoutMs, Number(process.env.SERVER_HEADERS_TIMEOUT_MS || 10_000)));
+const serverKeepAliveTimeoutMs = Math.max(1_000, Math.min(30_000, Number(process.env.SERVER_KEEP_ALIVE_TIMEOUT_MS || 5_000)));
 const rateBuckets = new Map();
 const startedAt = Date.now();
 const runtimeMetrics = {
@@ -622,7 +626,7 @@ function httpError(status, message, expose = true) {
 function readBody(req) {
   return new Promise((resolve, reject) => {
     const contentLength = Number(req.headers["content-length"] || 0);
-    if (contentLength > 1_000_000) {
+    if (contentLength > maxRequestBodyBytes) {
       reject(httpError(413, "request body too large"));
       return;
     }
@@ -631,7 +635,7 @@ function readBody(req) {
     req.on("data", chunk => {
       if (tooLarge) return;
       body += chunk;
-      if (body.length > 1_000_000) {
+      if (body.length > maxRequestBodyBytes) {
         tooLarge = true;
         reject(httpError(413, "request body too large"));
         req.destroy();
@@ -2947,6 +2951,14 @@ function healthSnapshot(db) {
       inquiries: (db.inquiries || []).length,
       deletedItems: (db.deletedItems || []).filter(item => !item.restoredAt).length
     },
+    limits: {
+      maxRequestBodyBytes,
+      requestTimeoutMs: serverRequestTimeoutMs,
+      headersTimeoutMs: serverHeadersTimeoutMs,
+      keepAliveTimeoutMs: serverKeepAliveTimeoutMs,
+      duplicateWindowMs,
+      rateWindowMs
+    },
     retention: retentionPolicy,
     generatedAt: Date.now()
   };
@@ -5057,6 +5069,9 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, safeStatus, { error: publicError, requestId: res.locals.requestId });
   }
 });
+server.requestTimeout = serverRequestTimeoutMs;
+server.headersTimeout = serverHeadersTimeoutMs;
+server.keepAliveTimeout = serverKeepAliveTimeoutMs;
 
 validateRuntimeConfig();
 

@@ -30,6 +30,14 @@ services:
         value: 2
       - key: ENABLE_SEED_DATA
         value: false
+      - key: MAX_REQUEST_BODY_BYTES
+        value: 1000000
+      - key: SERVER_REQUEST_TIMEOUT_MS
+        value: 30000
+      - key: SERVER_HEADERS_TIMEOUT_MS
+        value: 10000
+      - key: SERVER_KEEP_ALIVE_TIMEOUT_MS
+        value: 5000
       - key: SESSION_SECRET
         sync: false
       - key: STORAGE_DRIVER

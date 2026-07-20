@@ -42,6 +42,10 @@ HOT_TOPIC_BOT_ENABLED=false
 HOT_TOPIC_BOT_INTERVAL_MINUTES=360
 HOT_TOPIC_BOT_DAILY_LIMIT=2
 ENABLE_SEED_DATA=false
+MAX_REQUEST_BODY_BYTES=1000000
+SERVER_REQUEST_TIMEOUT_MS=30000
+SERVER_HEADERS_TIMEOUT_MS=10000
+SERVER_KEEP_ALIVE_TIMEOUT_MS=5000
 SESSION_SECRET=generated-session-secret
 DISCORD_LOGIN_ENABLED=false
 DISCORD_CLIENT_ID=...
@@ -65,6 +69,7 @@ COMMIT_SHA=
 - `HOT_TOPIC_BOT_ENABLED=false` is safest for the first public share. Set it to `true` only after the manual hot topic button feels right.
 - `HOT_TOPIC_BOT_DAILY_LIMIT` keeps automatic topic posts from crowding out real users.
 - `ENABLE_SEED_DATA=false` in production so local sample posts are not shown publicly.
+- Request and timeout limits can usually stay at their defaults: `MAX_REQUEST_BODY_BYTES=1000000`, `SERVER_REQUEST_TIMEOUT_MS=30000`, `SERVER_HEADERS_TIMEOUT_MS=10000`, and `SERVER_KEEP_ALIVE_TIMEOUT_MS=5000`.
 - `DISCORD_CLIENT_ID` is the numeric Discord application client ID, and `DISCORD_CLIENT_SECRET` is the real client secret. Do not leave `your-discord-client-id`, `your-discord-client-secret`, or `...` placeholders.
 - Discord redirect URL is `${PUBLIC_BASE_URL}/auth/discord/callback`.
 - `DATABASE_SSL=true` is required for production Postgres. Production startup is blocked if it is missing or set to another value.

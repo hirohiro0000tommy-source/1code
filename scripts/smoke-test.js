@@ -141,6 +141,10 @@ async function run() {
     assert(typeof health.runtime?.statusCounts === "object", "health status metrics missing");
     assert(Array.isArray(health.runtime?.recentRequests), "health recent requests missing");
     assert(typeof health.memory?.heapUsed === "number", "health memory metrics missing");
+    assert(health.limits?.maxRequestBodyBytes >= 32_000, "health request body limit missing");
+    assert(health.limits?.requestTimeoutMs >= 10_000, "health request timeout limit missing");
+    assert(health.limits?.headersTimeoutMs >= 5_000, "health headers timeout limit missing");
+    assert(health.limits?.keepAliveTimeoutMs >= 1_000, "health keep alive timeout limit missing");
     assert(health.retention?.auditLogs === 500, "health retention policy missing");
     const rawHealth = await requestRaw("/api/health");
     assert(rawHealth.headers["x-request-id"], "request id response header missing");

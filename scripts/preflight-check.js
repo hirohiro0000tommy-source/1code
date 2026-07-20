@@ -83,7 +83,7 @@ const operatorHandoff = fileText("docs/operator-handoff.md");
 const publicOperationsRunbook = fileText("docs/public-operations-runbook.md");
 const launchDayRunbook = fileText("docs/launch-day-runbook.md");
 const externalServiceWorkOrder = fileText("docs/external-service-work-order.md");
-const requiredEnvKeys = ["PORT", "NODE_ENV", "ADMIN_PIN", "ADMIN_ACCOUNT_IDS", "MODERATOR_ACCOUNT_IDS", "BETA_ACCESS_CODE", "BETA_WRITE_PAUSED", "PUBLIC_WRITE_PAUSED", "HOT_TOPIC_BOT_ENABLED", "HOT_TOPIC_BOT_INTERVAL_MINUTES", "HOT_TOPIC_BOT_DAILY_LIMIT", "SESSION_SECRET", "STORAGE_DRIVER", "DATABASE_URL", "DATABASE_SSL", "PUBLIC_BASE_URL", "PUBLIC_SECURITY_CONTACT", "DISCORD_LOGIN_ENABLED", "DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET"];
+const requiredEnvKeys = ["PORT", "NODE_ENV", "ADMIN_PIN", "ADMIN_ACCOUNT_IDS", "MODERATOR_ACCOUNT_IDS", "BETA_ACCESS_CODE", "BETA_WRITE_PAUSED", "PUBLIC_WRITE_PAUSED", "HOT_TOPIC_BOT_ENABLED", "HOT_TOPIC_BOT_INTERVAL_MINUTES", "HOT_TOPIC_BOT_DAILY_LIMIT", "ENABLE_SEED_DATA", "MAX_REQUEST_BODY_BYTES", "SERVER_REQUEST_TIMEOUT_MS", "SERVER_HEADERS_TIMEOUT_MS", "SERVER_KEEP_ALIVE_TIMEOUT_MS", "SESSION_SECRET", "STORAGE_DRIVER", "DATABASE_URL", "DATABASE_SSL", "PUBLIC_BASE_URL", "PUBLIC_SECURITY_CONTACT", "DISCORD_LOGIN_ENABLED", "DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET"];
 for (const key of requiredEnvKeys) {
   if (envExample.includes(`${key}=`)) pass(`env example: ${key}`);
   else fail(`env example: ${key}`, "missing");
@@ -315,6 +315,9 @@ else fail("write origin protection", "missing");
 
 if (server.includes("healthSnapshot") && server.includes("runtimeMetrics") && server.includes("/healthz") && server.includes("/readyz") && server.includes("/status.json") && smoke.includes("healthz failed") && smoke.includes("healthz head failed") && smoke.includes("readyz failed") && smoke.includes("status json failed")) pass("health runtime metrics");
 else fail("health runtime metrics", "missing");
+
+if (server.includes("maxRequestBodyBytes") && server.includes("server.requestTimeout") && server.includes("server.headersTimeout") && server.includes("server.keepAliveTimeout") && server.includes("limits:") && smoke.includes("health request body limit missing") && smoke.includes("health request timeout limit missing")) pass("request limit and timeout visibility");
+else fail("request limit and timeout visibility", "missing");
 
 if (server.includes("function statusHtml") && server.includes("/status.html") && index.includes("/status") && styles.includes(".status-list") && smoke.includes("status page failed") && liveCheck.includes("status page status")) pass("public status page");
 else fail("public status page", "missing");
