@@ -2,7 +2,7 @@ const fs = require("fs");
 const http = require("http");
 const os = require("os");
 const path = require("path");
-const { spawn } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
 
 const root = path.join(__dirname, "..");
 const port = 8890 + Math.floor(Math.random() * 1000);
@@ -122,6 +122,14 @@ function waitForProcessExit(child, timeoutMs = 1500) {
     }
     child.once("exit", onExit);
     child.once("error", onError);
+  });
+}
+
+function runNodeScript(args, env = {}) {
+  return spawnSync(process.execPath, args, {
+    cwd: root,
+    env: { ...process.env, ...env },
+    encoding: "utf8"
   });
 }
 
@@ -265,6 +273,24 @@ async function run() {
     productionBlocked = await waitForProcessExit(blockedChild);
     blockedChild.kill();
     assert(productionBlocked, "unsafe production config was not blocked");
+
+    const invalidLimitConfig = runNodeScript(["scripts/production-config-check.js", "--strict"], {
+      NODE_ENV: "production",
+      STORAGE_DRIVER: "postgres",
+      DATABASE_URL: "postgres://smoke_app:smoke-secret@db.smoke.test:5432/partyfinder",
+      DATABASE_SSL: "true",
+      PUBLIC_BASE_URL: "https://example.org",
+      PUBLIC_SECURITY_CONTACT: "mailto:security@1code.test",
+      ADMIN_PIN: "safe-admin-pin-123",
+      SESSION_SECRET: "safe-session-secret-for-smoke-testing",
+      ADMIN_ACCOUNT_IDS: validAdminAccountIds,
+      DISCORD_LOGIN_ENABLED: "true",
+      DISCORD_CLIENT_ID: validDiscordClientId,
+      DISCORD_CLIENT_SECRET: validDiscordClientSecret,
+      MAX_REQUEST_BODY_BYTES: "tiny",
+      SERVER_REQUEST_TIMEOUT_MS: "9000"
+    });
+    assert(invalidLimitConfig.status !== 0 && invalidLimitConfig.stdout.includes("MAX_REQUEST_BODY_BYTES") && invalidLimitConfig.stdout.includes("SERVER_REQUEST_TIMEOUT_MS"), "invalid production request limits were not blocked");
 
     let shortAdminPinBlocked = false;
     const shortAdminPinChild = spawn(process.execPath, ["server.js"], {

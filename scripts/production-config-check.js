@@ -34,6 +34,10 @@ function nextActionFor(check) {
     PUBLIC_WRITE_PAUSED: "Set PUBLIC_WRITE_PAUSED=false before announcing public posting.",
     BETA_ACCESS_CODE: "Remove BETA_ACCESS_CODE when switching from closed beta to public posting.",
     MODERATOR_ACCOUNT_IDS: "Use blank or comma-separated discord:numeric-id values only.",
+    MAX_REQUEST_BODY_BYTES: "Use a numeric request body limit between 32000 and 2000000 bytes.",
+    SERVER_REQUEST_TIMEOUT_MS: "Use a numeric server request timeout between 10000 and 120000 ms.",
+    SERVER_HEADERS_TIMEOUT_MS: "Use a numeric headers timeout between 5000 and SERVER_REQUEST_TIMEOUT_MS.",
+    SERVER_KEEP_ALIVE_TIMEOUT_MS: "Use a numeric keep-alive timeout between 1000 and 30000 ms.",
     RELEASE_VERSION: "Optional: set RELEASE_VERSION to the release label you want to see in admin/status screens.",
     COMMIT_SHA: "Optional: set COMMIT_SHA to the deployed commit for traceability."
   };
@@ -129,6 +133,15 @@ function publicSecurityContactSummary() {
   return { ok, detail: ok ? value.replace(/(.{24}).+/, "$1...") : "invalid or placeholder contact" };
 }
 
+function numericRangeState(name, min, max, fallback) {
+  const raw = env(name);
+  if (!raw) return { ok: true, value: fallback, detail: `default ${fallback}` };
+  if (!/^\d+$/.test(raw)) return { ok: false, value: NaN, detail: "must be a whole number" };
+  const value = Number(raw);
+  if (value < min || value > max) return { ok: false, value, detail: `out of range (${min}-${max})` };
+  return { ok: true, value, detail: String(value) };
+}
+
 const nodeEnv = env("NODE_ENV") || "development";
 const storageDriver = env("STORAGE_DRIVER") || "json";
 const adminPin = secretState("ADMIN_PIN", 16, ["admin", "change-this-before-public-release"]);
@@ -141,6 +154,10 @@ const adminAccounts = accountIdsState("ADMIN_ACCOUNT_IDS", discordLoginEnabled);
 const moderatorAccounts = accountIdsState("MODERATOR_ACCOUNT_IDS", false);
 const discordClientId = discordClientIdState();
 const discordClientSecret = discordClientSecretState();
+const maxRequestBodyBytes = numericRangeState("MAX_REQUEST_BODY_BYTES", 32_000, 2_000_000, 1_000_000);
+const serverRequestTimeoutMs = numericRangeState("SERVER_REQUEST_TIMEOUT_MS", 10_000, 120_000, 30_000);
+const serverHeadersTimeoutMs = numericRangeState("SERVER_HEADERS_TIMEOUT_MS", 5_000, serverRequestTimeoutMs.ok ? serverRequestTimeoutMs.value : 120_000, 10_000);
+const serverKeepAliveTimeoutMs = numericRangeState("SERVER_KEEP_ALIVE_TIMEOUT_MS", 1_000, 30_000, 5_000);
 const releaseVersion = env("RELEASE_VERSION");
 const commitSha = env("COMMIT_SHA");
 
@@ -161,6 +178,10 @@ add("BETA_WRITE_PAUSED", !flag("BETA_WRITE_PAUSED"), flag("BETA_WRITE_PAUSED") ?
 add("PUBLIC_WRITE_PAUSED", !flag("PUBLIC_WRITE_PAUSED"), flag("PUBLIC_WRITE_PAUSED") ? "true" : "false", strict ? "fail" : "warn");
 add("BETA_ACCESS_CODE", !env("BETA_ACCESS_CODE"), env("BETA_ACCESS_CODE") ? "set (closed beta mode)" : "blank", "warn");
 add("MODERATOR_ACCOUNT_IDS", moderatorAccounts.ok, moderatorAccounts.detail, moderatorAccounts.ok ? "warn" : strict ? "fail" : "warn");
+add("MAX_REQUEST_BODY_BYTES", maxRequestBodyBytes.ok, maxRequestBodyBytes.detail, strict ? "fail" : "warn");
+add("SERVER_REQUEST_TIMEOUT_MS", serverRequestTimeoutMs.ok, serverRequestTimeoutMs.detail, strict ? "fail" : "warn");
+add("SERVER_HEADERS_TIMEOUT_MS", serverHeadersTimeoutMs.ok, serverHeadersTimeoutMs.detail, strict ? "fail" : "warn");
+add("SERVER_KEEP_ALIVE_TIMEOUT_MS", serverKeepAliveTimeoutMs.ok, serverKeepAliveTimeoutMs.detail, strict ? "fail" : "warn");
 add("RELEASE_VERSION", true, releaseVersion || "optional");
 add("COMMIT_SHA", true, commitSha ? `${commitSha.slice(0, 12)}...` : "optional");
 
