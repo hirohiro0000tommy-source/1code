@@ -404,6 +404,45 @@ header .utility-link:hover {
   font-weight: 800;
   text-decoration: underline;
 }
+.positioning-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px 14px;
+}
+.positioning-strip strong {
+  display: block;
+  color: var(--ink);
+  font-size: 15px;
+}
+.positioning-strip span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.positioning-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.positioning-tags span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--ink);
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
 .row, .actions, .tabs {
   display: flex;
   flex-wrap: wrap;
@@ -700,6 +739,10 @@ button[aria-busy="true"] {
 }
 .quick-section .quick-card.guide {
   grid-column: 1 / -1;
+  border-left: 4px solid var(--accent);
+}
+.quick-card.guide .quick-list button {
+  min-width: 180px;
 }
 .quick-card {
   display: grid;

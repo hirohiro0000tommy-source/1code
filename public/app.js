@@ -1202,11 +1202,15 @@ function renderQuickSections() {
   const today = todayRecruitments();
   const hot = hotRecruitments();
   const games = countBy(state.recruitments.filter(item => item.status !== "closed"), "game").slice(0, 6);
-  if (!today.length && !hot.length && !games.length) {
-    container.innerHTML = "";
-    return;
-  }
   container.innerHTML = `
+    <div class="quick-card guide">
+      <div class="quick-card-head"><strong>掲示板として気軽に使えます</strong><span>プロフィールを作り込む前に、募集を眺める、返信する、短く募集を書く。まずはそれだけで大丈夫です。</span></div>
+      <div class="quick-list">
+        <button type="button" data-guide-jump="recruitment"><strong>募集を書く</strong><span>ゲームと雰囲気だけでも投稿できます</span></button>
+        <button type="button" data-guide-jump="active"><strong>動きを見る</strong><span>返信やいいねがある募集を確認</span></button>
+        <button type="button" data-guide-jump="profile"><strong>プロフィール</strong><span>年齢・VC・遊ぶゲームを任意で設定</span></button>
+      </div>
+    </div>
     <div class="quick-card">
       <div class="quick-card-head"><strong>今日遊べる募集</strong><span>${today.length ? "直近で動きがある募集です。" : "動きが出たらここに表示されます。"}</span></div>
       <div class="quick-list">${today.map(item => quickPostButton(item, "recruitments")).join("") || `<span class="muted">まだありません</span>`}</div>
