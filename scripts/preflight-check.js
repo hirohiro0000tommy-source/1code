@@ -304,7 +304,7 @@ else fail("security header: permissions-policy", "missing");
 if (server.includes("content-security-policy")) pass("security header: content-security-policy");
 else fail("security header: content-security-policy", "missing");
 
-if (server.includes("strict-transport-security") && server.includes("cross-origin-opener-policy") && liveCheck.includes("home hsts") && liveCheck.includes("home opener policy") && liveCheck.includes("home content security policy") && liveCheck.includes("home permissions policy") && liveCheck.includes("home content type options")) pass("security header: production isolation");
+if (server.includes("strict-transport-security") && server.includes("cross-origin-opener-policy") && server.includes("x-frame-options") && liveCheck.includes("home hsts") && liveCheck.includes("home opener policy") && liveCheck.includes("home content security policy") && liveCheck.includes("home permissions policy") && liveCheck.includes("home content type options") && liveCheck.includes("home frame options")) pass("security header: production isolation");
 else fail("security header: production isolation", "missing");
 
 if (server.includes("function oauthStateCookie") && server.includes("function clearOauthStateCookie") && server.includes("pf_oauth_state") && server.includes("process.env.NODE_ENV === \"production\" ? \"; Secure\"")) pass("oauth state secure cookie");

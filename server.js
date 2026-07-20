@@ -834,6 +834,7 @@ function securityHeaders(contentType, extra = {}) {
     "content-type": contentType,
     ...(process.env.NODE_ENV === "production" ? { "strict-transport-security": "max-age=31536000; includeSubDomains" } : {}),
     "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
     "referrer-policy": "same-origin",
     "cross-origin-opener-policy": "same-origin",
     "origin-agent-cluster": "?1",

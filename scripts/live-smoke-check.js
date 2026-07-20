@@ -154,6 +154,7 @@ async function main() {
   assert("home content security policy", hasHeader(home.headers, "content-security-policy", "frame-ancestors 'none'"));
   assert("home permissions policy", hasHeader(home.headers, "permissions-policy", "camera=()"));
   assert("home content type options", hasHeader(home.headers, "x-content-type-options", "nosniff"));
+  assert("home frame options", hasHeader(home.headers, "x-frame-options", "DENY"));
   assert("home og title", home.body.includes("property=\"og:title\""));
   assert("home canonical absolute url", home.body.includes(`<link rel="canonical" href="${baseUrl.origin}/">`));
   assert("home og image absolute url", home.body.includes(`<meta property="og:image" content="${baseUrl.origin}/og-image.svg">`));
