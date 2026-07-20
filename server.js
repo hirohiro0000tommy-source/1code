@@ -2964,6 +2964,29 @@ function healthSnapshot(db) {
   };
 }
 
+function startupSummary() {
+  const deployment = deploymentInfo();
+  return {
+    port,
+    nodeEnv: process.env.NODE_ENV || "development",
+    storage: process.env.STORAGE_DRIVER || "json",
+    publicBaseUrl,
+    publicMode: publicServiceStatus().mode,
+    release: deployment.release || deployment.version,
+    commit: deployment.commit || "",
+    discordLoginEnabled,
+    hotTopicBotEnabled,
+    writePaused,
+    betaAccessRequired: Boolean(betaAccessCode),
+    limits: {
+      maxRequestBodyBytes,
+      requestTimeoutMs: serverRequestTimeoutMs,
+      headersTimeoutMs: serverHeadersTimeoutMs,
+      keepAliveTimeoutMs: serverKeepAliveTimeoutMs
+    }
+  };
+}
+
 function systemReport(db) {
   const storageDriver = process.env.STORAGE_DRIVER || "json";
   const checks = systemChecks();
@@ -5089,7 +5112,7 @@ server.listen(port, async () => {
       });
     }, hotTopicBotIntervalMs).unref();
   }
-  console.log(`Red Thread running at http://localhost:${port}`);
+  console.log(`Red Thread startup ${JSON.stringify(startupSummary())}`);
 });
 
 function shutdown(signal) {
