@@ -601,6 +601,16 @@ function clearSessionCookie() {
   return `pf_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`;
 }
 
+function oauthStateCookie(state) {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `pf_oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${secure}`;
+}
+
+function clearOauthStateCookie() {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `pf_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`;
+}
+
 function sessionAccount(req) {
   const raw = parseCookies(req).pf_session;
   if (!raw || !raw.includes(".")) return null;
@@ -3714,7 +3724,7 @@ async function handleAuth(req, res, url) {
       state
     });
     redirect(res, `https://discord.com/oauth2/authorize?${params}`, {
-      "set-cookie": `pf_oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`
+      "set-cookie": oauthStateCookie(state)
     });
     return;
   }
@@ -3760,7 +3770,7 @@ async function handleAuth(req, res, url) {
     redirect(res, "/", {
       "set-cookie": [
         sessionCookie(account),
-        "pf_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+        clearOauthStateCookie()
       ]
     });
     return;
