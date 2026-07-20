@@ -120,6 +120,10 @@ async function main() {
     assert("health ok", body.ok === true);
     assert("health ready field", typeof body.ready === "boolean");
     assert("health storage field", typeof body.storage === "string");
+    assert("health request body limit", body.limits?.maxRequestBodyBytes >= 32_000);
+    assert("health request timeout", body.limits?.requestTimeoutMs >= 10_000);
+    assert("health headers timeout", body.limits?.headersTimeoutMs >= 5_000);
+    assert("health keep alive timeout", body.limits?.keepAliveTimeoutMs >= 1_000);
   } catch (error) {
     fail("health json", error.message);
   }
