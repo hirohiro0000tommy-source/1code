@@ -5143,5 +5143,17 @@ function shutdown(signal) {
   });
 }
 
+function fatalShutdown(reason, error) {
+  const message = error?.stack || error?.message || String(error || "unknown error");
+  runtimeMetrics.lastErrorAt = Date.now();
+  runtimeMetrics.lastError = `${reason}: ${error?.message || message}`;
+  console.error(`Red Thread fatal ${reason}: ${message}`);
+  const forceExit = setTimeout(() => process.exit(1), 5000);
+  forceExit.unref();
+  server.close(() => process.exit(1));
+}
+
 process.once("SIGTERM", () => shutdown("SIGTERM"));
 process.once("SIGINT", () => shutdown("SIGINT"));
+process.once("uncaughtException", error => fatalShutdown("uncaughtException", error));
+process.once("unhandledRejection", error => fatalShutdown("unhandledRejection", error));

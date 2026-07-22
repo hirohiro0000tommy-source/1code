@@ -337,6 +337,9 @@ else fail("static method and path hardening", "missing");
 if (server.includes("function shutdown") && server.includes("SIGTERM") && server.includes("SIGINT") && server.includes("server.close")) pass("graceful shutdown");
 else fail("graceful shutdown", "missing");
 
+if (server.includes("function fatalShutdown") && server.includes("uncaughtException") && server.includes("unhandledRejection") && server.includes("Red Thread fatal")) pass("fatal process guard");
+else fail("fatal process guard", "missing");
+
 if (server.includes("function startupSummary") && server.includes("Red Thread startup") && server.includes("JSON.stringify(startupSummary())") && server.includes("betaAccessRequired") && server.includes("maxRequestBodyBytes")) pass("safe startup log");
 else fail("safe startup log", "missing");
 
