@@ -107,7 +107,7 @@ let betaAccess = {
   required: false,
   granted: false,
   writePaused: false,
-  code: localStorage.getItem(betaAccessKey) || ""
+  code: readStoredValue(localStorage, betaAccessKey)
 };
 let toastTimer = null;
 let adminInquiriesCache = [];
@@ -147,11 +147,11 @@ function messageSeenKey() {
 }
 
 function lastMessageSeenAt() {
-  return Number(localStorage.getItem(messageSeenKey()) || 0);
+  return Number(readStoredValue(localStorage, messageSeenKey(), "0") || 0);
 }
 
 function markMessagesSeen() {
-  localStorage.setItem(messageSeenKey(), String(Date.now()));
+  writeStoredValue(localStorage, messageSeenKey(), String(Date.now()));
   renderMessageNavBadge();
 }
 
@@ -162,7 +162,7 @@ function browserNotificationsSupported() {
 function browserNotificationsEnabled() {
   return browserNotificationsSupported()
     && Notification.permission === "granted"
-    && localStorage.getItem(browserNotificationKey) === "1";
+    && readStoredValue(localStorage, browserNotificationKey) === "1";
 }
 
 function renderNotificationSettings() {
@@ -274,14 +274,14 @@ function cleanPreview(value, max = 80) {
 async function toggleBrowserNotifications() {
   if (!browserNotificationsSupported()) return;
   if (browserNotificationsEnabled()) {
-    localStorage.removeItem(browserNotificationKey);
+    removeStoredValue(localStorage, browserNotificationKey);
     renderNotificationSettings();
     showToast("通知をオフにしました", "マイページからいつでもオンにできます。");
     return;
   }
   const permission = await Notification.requestPermission();
   if (permission === "granted") {
-    localStorage.setItem(browserNotificationKey, "1");
+    writeStoredValue(localStorage, browserNotificationKey, "1");
     renderNotificationSettings();
     showToast("通知をオンにしました", "返信やDMの新着をブラウザで知らせます。");
     return;
@@ -311,25 +311,16 @@ function stateCacheKey() {
 }
 
 function loadCachedState(maxAgeMs = 5 * 60 * 1000) {
-  try {
-    const cached = JSON.parse(sessionStorage.getItem(stateCacheKey()) || "null");
-    if (!cached || Date.now() - Number(cached.savedAt || 0) > maxAgeMs) return false;
-    state = cached.state || state;
-    normalizeViewerFlags();
-    renderAll();
-    return true;
-  } catch {
-    sessionStorage.removeItem(stateCacheKey());
-    return false;
-  }
+  const cached = readStoredJson(sessionStorage, stateCacheKey());
+  if (!cached || Date.now() - Number(cached.savedAt || 0) > maxAgeMs) return false;
+  state = cached.state || state;
+  normalizeViewerFlags();
+  renderAll();
+  return true;
 }
 
 function writeCachedState() {
-  try {
-    sessionStorage.setItem(stateCacheKey(), JSON.stringify({ savedAt: Date.now(), state }));
-  } catch {
-    // Session storage can be unavailable or full; live data still works without it.
-  }
+  writeStoredJson(sessionStorage, stateCacheKey(), { savedAt: Date.now(), state });
 }
 
 function saveCachedState({ immediate = false } = {}) {
@@ -370,18 +361,67 @@ function resetFeedLimit(type) {
   feedLimits[type] = feedPageSize;
 }
 
+function readStoredJson(storage, key, fallback = null) {
+  try {
+    const saved = storage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    try {
+      storage.removeItem(key);
+    } catch {
+      // Storage may be unavailable; callers can continue with fallback values.
+    }
+    return fallback;
+  }
+}
+
+function readStoredValue(storage, key, fallback = "") {
+  try {
+    const saved = storage.getItem(key);
+    return saved === null ? fallback : saved;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeStoredValue(storage, key, value) {
+  try {
+    storage.setItem(key, String(value));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function writeStoredJson(storage, key, value) {
+  try {
+    storage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function removeStoredValue(storage, key) {
+  try {
+    storage.removeItem(key);
+  } catch {
+    // Storage cleanup is best effort.
+  }
+}
+
 function loadAccount() {
-  const saved = localStorage.getItem(clientAccountKey);
-  if (saved) return { ...JSON.parse(saved), profile: loadProfile() };
+  const saved = readStoredJson(localStorage, clientAccountKey);
+  if (saved && saved.id) return { ...saved, profile: loadProfile() };
   const next = { id: crypto.randomUUID(), name: "Anonymous", discord: "" };
-  localStorage.setItem(clientAccountKey, JSON.stringify(next));
+  writeStoredJson(localStorage, clientAccountKey, next);
   return { ...next, profile: loadProfile() };
 }
 
 function saveAccount(next) {
   account = { ...next, profile: next.profile || account?.profile || loadProfile() };
   const { profile, ...storedAccount } = account;
-  localStorage.setItem(clientAccountKey, JSON.stringify(storedAccount));
+  writeStoredJson(localStorage, clientAccountKey, storedAccount);
   saveProfile(profile);
 }
 
@@ -400,18 +440,11 @@ function defaultProfile() {
 }
 
 function loadProfile() {
-  const saved = localStorage.getItem(clientProfileKey);
-  if (!saved) return defaultProfile();
-  try {
-    return { ...defaultProfile(), ...JSON.parse(saved) };
-  } catch {
-    localStorage.removeItem(clientProfileKey);
-    return defaultProfile();
-  }
+  return { ...defaultProfile(), ...readStoredJson(localStorage, clientProfileKey, {}) };
 }
 
 function saveProfile(profile) {
-  localStorage.setItem(clientProfileKey, JSON.stringify({ ...defaultProfile(), ...(profile || {}) }));
+  writeStoredJson(localStorage, clientProfileKey, { ...defaultProfile(), ...(profile || {}) });
 }
 
 function formDraft(fields) {
@@ -419,20 +452,15 @@ function formDraft(fields) {
 }
 
 function saveFormDraft(key, fields) {
-  localStorage.setItem(key, JSON.stringify(formDraft(fields)));
+  writeStoredJson(localStorage, key, formDraft(fields));
 }
 
 function restoreFormDraft(key, fields) {
-  const saved = localStorage.getItem(key);
-  if (!saved) return;
-  try {
-    const values = JSON.parse(saved);
-    fields.forEach(selector => {
-      if ($(selector) && values[selector] !== undefined) $(selector).value = values[selector];
-    });
-  } catch {
-    localStorage.removeItem(key);
-  }
+  const values = readStoredJson(localStorage, key);
+  if (!values) return;
+  fields.forEach(selector => {
+    if ($(selector) && values[selector] !== undefined) $(selector).value = values[selector];
+  });
 }
 
 function bindFormDraft(key, fields) {
@@ -446,19 +474,14 @@ function bindFormDraft(key, fields) {
 }
 
 function restoreRecruitmentDraft() {
-  const saved = localStorage.getItem(recruitmentDraftKey);
-  if (!saved) return;
-  try {
-    const values = JSON.parse(saved);
-    if (values["#gameInput"] !== undefined) $("#gameInput").value = values["#gameInput"];
-    renderRecruitmentFormOptions();
-    recruitmentDraftFields.forEach(selector => {
-      if ($(selector) && values[selector] !== undefined) $(selector).value = values[selector];
-    });
-    renderRecruitmentFormOptions();
-  } catch {
-    localStorage.removeItem(recruitmentDraftKey);
-  }
+  const values = readStoredJson(localStorage, recruitmentDraftKey);
+  if (!values) return;
+  if (values["#gameInput"] !== undefined) $("#gameInput").value = values["#gameInput"];
+  renderRecruitmentFormOptions();
+  recruitmentDraftFields.forEach(selector => {
+    if ($(selector) && values[selector] !== undefined) $(selector).value = values[selector];
+  });
+  renderRecruitmentFormOptions();
 }
 
 function headers() {
@@ -897,7 +920,7 @@ function renderBetaChecklist() {
     {
       id: "feedback",
       label: "感想を送る",
-      done: localStorage.getItem(betaFeedbackSentKey) === "1",
+      done: readStoredValue(localStorage, betaFeedbackSentKey) === "1",
       action: "送る"
     }
   ];
@@ -4193,7 +4216,7 @@ $("#postForm").addEventListener("submit", async event => {
     const created = await api("/api/recruitments", { method: "POST", body: JSON.stringify(payload) });
     $("#postForm").reset();
     renderRecruitmentFormOptions();
-    localStorage.removeItem(recruitmentDraftKey);
+    removeStoredValue(localStorage, recruitmentDraftKey);
     $("#recruitmentLayout").classList.remove("form-open");
     updateCreateButton("recruitmentView");
     submitted = true;
@@ -4226,7 +4249,7 @@ $("#chatForm").addEventListener("submit", async event => {
   try {
     const created = await api("/api/threads", { method: "POST", body: JSON.stringify(payload) });
     $("#chatForm").reset();
-    localStorage.removeItem(threadDraftKey);
+    removeStoredValue(localStorage, threadDraftKey);
     $("#chatLayout").classList.remove("form-open");
     updateCreateButton("chatView");
     submitted = true;
@@ -4261,7 +4284,7 @@ $("#inquiryForm").addEventListener("submit", async event => {
         message: $("#inquiryMessageInput").value.trim()
       })
     });
-    if (category === "βフィードバック") localStorage.setItem(betaFeedbackSentKey, "1");
+    if (category === "βフィードバック") writeStoredValue(localStorage, betaFeedbackSentKey, "1");
     $("#inquiryForm").reset();
     const receipt = result.requestId ? ` 受付ID: ${result.requestId.slice(0, 8)}` : "";
     $("#inquiryStatus").textContent = `送信しました。確認ありがとうございます。${receipt}`;
@@ -5072,8 +5095,8 @@ $("#notificationButton").addEventListener("click", () => {
 $("#betaAccessForm").addEventListener("submit", async event => {
   event.preventDefault();
   betaAccess.code = $("#betaAccessInput").value.trim();
-  if (betaAccess.code) localStorage.setItem(betaAccessKey, betaAccess.code);
-  else localStorage.removeItem(betaAccessKey);
+  if (betaAccess.code) writeStoredValue(localStorage, betaAccessKey, betaAccess.code);
+  else removeStoredValue(localStorage, betaAccessKey);
   await syncServerAccount();
   renderBetaAccess();
   showToast(

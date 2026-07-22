@@ -530,6 +530,9 @@ else fail("beta feedback prompt UI", "missing");
 if (app.includes("unhandledrejection") && app.includes("showErrorToast(event.reason)")) pass("uncaught frontend error handling");
 else fail("uncaught frontend error handling", "missing");
 
+if (app.includes("function readStoredJson") && app.includes("function writeStoredJson") && app.includes("function readStoredValue") && app.includes("function writeStoredValue") && app.includes("function removeStoredValue") && !app.includes("localStorage.getItem") && !app.includes("localStorage.setItem") && !app.includes("localStorage.removeItem") && !app.includes("sessionStorage.getItem") && !app.includes("sessionStorage.setItem") && !app.includes("sessionStorage.removeItem")) pass("client storage resilience");
+else fail("client storage resilience", "missing");
+
 if (server.includes("BETA_ACCESS_CODE") && server.includes("verifyBetaAccess") && smoke.includes("beta inquiry with code failed") && smoke.includes("beta reply with code failed") && smoke.includes("beta report with code failed")) pass("beta write access gate");
 else fail("beta write access gate", "missing");
 
