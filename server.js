@@ -895,11 +895,7 @@ function sitemapXml(db) {
       { loc: absoluteUrl("/terms.html"), lastmod: new Date().toISOString(), priority: "0.5", changefreq: "monthly" },
       { loc: absoluteUrl("/privacy.html"), lastmod: new Date().toISOString(), priority: "0.5", changefreq: "monthly" }
     );
-    const posts = [
-      ...(db.recruitments || []).map(item => ({ ...item, type: "recruitments" })),
-      ...(db.threads || []).map(item => ({ ...item, type: "threads" }))
-    ]
-      .filter(item => item.id)
+    const posts = publicIndexItems(db)
       .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
       .slice(0, 200);
     for (const item of posts) {
@@ -924,11 +920,12 @@ function sitemapXml(db) {
 }
 
 function feedXml(db) {
-  const items = betaAccessCode ? [] : [
-    ...(db.recruitments || []).map(item => ({ ...item, type: "recruitments", label: "募集", tag: item.game || "ゲーム募集" })),
-    ...(db.threads || []).map(item => ({ ...item, type: "threads", label: "フリートーク", tag: item.category || "フリートーク" }))
-  ]
-    .filter(item => item.id)
+  const items = betaAccessCode ? [] : publicIndexItems(db)
+    .map(item => ({
+      ...item,
+      label: item.type === "recruitments" ? "募集" : "フリートーク",
+      tag: item.type === "recruitments" ? item.game || "ゲーム募集" : item.category || "フリートーク"
+    }))
     .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
     .slice(0, 30);
   const latest = items[0]?.createdAt || Date.now();
@@ -3087,6 +3084,17 @@ function shareTarget(db, type, id) {
   if (type === "recruitments") return db.recruitments.find(item => item.id === id);
   if (type === "threads") return db.threads.find(item => item.id === id);
   return null;
+}
+
+function publicIndexItems(db) {
+  return [
+    ...(db.recruitments || [])
+      .filter(item => item.id && item.status !== "closed")
+      .map(item => ({ ...item, type: "recruitments" })),
+    ...(db.threads || [])
+      .filter(item => item.id)
+      .map(item => ({ ...item, type: "threads" }))
+  ];
 }
 
 function jsonLdScript(data) {

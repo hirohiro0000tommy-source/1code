@@ -906,6 +906,10 @@ async function run() {
       body: { status: "closed" }
     });
     assert(closed.status === "closed", "recruitment close failed");
+    const closedRecruitmentFeed = await requestRaw("/feed.xml");
+    assert(!closedRecruitmentFeed.body.includes(`/share/recruitments/${recruitment.id}`), "closed recruitment should be hidden from feed");
+    const closedRecruitmentSitemap = await requestRaw("/sitemap.xml");
+    assert(!closedRecruitmentSitemap.body.includes(`/share/recruitments/${recruitment.id}`), "closed recruitment should be hidden from sitemap");
 
     const reopened = await request(`/api/recruitments/${recruitment.id}/status`, {
       method: "PATCH",

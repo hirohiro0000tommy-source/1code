@@ -251,10 +251,10 @@ else fail("manifest icon", "missing");
 if (server.includes("function robotsText") && server.includes("x-robots-tag") && server.includes("absoluteUrl(\"/sitemap.xml\")") && smoke.includes("robots sitemap absolute url missing") && smoke.includes("closed beta robots should disallow indexing")) pass("closed beta noindex");
 else fail("closed beta noindex", "missing");
 
-if (server.includes("function sitemapXml") && server.includes("/sitemap.xml") && server.includes("/guidelines.html") && server.includes("/share/${item.type}") && smoke.includes("sitemap recruitment share missing") && smoke.includes("sitemap guidelines missing") && smoke.includes("closed beta sitemap should not expose share pages") && smoke.includes("closed beta sitemap should not expose static public pages")) pass("dynamic sitemap");
+if (server.includes("function sitemapXml") && server.includes("function publicIndexItems") && server.includes("item.status !== \"closed\"") && server.includes("/sitemap.xml") && server.includes("/guidelines.html") && server.includes("/share/${item.type}") && smoke.includes("sitemap recruitment share missing") && smoke.includes("sitemap guidelines missing") && smoke.includes("closed recruitment should be hidden from sitemap") && smoke.includes("closed beta sitemap should not expose share pages") && smoke.includes("closed beta sitemap should not expose static public pages")) pass("dynamic sitemap");
 else fail("dynamic sitemap", "missing");
 
-if (server.includes("function feedXml") && server.includes("/feed.xml") && index.includes("application/rss+xml") && smoke.includes("feed recruitment share missing") && smoke.includes("closed beta feed should not expose share pages")) pass("public rss feed");
+if (server.includes("function feedXml") && server.includes("publicIndexItems(db)") && server.includes("/feed.xml") && index.includes("application/rss+xml") && smoke.includes("feed recruitment share missing") && smoke.includes("closed recruitment should be hidden from feed") && smoke.includes("closed beta feed should not expose share pages")) pass("public rss feed");
 else fail("public rss feed", "missing");
 
 const app = fileText("public/app.js");
