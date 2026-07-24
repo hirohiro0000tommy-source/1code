@@ -71,6 +71,18 @@ function drawCircle(canvas, cx, cy, radius, color) {
   }
 }
 
+function drawEllipse(canvas, cx, cy, rx, ry, color) {
+  const rx2 = rx * rx;
+  const ry2 = ry * ry;
+  for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y += 1) {
+    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x += 1) {
+      const dx = x - cx;
+      const dy = y - cy;
+      if ((dx * dx) / rx2 + (dy * dy) / ry2 <= 1) setPixel(canvas, x, y, color);
+    }
+  }
+}
+
 function pointOnCubic(t, p0, p1, p2, p3) {
   const mt = 1 - t;
   const mt2 = mt * mt;
@@ -96,7 +108,7 @@ function drawThread(canvas) {
 }
 
 function drawSmile(canvas, color) {
-  const curve = [{ x: 218, y: 374 }, { x: 236, y: 392 }, { x: 276, y: 392 }, { x: 294, y: 374 }];
+  const curve = [{ x: 218, y: 378 }, { x: 238, y: 396 }, { x: 274, y: 396 }, { x: 294, y: 378 }];
   for (let i = 0; i <= 90; i += 1) {
     const point = pointOnCubic(i / 90, ...curve);
     drawCircle(canvas, Math.round(point.x), Math.round(point.y), 6, color);
@@ -110,6 +122,7 @@ function drawCorgi(canvas) {
     brown: rgba("#8b5b2b"),
     orange: rgba("#c98235"),
     orangeLight: rgba("#d59142"),
+    earInner: rgba("#e0a04a"),
     orangeMid: rgba("#b87732"),
     orangeDark: rgba("#a8662e"),
     cream: rgba("#f4ead3"),
@@ -119,26 +132,26 @@ function drawCorgi(canvas) {
   fill(canvas, colors.bg);
   drawThread(canvas);
 
-  fillTriangle(canvas, { x: 116, y: 76 }, { x: 202, y: 206 }, { x: 82, y: 230 }, colors.brown);
-  fillTriangle(canvas, { x: 396, y: 76 }, { x: 310, y: 206 }, { x: 430, y: 230 }, colors.brown);
-  fillTriangle(canvas, { x: 128, y: 118 }, { x: 184, y: 204 }, { x: 112, y: 214 }, colors.orangeLight);
-  fillTriangle(canvas, { x: 384, y: 118 }, { x: 328, y: 204 }, { x: 400, y: 214 }, colors.orangeLight);
+  fillTriangle(canvas, { x: 104, y: 58 }, { x: 210, y: 214 }, { x: 68, y: 238 }, colors.brown);
+  fillTriangle(canvas, { x: 408, y: 58 }, { x: 302, y: 214 }, { x: 444, y: 238 }, colors.brown);
+  fillTriangle(canvas, { x: 126, y: 116 }, { x: 186, y: 204 }, { x: 104, y: 218 }, colors.earInner);
+  fillTriangle(canvas, { x: 386, y: 116 }, { x: 326, y: 204 }, { x: 408, y: 218 }, colors.earInner);
 
-  drawCircle(canvas, 256, 280, 174, colors.orange);
-  drawCircle(canvas, 174, 300, 86, colors.orangeLight);
-  drawCircle(canvas, 338, 300, 86, colors.orangeLight);
-  drawCircle(canvas, 256, 216, 82, colors.orangeLight);
+  drawCircle(canvas, 256, 284, 174, colors.orange);
+  drawCircle(canvas, 164, 306, 92, colors.orangeLight);
+  drawCircle(canvas, 348, 306, 92, colors.orangeLight);
+  drawCircle(canvas, 256, 212, 88, colors.orangeLight);
 
-  drawCircle(canvas, 256, 318, 104, colors.cream);
-  fillRect(canvas, 152, 318, 208, 64, colors.cream);
-  drawCircle(canvas, 188, 326, 58, colors.cream);
-  drawCircle(canvas, 324, 326, 58, colors.cream);
+  fillTriangle(canvas, { x: 214, y: 142 }, { x: 298, y: 142 }, { x: 256, y: 426 }, colors.cream);
+  drawEllipse(canvas, 256, 340, 106, 88, colors.cream);
+  drawEllipse(canvas, 178, 330, 58, 60, colors.cream);
+  drawEllipse(canvas, 334, 330, 58, 60, colors.cream);
 
-  drawCircle(canvas, 184, 264, 22, colors.dark);
-  drawCircle(canvas, 328, 264, 22, colors.dark);
-  drawCircle(canvas, 194, 254, 6, colors.white);
-  drawCircle(canvas, 338, 254, 6, colors.white);
-  drawCircle(canvas, 256, 334, 24, colors.dark);
+  drawCircle(canvas, 184, 272, 21, colors.dark);
+  drawCircle(canvas, 328, 272, 21, colors.dark);
+  drawCircle(canvas, 193, 262, 6, colors.white);
+  drawCircle(canvas, 337, 262, 6, colors.white);
+  drawEllipse(canvas, 256, 340, 28, 22, colors.dark);
   drawSmile(canvas, colors.dark);
 }
 
