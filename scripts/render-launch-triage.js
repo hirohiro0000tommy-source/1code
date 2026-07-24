@@ -87,7 +87,7 @@ function printEnvPlan() {
   ];
 
   console.log("");
-  console.log("Render env checklist");
+  console.log("Local env visibility checklist");
   console.log("KEY                      STATE                         EXPECTED");
   for (const [key, state, expected] of rows) {
     console.log(`${key.padEnd(24)} ${state.padEnd(29)} ${expected}`);
@@ -135,7 +135,7 @@ async function main() {
   if (allFailed || timeouts.length >= 2) {
     console.log("- Open Render -> 1code -> Logs and confirm whether node server.js starts.");
     console.log("- If it exits immediately, fix the first fatal log line.");
-    console.log("- If it keeps restarting, confirm DATABASE_URL, DATABASE_SSL=true, SESSION_SECRET, ADMIN_PIN, and PUBLIC_BASE_URL.");
+    console.log("- If it keeps restarting, confirm the actual Render env values for DATABASE_URL, DATABASE_SSL=true, SESSION_SECRET, ADMIN_PIN, and PUBLIC_BASE_URL.");
     console.log("- If Discord is postponed, set DISCORD_LOGIN_ENABLED=false and redeploy.");
   } else if (serverErrors.length) {
     console.log("- The service is reachable but returning 5xx. Check Render logs around the request time and the app status JSON.");
