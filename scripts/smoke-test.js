@@ -322,6 +322,19 @@ async function run() {
     });
     assert(invalidLimitConfig.status !== 0 && invalidLimitConfig.stdout.includes("MAX_REQUEST_BODY_BYTES") && invalidLimitConfig.stdout.includes("SERVER_REQUEST_TIMEOUT_MS"), "invalid production request limits were not blocked");
 
+    const discordPostponedConfig = runNodeScript(["scripts/production-config-check.js", "--strict"], {
+      NODE_ENV: "production",
+      STORAGE_DRIVER: "postgres",
+      DATABASE_URL: "postgres://smoke_app:smoke-secret@db.smoke.test:5432/partyfinder",
+      DATABASE_SSL: "true",
+      PUBLIC_BASE_URL: "https://example.org",
+      PUBLIC_SECURITY_CONTACT: "mailto:security@1code.test",
+      ADMIN_PIN: "safe-admin-pin-123",
+      SESSION_SECRET: "safe-session-secret-for-smoke-testing",
+      DISCORD_LOGIN_ENABLED: "false"
+    });
+    assert(discordPostponedConfig.status === 0 && discordPostponedConfig.stdout.includes("DISCORD_LOGIN_ENABLED (false)"), "discord postponed production config should pass");
+
     let shortAdminPinBlocked = false;
     const shortAdminPinChild = spawn(process.execPath, ["server.js"], {
       cwd: root,
