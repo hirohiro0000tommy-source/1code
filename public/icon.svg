@@ -1,16 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
   <title id="title">Red Thread string phone icon</title>
-  <desc id="desc">Minimal single string phone cup with a red thread on a black background.</desc>
-  <rect width="512" height="512" rx="96" fill="#08090b"/>
+  <desc id="desc">Minimal paper cup string phone icon with a red thread on a white background.</desc>
+  <rect width="512" height="512" rx="96" fill="#fff"/>
 
   <g>
-    <path d="M276 360 C328 420 408 450 500 462" fill="none" stroke="#c93542" stroke-width="32" stroke-linecap="round"/>
+    <path d="M102 306 C104 362 152 418 246 426 S404 402 480 438" fill="none" stroke="#d71928" stroke-width="22" stroke-linecap="round"/>
 
-    <polygon points="92,56 430,134 334,424 18,318" fill="#f7f7f4"/>
-    <polygon points="92,56 430,134 400,224 62,126" fill="#ffffff"/>
-    <polygon points="62,126 400,224 374,304 40,202" fill="#f2f2ee"/>
-    <path d="M92 56 L430 134" fill="none" stroke="#d8d8d2" stroke-width="28" stroke-linecap="round"/>
-    <path d="M18 318 L334 424" fill="none" stroke="#e8e8e2" stroke-width="28" stroke-linecap="round"/>
-    <circle cx="276" cy="360" r="24" fill="#c93542"/>
+    <polygon points="92,112 434,76 414,362 80,326" fill="#fbfaf6"/>
+    <polygon points="92,112 434,76 430,150 88,186" fill="#fff"/>
+    <polygon points="86,196 424,162 420,234 84,268" fill="#f3f2ee"/>
+    <path d="M92 112 L434 76" fill="none" stroke="#d6d4ce" stroke-width="18" stroke-linecap="round"/>
+    <path d="M80 326 L414 362" fill="none" stroke="#dedcd6" stroke-width="18" stroke-linecap="round"/>
+    <path d="M154 106 C132 168 126 256 148 334" fill="none" stroke="#ddd9d2" stroke-width="12" stroke-linecap="round"/>
+    <path d="M260 94 C238 166 232 266 252 344" fill="none" stroke="#ddd9d2" stroke-width="12" stroke-linecap="round"/>
+    <path d="M366 84 C344 162 338 274 358 354" fill="none" stroke="#ddd9d2" stroke-width="12" stroke-linecap="round"/>
   </g>
 </svg>
