@@ -352,6 +352,9 @@ else fail("recent request history", "missing");
 if (server.includes("rateLimitBlockedCount") && server.includes("recentRateLimits")) pass("rate limit history");
 else fail("rate limit history", "missing");
 
+if (server.includes("function clientIp") && server.includes("x-forwarded-for") && server.includes("replace(/^::ffff:/") && smoke.includes("forwarded client ip was not used for rate limit bucket")) pass("forwarded client ip rate limit");
+else fail("forwarded client ip rate limit", "missing");
+
 if (server.includes("\"retry-after\"") && server.includes("\"x-ratelimit-limit\"") && smoke.includes("rate limit retry-after headers missing")) pass("rate limit response headers");
 else fail("rate limit response headers", "missing");
 

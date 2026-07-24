@@ -26,7 +26,8 @@ function request(pathname, options = {}) {
         "x-display-name": options.displayName || "SmokeUser",
         "x-admin-pin": options.adminPin || "",
         "x-beta-code": options.betaCode || "",
-        ...(options.origin ? { origin: options.origin } : {})
+        ...(options.origin ? { origin: options.origin } : {}),
+        ...(options.headers || {})
       }
     }, res => {
       let raw = "";
@@ -244,6 +245,23 @@ async function run() {
         && error.data?.retryAfterSeconds >= 1;
     }
     assert(rateLimitBlocked, "rate limit retry-after headers missing");
+
+    for (let i = 0; i < 5; i += 1) {
+      const forwardedInquiry = await request("/api/inquiries", {
+        method: "POST",
+        accountId: "rate-limit-forwarded-smoke",
+        headers: { "x-forwarded-for": "198.51.100.10, 10.0.0.1" },
+        body: { name: "Forwarded Rate Limit", category: "その他", message: `forwarded rate limit probe ${i}` }
+      });
+      assert(forwardedInquiry.ok, "forwarded rate limit warmup inquiry failed");
+    }
+    const forwardedDifferentIp = await request("/api/inquiries", {
+      method: "POST",
+      accountId: "rate-limit-forwarded-smoke",
+      headers: { "x-forwarded-for": "198.51.100.11, 10.0.0.1" },
+      body: { name: "Forwarded Rate Limit", category: "その他", message: "forwarded different ip should pass" }
+    });
+    assert(forwardedDifferentIp.ok, "forwarded client ip was not used for rate limit bucket");
 
     const roleAdminStats = await request("/api/admin/stats", { accountId: "smoke-admin", displayName: "SmokeAdmin" });
     assert(roleAdminStats.stats, "admin account role did not access admin stats");
