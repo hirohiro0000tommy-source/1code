@@ -3096,7 +3096,7 @@ function renderSystem(system) {
           ${recentRateLimits.map(entry => `
             <div class="system-check warn">
               <strong>${escapeHtml(entry.count || 0)}/${escapeHtml(entry.max || 0)}</strong>
-              <span>${escapeHtml(entry.method)} ${escapeHtml(entry.path)} / acct:${escapeHtml(entry.accountId || "-")} / src:${escapeHtml(entry.ipHash || "-")} / ${timeAgo(entry.at)}</span>
+              <span>${escapeHtml(entry.method)} ${escapeHtml(entry.path)} / acct:${escapeHtml(entry.accountId || "-")} / src:${escapeHtml(entry.ipHash || "-")} ${escapeHtml(entry.ipSource || "")} / ${timeAgo(entry.at)}</span>
             </div>
           `).join("")}
         </div>

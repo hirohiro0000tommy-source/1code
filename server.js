@@ -3795,20 +3795,24 @@ function rateLimitRule(req, url) {
   return { windowMs: rateWindowMs, max: 60 };
 }
 
-function clientIp(req) {
+function clientIpInfo(req) {
   const forwarded = String(req.headers["x-forwarded-for"] || "")
     .split(",")
     .map(value => value.trim())
     .find(Boolean);
   const candidate = forwarded || req.socket.remoteAddress || "unknown";
-  return cleanText(candidate.replace(/^::ffff:/, ""), 80) || "unknown";
+  return {
+    ip: cleanText(candidate.replace(/^::ffff:/, ""), 80) || "unknown",
+    source: forwarded ? "x-forwarded-for" : "remoteAddress"
+  };
 }
 
 function rateLimit(req, res, url) {
   if (req.method === "GET") return true;
   if (isAdmin(req)) return true;
   const now = Date.now();
-  const ip = clientIp(req);
+  const ipInfo = clientIpInfo(req);
+  const ip = ipInfo.ip;
   const account = accountId(req);
   const key = `${ip}:${account}:${url.pathname}`;
   const rule = rateLimitRule(req, url);
@@ -3827,6 +3831,7 @@ function rateLimit(req, res, url) {
       path: url.pathname,
       accountId: account || "",
       ipHash: shortFingerprint(ip),
+      ipSource: ipInfo.source,
       count: bucket.count,
       max: rule.max,
       retryAfterSeconds,

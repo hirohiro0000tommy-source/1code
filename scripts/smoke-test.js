@@ -255,6 +255,18 @@ async function run() {
       });
       assert(forwardedInquiry.ok, "forwarded rate limit warmup inquiry failed");
     }
+    let forwardedRateLimitBlocked = false;
+    try {
+      await request("/api/inquiries", {
+        method: "POST",
+        accountId: "rate-limit-forwarded-smoke",
+        headers: { "x-forwarded-for": "198.51.100.10, 10.0.0.1" },
+        body: { name: "Forwarded Rate Limit", category: "その他", message: "forwarded same ip should block" }
+      });
+    } catch (error) {
+      forwardedRateLimitBlocked = error.statusCode === 429;
+    }
+    assert(forwardedRateLimitBlocked, "forwarded client ip rate limit was not blocked");
     const forwardedDifferentIp = await request("/api/inquiries", {
       method: "POST",
       accountId: "rate-limit-forwarded-smoke",
@@ -1361,6 +1373,7 @@ async function run() {
     assert(systemWithRef.system.health.runtime.refCounts["beta-invite"] >= 1, "ref tracking failed");
     assert(typeof systemWithRef.system.health.runtime.rateLimitBlockedCount === "number", "rate limit blocked count missing");
     assert(Array.isArray(systemWithRef.system.health.runtime.recentRateLimits), "recent rate limit list missing");
+    assert(systemWithRef.system.health.runtime.recentRateLimits.some(entry => entry.ipSource === "x-forwarded-for"), "forwarded rate limit source missing");
 
     await request(`/api/admin/inquiries/${smokeInquiry.id}/triage`, {
       method: "POST",
