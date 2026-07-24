@@ -107,52 +107,58 @@ function drawThread(canvas) {
   }
 }
 
-function drawSmile(canvas, color) {
-  const curve = [{ x: 218, y: 378 }, { x: 238, y: 396 }, { x: 274, y: 396 }, { x: 294, y: 378 }];
-  for (let i = 0; i <= 90; i += 1) {
-    const point = pointOnCubic(i / 90, ...curve);
-    drawCircle(canvas, Math.round(point.x), Math.round(point.y), 6, color);
+function drawCurve(canvas, curve, radius, color, steps = 120) {
+  for (let i = 0; i <= steps; i += 1) {
+    const point = pointOnCubic(i / steps, ...curve);
+    drawCircle(canvas, Math.round(point.x), Math.round(point.y), radius, color);
   }
 }
 
-function drawCorgi(canvas) {
+function drawThickLine(canvas, from, to, radius, color) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const steps = Math.max(Math.abs(dx), Math.abs(dy));
+  for (let i = 0; i <= steps; i += 1) {
+    const t = i / steps;
+    drawCircle(canvas, Math.round(from.x + dx * t), Math.round(from.y + dy * t), radius, color);
+  }
+}
+
+function drawStringPhone(canvas) {
   const colors = {
     bg: rgba("#08090b"),
-    dark: rgba("#111111"),
-    brown: rgba("#8b5b2b"),
-    orange: rgba("#c98235"),
-    orangeLight: rgba("#d59142"),
-    earInner: rgba("#e0a04a"),
-    orangeMid: rgba("#b87732"),
-    orangeDark: rgba("#a8662e"),
-    cream: rgba("#f4ead3"),
-    white: rgba("#ffffff")
+    red: rgba("#c93542"),
+    cup: rgba("#f7f7f4"),
+    cupTop: rgba("#ffffff"),
+    rim: rgba("#d8d8d2"),
+    base: rgba("#e8e8e2")
   };
 
   fill(canvas, colors.bg);
-  drawThread(canvas);
 
-  fillTriangle(canvas, { x: 104, y: 58 }, { x: 210, y: 214 }, { x: 68, y: 238 }, colors.brown);
-  fillTriangle(canvas, { x: 408, y: 58 }, { x: 302, y: 214 }, { x: 444, y: 238 }, colors.brown);
-  fillTriangle(canvas, { x: 126, y: 116 }, { x: 186, y: 204 }, { x: 104, y: 218 }, colors.earInner);
-  fillTriangle(canvas, { x: 386, y: 116 }, { x: 326, y: 204 }, { x: 408, y: 218 }, colors.earInner);
+  drawCurve(canvas, [
+    { x: 124, y: 278 },
+    { x: 178, y: 378 },
+    { x: 334, y: 378 },
+    { x: 388, y: 278 }
+  ], 13, colors.red, 140);
+  drawCircle(canvas, 256, 382, 17, colors.red);
 
-  drawCircle(canvas, 256, 284, 174, colors.orange);
-  drawCircle(canvas, 164, 306, 92, colors.orangeLight);
-  drawCircle(canvas, 348, 306, 92, colors.orangeLight);
-  drawCircle(canvas, 256, 212, 88, colors.orangeLight);
+  fillTriangle(canvas, { x: 74, y: 152 }, { x: 198, y: 196 }, { x: 34, y: 276 }, colors.cup);
+  fillTriangle(canvas, { x: 198, y: 196 }, { x: 152, y: 318 }, { x: 34, y: 276 }, colors.cup);
+  fillTriangle(canvas, { x: 74, y: 152 }, { x: 198, y: 196 }, { x: 58, y: 198 }, colors.cupTop);
+  fillTriangle(canvas, { x: 198, y: 196 }, { x: 180, y: 242 }, { x: 58, y: 198 }, colors.cupTop);
+  drawThickLine(canvas, { x: 74, y: 152 }, { x: 198, y: 196 }, 9, colors.rim);
+  drawThickLine(canvas, { x: 58, y: 276 }, { x: 152, y: 318 }, 9, colors.base);
+  drawCircle(canvas, 124, 278, 14, colors.red);
 
-  fillTriangle(canvas, { x: 214, y: 142 }, { x: 298, y: 142 }, { x: 256, y: 426 }, colors.cream);
-  drawEllipse(canvas, 256, 340, 106, 88, colors.cream);
-  drawEllipse(canvas, 178, 330, 58, 60, colors.cream);
-  drawEllipse(canvas, 334, 330, 58, 60, colors.cream);
-
-  drawCircle(canvas, 184, 272, 21, colors.dark);
-  drawCircle(canvas, 328, 272, 21, colors.dark);
-  drawCircle(canvas, 193, 262, 6, colors.white);
-  drawCircle(canvas, 337, 262, 6, colors.white);
-  drawEllipse(canvas, 256, 340, 28, 22, colors.dark);
-  drawSmile(canvas, colors.dark);
+  fillTriangle(canvas, { x: 438, y: 152 }, { x: 314, y: 196 }, { x: 478, y: 276 }, colors.cup);
+  fillTriangle(canvas, { x: 314, y: 196 }, { x: 360, y: 318 }, { x: 478, y: 276 }, colors.cup);
+  fillTriangle(canvas, { x: 438, y: 152 }, { x: 314, y: 196 }, { x: 454, y: 198 }, colors.cupTop);
+  fillTriangle(canvas, { x: 314, y: 196 }, { x: 332, y: 242 }, { x: 454, y: 198 }, colors.cupTop);
+  drawThickLine(canvas, { x: 438, y: 152 }, { x: 314, y: 196 }, 9, colors.rim);
+  drawThickLine(canvas, { x: 454, y: 276 }, { x: 360, y: 318 }, 9, colors.base);
+  drawCircle(canvas, 388, 278, 14, colors.red);
 }
 
 function resizeNearest(source, targetSize) {
@@ -215,7 +221,7 @@ function png(canvas) {
 }
 
 const base = makeCanvas(baseSize);
-drawCorgi(base);
+drawStringPhone(base);
 
 const outputs = [
   ["icon-512.png", 512],
