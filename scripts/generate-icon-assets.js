@@ -127,41 +127,52 @@ function drawThickLine(canvas, from, to, radius, color) {
 function drawStringPhone(canvas) {
   const colors = {
     bg: rgba("#ffffff"),
-    red: rgba("#d71928"),
+    red: rgba("#e10f21"),
     cup: rgba("#fbfaf6"),
     cupTop: rgba("#ffffff"),
     band: rgba("#f3f2ee"),
-    rim: rgba("#d6d4ce"),
-    base: rgba("#dedcd6"),
-    line: rgba("#ddd9d2")
+    rim: rgba("#bdb9ae"),
+    base: rgba("#d6d2c8"),
+    line: rgba("#d9d6ce"),
+    shade: rgba("#f2efe6")
   };
 
   fill(canvas, colors.bg);
 
   drawCurve(canvas, [
-    { x: 102, y: 306 },
-    { x: 104, y: 362 },
-    { x: 152, y: 418 },
-    { x: 246, y: 426 }
-  ], 11, colors.red, 90);
+    { x: 166, y: 238 },
+    { x: 82, y: 252 },
+    { x: 24, y: 296 },
+    { x: 28, y: 338 }
+  ], 12, colors.red, 90);
   drawCurve(canvas, [
-    { x: 246, y: 426 },
-    { x: 324, y: 434 },
-    { x: 404, y: 402 },
-    { x: 480, y: 438 }
-  ], 11, colors.red, 90);
+    { x: 28, y: 338 },
+    { x: 34, y: 408 },
+    { x: 174, y: 400 },
+    { x: 286, y: 418 }
+  ], 12, colors.red, 120);
+  drawCurve(canvas, [
+    { x: 286, y: 418 },
+    { x: 384, y: 434 },
+    { x: 414, y: 474 },
+    { x: 482, y: 476 }
+  ], 12, colors.red, 90);
 
-  fillTriangle(canvas, { x: 92, y: 112 }, { x: 434, y: 76 }, { x: 80, y: 326 }, colors.cup);
-  fillTriangle(canvas, { x: 434, y: 76 }, { x: 414, y: 362 }, { x: 80, y: 326 }, colors.cup);
-  fillTriangle(canvas, { x: 92, y: 112 }, { x: 434, y: 76 }, { x: 88, y: 186 }, colors.cupTop);
-  fillTriangle(canvas, { x: 434, y: 76 }, { x: 430, y: 150 }, { x: 88, y: 186 }, colors.cupTop);
-  fillTriangle(canvas, { x: 86, y: 196 }, { x: 424, y: 162 }, { x: 84, y: 268 }, colors.band);
-  fillTriangle(canvas, { x: 424, y: 162 }, { x: 420, y: 234 }, { x: 84, y: 268 }, colors.band);
-  drawThickLine(canvas, { x: 92, y: 112 }, { x: 434, y: 76 }, 9, colors.rim);
-  drawThickLine(canvas, { x: 80, y: 326 }, { x: 414, y: 362 }, 9, colors.base);
-  drawCurve(canvas, [{ x: 154, y: 106 }, { x: 132, y: 168 }, { x: 126, y: 256 }, { x: 148, y: 334 }], 6, colors.line, 90);
-  drawCurve(canvas, [{ x: 260, y: 94 }, { x: 238, y: 166 }, { x: 232, y: 266 }, { x: 252, y: 344 }], 6, colors.line, 90);
-  drawCurve(canvas, [{ x: 366, y: 84 }, { x: 344, y: 162 }, { x: 338, y: 274 }, { x: 358, y: 354 }], 6, colors.line, 90);
+  fillTriangle(canvas, { x: 168, y: 180 }, { x: 378, y: 132 }, { x: 168, y: 288 }, colors.cup);
+  fillTriangle(canvas, { x: 378, y: 132 }, { x: 378, y: 344 }, { x: 168, y: 288 }, colors.cup);
+  fillTriangle(canvas, { x: 168, y: 180 }, { x: 378, y: 132 }, { x: 178, y: 246 }, colors.cupTop);
+  fillTriangle(canvas, { x: 378, y: 132 }, { x: 402, y: 204 }, { x: 178, y: 246 }, colors.cupTop);
+  fillTriangle(canvas, { x: 176, y: 252 }, { x: 404, y: 210 }, { x: 170, y: 288 }, colors.band);
+  fillTriangle(canvas, { x: 404, y: 210 }, { x: 398, y: 306 }, { x: 170, y: 288 }, colors.band);
+
+  drawThickLine(canvas, { x: 168, y: 180 }, { x: 378, y: 132 }, 4, colors.rim);
+  drawThickLine(canvas, { x: 168, y: 288 }, { x: 378, y: 344 }, 4, colors.rim);
+  drawCurve(canvas, [{ x: 178, y: 184 }, { x: 150, y: 212 }, { x: 148, y: 260 }, { x: 170, y: 288 }], 4, colors.rim, 80);
+  drawCurve(canvas, [{ x: 314, y: 148 }, { x: 286, y: 198 }, { x: 286, y: 286 }, { x: 314, y: 328 }], 6, colors.line, 90);
+  drawEllipse(canvas, 384, 238, 48, 108, colors.rim);
+  drawEllipse(canvas, 384, 238, 40, 100, colors.shade);
+  drawEllipse(canvas, 390, 238, 32, 90, colors.base);
+  drawEllipse(canvas, 390, 238, 26, 84, colors.cupTop);
 }
 
 function resizeNearest(source, targetSize) {
