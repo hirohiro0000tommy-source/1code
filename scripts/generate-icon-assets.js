@@ -40,6 +40,22 @@ function fillRect(canvas, x, y, width, height, color) {
   }
 }
 
+function fillTriangle(canvas, p1, p2, p3, color) {
+  const minX = Math.floor(Math.min(p1.x, p2.x, p3.x));
+  const maxX = Math.ceil(Math.max(p1.x, p2.x, p3.x));
+  const minY = Math.floor(Math.min(p1.y, p2.y, p3.y));
+  const maxY = Math.ceil(Math.max(p1.y, p2.y, p3.y));
+  const area = (p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y);
+  for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      const a = ((p2.y - p3.y) * (x - p3.x) + (p3.x - p2.x) * (y - p3.y)) / area;
+      const b = ((p3.y - p1.y) * (x - p3.x) + (p1.x - p3.x) * (y - p3.y)) / area;
+      const c = 1 - a - b;
+      if (a >= 0 && b >= 0 && c >= 0) setPixel(canvas, x, y, color);
+    }
+  }
+}
+
 function fill(canvas, color) {
   fillRect(canvas, 0, 0, canvas.size, canvas.size, color);
 }
@@ -79,6 +95,14 @@ function drawThread(canvas) {
   }
 }
 
+function drawSmile(canvas, color) {
+  const curve = [{ x: 218, y: 374 }, { x: 236, y: 392 }, { x: 276, y: 392 }, { x: 294, y: 374 }];
+  for (let i = 0; i <= 90; i += 1) {
+    const point = pointOnCubic(i / 90, ...curve);
+    drawCircle(canvas, Math.round(point.x), Math.round(point.y), 6, color);
+  }
+}
+
 function drawCorgi(canvas) {
   const colors = {
     bg: rgba("#08090b"),
@@ -95,30 +119,27 @@ function drawCorgi(canvas) {
   fill(canvas, colors.bg);
   drawThread(canvas);
 
-  const rects = [
-    [64, 80, 112, 128, colors.brown],
-    [336, 80, 112, 128, colors.brown],
-    [80, 184, 112, 104, colors.orangeMid],
-    [320, 184, 112, 104, colors.orangeMid],
-    [96, 128, 320, 320, colors.orange],
-    [160, 96, 192, 72, colors.orangeLight],
-    [88, 232, 336, 128, colors.orangeLight],
-    [168, 176, 176, 264, colors.cream],
-    [128, 248, 72, 128, colors.cream],
-    [312, 248, 72, 128, colors.cream],
-    [200, 400, 112, 40, colors.cream],
-    [152, 240, 48, 48, colors.dark],
-    [312, 240, 48, 48, colors.dark],
-    [176, 224, 16, 16, colors.white],
-    [336, 224, 16, 16, colors.white],
-    [232, 312, 48, 48, colors.dark],
-    [216, 376, 80, 16, colors.dark],
-    [200, 360, 24, 16, colors.dark],
-    [288, 360, 24, 16, colors.dark],
-    [0, 480, 512, 32, colors.bg]
-  ];
+  fillTriangle(canvas, { x: 116, y: 76 }, { x: 202, y: 206 }, { x: 82, y: 230 }, colors.brown);
+  fillTriangle(canvas, { x: 396, y: 76 }, { x: 310, y: 206 }, { x: 430, y: 230 }, colors.brown);
+  fillTriangle(canvas, { x: 128, y: 118 }, { x: 184, y: 204 }, { x: 112, y: 214 }, colors.orangeLight);
+  fillTriangle(canvas, { x: 384, y: 118 }, { x: 328, y: 204 }, { x: 400, y: 214 }, colors.orangeLight);
 
-  for (const [x, y, w, h, color] of rects) fillRect(canvas, x, y, w, h, color);
+  drawCircle(canvas, 256, 280, 174, colors.orange);
+  drawCircle(canvas, 174, 300, 86, colors.orangeLight);
+  drawCircle(canvas, 338, 300, 86, colors.orangeLight);
+  drawCircle(canvas, 256, 216, 82, colors.orangeLight);
+
+  drawCircle(canvas, 256, 318, 104, colors.cream);
+  fillRect(canvas, 152, 318, 208, 64, colors.cream);
+  drawCircle(canvas, 188, 326, 58, colors.cream);
+  drawCircle(canvas, 324, 326, 58, colors.cream);
+
+  drawCircle(canvas, 184, 264, 22, colors.dark);
+  drawCircle(canvas, 328, 264, 22, colors.dark);
+  drawCircle(canvas, 194, 254, 6, colors.white);
+  drawCircle(canvas, 338, 254, 6, colors.white);
+  drawCircle(canvas, 256, 334, 24, colors.dark);
+  drawSmile(canvas, colors.dark);
 }
 
 function resizeNearest(source, targetSize) {
