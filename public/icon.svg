@@ -1,22 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
   <title id="title">Red Thread string phone icon</title>
-  <desc id="desc">Minimal string phone icon with two white cups connected by a red thread on a black background.</desc>
+  <desc id="desc">Minimal single string phone cup with a red thread on a black background.</desc>
   <rect width="512" height="512" rx="96" fill="#08090b"/>
 
   <g>
-    <path d="M124 278 C178 378 334 378 388 278" fill="none" stroke="#c93542" stroke-width="26" stroke-linecap="round"/>
-    <circle cx="256" cy="382" r="17" fill="#c93542"/>
+    <path d="M276 360 C328 420 408 450 500 462" fill="none" stroke="#c93542" stroke-width="32" stroke-linecap="round"/>
 
-    <polygon points="74,152 198,196 152,318 34,276" fill="#f7f7f4"/>
-    <polygon points="74,152 198,196 180,242 58,198" fill="#ffffff"/>
-    <path d="M74 152 L198 196" fill="none" stroke="#d8d8d2" stroke-width="18" stroke-linecap="round"/>
-    <path d="M58 276 L152 318" fill="none" stroke="#e8e8e2" stroke-width="18" stroke-linecap="round"/>
-    <circle cx="124" cy="278" r="14" fill="#c93542"/>
-
-    <polygon points="438,152 314,196 360,318 478,276" fill="#f7f7f4"/>
-    <polygon points="438,152 314,196 332,242 454,198" fill="#ffffff"/>
-    <path d="M438 152 L314 196" fill="none" stroke="#d8d8d2" stroke-width="18" stroke-linecap="round"/>
-    <path d="M454 276 L360 318" fill="none" stroke="#e8e8e2" stroke-width="18" stroke-linecap="round"/>
-    <circle cx="388" cy="278" r="14" fill="#c93542"/>
+    <polygon points="92,56 430,134 334,424 18,318" fill="#f7f7f4"/>
+    <polygon points="92,56 430,134 400,224 62,126" fill="#ffffff"/>
+    <polygon points="62,126 400,224 374,304 40,202" fill="#f2f2ee"/>
+    <path d="M92 56 L430 134" fill="none" stroke="#d8d8d2" stroke-width="28" stroke-linecap="round"/>
+    <path d="M18 318 L334 424" fill="none" stroke="#e8e8e2" stroke-width="28" stroke-linecap="round"/>
+    <circle cx="276" cy="360" r="24" fill="#c93542"/>
   </g>
 </svg>

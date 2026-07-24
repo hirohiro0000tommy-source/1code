@@ -137,28 +137,21 @@ function drawStringPhone(canvas) {
   fill(canvas, colors.bg);
 
   drawCurve(canvas, [
-    { x: 124, y: 278 },
-    { x: 178, y: 378 },
-    { x: 334, y: 378 },
-    { x: 388, y: 278 }
-  ], 13, colors.red, 140);
-  drawCircle(canvas, 256, 382, 17, colors.red);
+    { x: 276, y: 360 },
+    { x: 328, y: 420 },
+    { x: 408, y: 450 },
+    { x: 500, y: 462 }
+  ], 16, colors.red, 140);
 
-  fillTriangle(canvas, { x: 74, y: 152 }, { x: 198, y: 196 }, { x: 34, y: 276 }, colors.cup);
-  fillTriangle(canvas, { x: 198, y: 196 }, { x: 152, y: 318 }, { x: 34, y: 276 }, colors.cup);
-  fillTriangle(canvas, { x: 74, y: 152 }, { x: 198, y: 196 }, { x: 58, y: 198 }, colors.cupTop);
-  fillTriangle(canvas, { x: 198, y: 196 }, { x: 180, y: 242 }, { x: 58, y: 198 }, colors.cupTop);
-  drawThickLine(canvas, { x: 74, y: 152 }, { x: 198, y: 196 }, 9, colors.rim);
-  drawThickLine(canvas, { x: 58, y: 276 }, { x: 152, y: 318 }, 9, colors.base);
-  drawCircle(canvas, 124, 278, 14, colors.red);
-
-  fillTriangle(canvas, { x: 438, y: 152 }, { x: 314, y: 196 }, { x: 478, y: 276 }, colors.cup);
-  fillTriangle(canvas, { x: 314, y: 196 }, { x: 360, y: 318 }, { x: 478, y: 276 }, colors.cup);
-  fillTriangle(canvas, { x: 438, y: 152 }, { x: 314, y: 196 }, { x: 454, y: 198 }, colors.cupTop);
-  fillTriangle(canvas, { x: 314, y: 196 }, { x: 332, y: 242 }, { x: 454, y: 198 }, colors.cupTop);
-  drawThickLine(canvas, { x: 438, y: 152 }, { x: 314, y: 196 }, 9, colors.rim);
-  drawThickLine(canvas, { x: 454, y: 276 }, { x: 360, y: 318 }, 9, colors.base);
-  drawCircle(canvas, 388, 278, 14, colors.red);
+  fillTriangle(canvas, { x: 92, y: 56 }, { x: 430, y: 134 }, { x: 18, y: 318 }, colors.cup);
+  fillTriangle(canvas, { x: 430, y: 134 }, { x: 334, y: 424 }, { x: 18, y: 318 }, colors.cup);
+  fillTriangle(canvas, { x: 92, y: 56 }, { x: 430, y: 134 }, { x: 62, y: 126 }, colors.cupTop);
+  fillTriangle(canvas, { x: 430, y: 134 }, { x: 400, y: 224 }, { x: 62, y: 126 }, colors.cupTop);
+  fillTriangle(canvas, { x: 62, y: 126 }, { x: 400, y: 224 }, { x: 40, y: 202 }, colors.base);
+  fillTriangle(canvas, { x: 400, y: 224 }, { x: 374, y: 304 }, { x: 40, y: 202 }, colors.base);
+  drawThickLine(canvas, { x: 92, y: 56 }, { x: 430, y: 134 }, 14, colors.rim);
+  drawThickLine(canvas, { x: 18, y: 318 }, { x: 334, y: 424 }, 14, colors.base);
+  drawCircle(canvas, 276, 360, 24, colors.red);
 }
 
 function resizeNearest(source, targetSize) {
