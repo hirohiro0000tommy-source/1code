@@ -848,6 +848,14 @@ function applyAnonymousModeToForms() {
   const enabled = !!profileValues().anonymousMode;
   if ($("#anonymousRecruitmentInput")) $("#anonymousRecruitmentInput").checked = enabled;
   if ($("#anonymousThreadInput")) $("#anonymousThreadInput").checked = enabled;
+  renderAnonymousToggleState();
+}
+
+function renderAnonymousToggleState() {
+  document.querySelectorAll(".anonymous-toggle").forEach(label => {
+    const input = label.querySelector("input[type='checkbox']");
+    label.classList.toggle("active", !!input?.checked);
+  });
 }
 
 function renderProfileGameOptions(selectedGames = []) {
@@ -4668,8 +4676,13 @@ document.body.addEventListener("click", event => {
 
 document.body.addEventListener("change", event => {
   const input = event.target.closest?.(".check-list input[type='checkbox']");
-  if (!input) return;
-  syncCheckedLabel(input.closest("label"));
+  if (input) {
+    syncCheckedLabel(input.closest("label"));
+    return;
+  }
+  if (event.target.closest?.(".anonymous-toggle input[type='checkbox']")) {
+    renderAnonymousToggleState();
+  }
 });
 
 document.body.addEventListener("click", event => {

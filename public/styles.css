@@ -990,6 +990,57 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   justify-content: flex-start;
   width: fit-content;
 }
+.anonymous-toggle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+  padding: 10px;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+.anonymous-toggle input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ink);
+}
+.anonymous-toggle strong,
+.anonymous-toggle small {
+  display: block;
+}
+.anonymous-toggle strong {
+  font-size: 14px;
+  line-height: 1.25;
+}
+.anonymous-toggle small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.anonymous-toggle.active {
+  border-style: solid;
+  border-color: var(--ink);
+  background: linear-gradient(90deg, rgba(201, 53, 66, .10), #fff 56%);
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+.anonymous-toggle.active strong::after {
+  content: " ON";
+  color: var(--accent-deep);
+  font-size: 12px;
+}
+.profile-anonymous-toggle {
+  margin-top: 12px;
+}
 .filters {
   display: grid;
   grid-template-columns: minmax(220px, .9fr) minmax(0, 1.4fr);

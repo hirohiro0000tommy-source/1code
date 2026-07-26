@@ -198,7 +198,7 @@
               </select>
             </label>
             <label>本文<textarea id="messageInput" maxlength="500" required placeholder="雰囲気、目的、連絡方法など"></textarea></label>
-            <label class="inline-check anonymous-option"><input id="anonymousRecruitmentInput" type="checkbox">匿名で表示</label>
+            <label class="anonymous-toggle"><input id="anonymousRecruitmentInput" type="checkbox"><span><strong>匿名で投稿</strong><small>名前とプロフィールを表示しません</small></span></label>
             <p class="form-status" id="recruitmentFormStatus" aria-live="polite">本文 0/500</p>
             <p class="form-note">外部IDは、必要なときだけ書けば大丈夫です。</p>
             <button class="btn dark" type="submit">募集を投稿</button>
@@ -287,7 +287,7 @@
             </label>
             <label>本文<textarea id="chatBodyInput" maxlength="500" required placeholder="本文を書く"></textarea></label>
             <label>画像URL<input id="chatImageInput" type="url" maxlength="400" placeholder="https://..."></label>
-            <label class="inline-check anonymous-option"><input id="anonymousThreadInput" type="checkbox">匿名で表示</label>
+            <label class="anonymous-toggle"><input id="anonymousThreadInput" type="checkbox"><span><strong>匿名で投稿</strong><small>名前を表示せずにスレッドを出します</small></span></label>
             <p class="form-status" id="chatFormStatus" aria-live="polite">タイトル 0/72 / 本文 0/500</p>
             <p class="form-note">ネタバレや強めの話題は、タイトルで少し伝えておくと親切です。</p>
             <button class="btn dark" type="submit">スレッドを投稿</button>
@@ -404,7 +404,7 @@
             <span>よく遊ぶゲーム</span>
             <div class="check-list profile-game-list" id="profileGamesInput" aria-label="よく遊ぶゲーム"></div>
           </div>
-          <label class="inline-check anonymous-option"><input id="profileAnonymousInput" type="checkbox">投稿は基本的に匿名で表示</label>
+          <label class="anonymous-toggle profile-anonymous-toggle"><input id="profileAnonymousInput" type="checkbox"><span><strong>匿名モード</strong><small>オンにすると、募集とフリートーク投稿が最初から匿名になります</small></span></label>
           <label>ひとこと<textarea id="profileBioInput" maxlength="160" placeholder="好きな遊び方や、募集で伝えたい雰囲気を書けます。"></textarea></label>
           <div class="actions profile-actions">
             <button class="btn dark" type="submit">プロフィールを保存</button>
