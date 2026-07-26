@@ -87,9 +87,10 @@ const recruitmentDraftFields = [
   "#rankInput",
   "#capacityInput",
   "#styleInput",
-  "#messageInput"
+  "#messageInput",
+  "#anonymousRecruitmentInput"
 ];
-const threadDraftFields = ["#chatTitleInput", "#chatCategoryInput", "#chatBodyInput"];
+const threadDraftFields = ["#chatTitleInput", "#chatCategoryInput", "#chatBodyInput", "#anonymousThreadInput"];
 const rankOptionsByGame = {
   "Shadowverse/Worlds Beyond": ["Beginner", "Bronze", "Silver", "Gold", "Master", "Grand Master"],
   "Pokemon Champions": ["初心者", "ビギナー", "モンスターボール級", "スーパーボール級", "ハイパーボール級", "マスターボール級"],
@@ -101,7 +102,7 @@ const rankOptionsByGame = {
   Splatoon: ["C-", "C", "C+", "B-", "B", "B+", "A-", "A", "A+", "S", "S+", "X"],
   その他: ["初心者", "中級者", "上級者", "ランク不問"]
 };
-let state = { recruitments: [], threads: [], messages: [], publicStatus: null };
+let state = { recruitments: [], threads: [], messages: [], articles: [], publicStatus: null };
 let account = loadAccount();
 let betaAccess = {
   required: false,
@@ -448,7 +449,10 @@ function saveProfile(profile) {
 }
 
 function formDraft(fields) {
-  return Object.fromEntries(fields.map(selector => [selector, $(selector)?.value || ""]));
+  return Object.fromEntries(fields.map(selector => {
+    const field = $(selector);
+    return [selector, field?.type === "checkbox" ? !!field.checked : field?.value || ""];
+  }));
 }
 
 function saveFormDraft(key, fields) {
@@ -459,7 +463,10 @@ function restoreFormDraft(key, fields) {
   const values = readStoredJson(localStorage, key);
   if (!values) return;
   fields.forEach(selector => {
-    if ($(selector) && values[selector] !== undefined) $(selector).value = values[selector];
+    const field = $(selector);
+    if (!field || values[selector] === undefined) return;
+    if (field.type === "checkbox") field.checked = !!values[selector];
+    else field.value = values[selector];
   });
 }
 
@@ -479,7 +486,10 @@ function restoreRecruitmentDraft() {
   if (values["#gameInput"] !== undefined) $("#gameInput").value = values["#gameInput"];
   renderRecruitmentFormOptions();
   recruitmentDraftFields.forEach(selector => {
-    if ($(selector) && values[selector] !== undefined) $(selector).value = values[selector];
+    const field = $(selector);
+    if (!field || values[selector] === undefined) return;
+    if (field.type === "checkbox") field.checked = !!values[selector];
+    else field.value = values[selector];
   });
   renderRecruitmentFormOptions();
 }
@@ -939,6 +949,10 @@ function updateCreateButton(viewId = document.querySelector(".view.active")?.id 
   const button = $("#openRecruitFormButton");
   if (viewId === "chatView") {
     button.textContent = $("#chatLayout").classList.contains("form-open") ? "入力欄を閉じる" : "スレッドを投稿";
+    return;
+  }
+  if (viewId === "articleView") {
+    button.textContent = "募集を投稿";
     return;
   }
   button.textContent = $("#recruitmentLayout").classList.contains("form-open") ? "入力欄を閉じる" : "募集を投稿";
@@ -1548,6 +1562,14 @@ function appHash(type, id) {
 }
 
 function recruitmentProfileMarkup(post) {
+  if (post.isAnonymous) {
+    return `
+      <div class="poster-profile anonymous-profile">
+        <strong>匿名投稿</strong>
+        <p>この投稿ではプロフィールを公開していません。</p>
+      </div>
+    `;
+  }
   const profile = { ...defaultProfile(), ...(post.authorProfile || {}) };
   const displayName = profile.displayName || post.author || "Anonymous";
   const games = profileGames(profile);
@@ -1577,6 +1599,10 @@ function recruitmentProfileMarkup(post) {
       </div>
     </details>
   `;
+}
+
+function displayAuthor(post) {
+  return post.isAnonymous ? "匿名" : post.author || "Anonymous";
 }
 
 function messageMarkup(message) {
@@ -1811,6 +1837,7 @@ function recruitmentCard(post) {
             ${officialSampleBadges(post, "募集見本")}
             <span class="badge">${escapeHtml(post.game)}</span>
             ${post.isOfficial ? "" : `<span class="badge ${post.status === "closed" ? "light" : ""}">${post.status === "closed" ? "締切" : "募集中"}</span>`}
+            ${post.isAnonymous ? `<span class="badge light">匿名</span>` : ""}
             <span class="badge light">${escapeHtml(post.platform)}</span>
             ${activityBadge(post)}
             <span>${timeAgo(post.createdAt)}</span>
@@ -1855,7 +1882,7 @@ function threadCard(post) {
             ${officialSampleBadges(post, "話題見本")}
             <span class="badge">${escapeHtml(post.category)}</span>
             ${activityBadge(post)}
-            <span>${escapeHtml(post.author)}</span>
+            ${post.isAnonymous ? `<span class="badge light">匿名</span>` : `<span>${escapeHtml(displayAuthor(post))}</span>`}
             <span>${timeAgo(post.createdAt)}</span>
           </div>
           <h2>${escapeHtml(post.title)}</h2>
@@ -1931,6 +1958,44 @@ function renderThreads() {
   }
   const cards = items.map(threadCard);
   $("#chatFeed").innerHTML = cards.join("") + loadMoreMarkup("threads", allItems.length);
+}
+
+function articleCard(article) {
+  const body = String(article.body || "");
+  const shouldCollapse = body.length > 360 || body.split("\n").length > 8;
+  return `
+    <article class="card article-card" data-type="articles" data-id="${escapeHtml(article.id)}">
+      <div class="card-head">
+        <div>
+          <div class="meta">
+            <span class="badge">記事</span>
+            ${article.category ? `<span class="badge light">${escapeHtml(article.category)}</span>` : ""}
+            <span>${escapeHtml(article.author || "Red Thread運営")}</span>
+            <span>${timeAgo(article.publishedAt || article.createdAt)}</span>
+          </div>
+          <h2>${escapeHtml(article.title)}</h2>
+          ${article.summary ? `<p class="card-preview">${escapeHtml(article.summary)}</p>` : ""}
+        </div>
+      </div>
+      <div class="message ${shouldCollapse ? "collapsible" : ""}">${escapeHtml(body)}</div>
+      ${shouldCollapse ? `<button class="link-action body-toggle" type="button" data-action="toggle-article-body">全文を表示</button>` : ""}
+    </article>
+  `;
+}
+
+function renderArticles() {
+  const articles = (state.articles || []).filter(article => article.isPublished !== false);
+  $("#articleCount").textContent = `${articles.length}件`;
+  if (!articles.length) {
+    $("#articleFeed").innerHTML = `
+      <div class="empty">
+        <strong>記事はまだありません</strong>
+        <span>運営からの案内や募集のコツをここに掲載します。</span>
+      </div>
+    `;
+    return;
+  }
+  $("#articleFeed").innerHTML = articles.map(articleCard).join("");
 }
 
 function renderReminder() {
@@ -2335,6 +2400,50 @@ function renderAnnouncementAdmin(announcements = []) {
   $("#announcementFeed").innerHTML = form + (list || `<div class="empty">お知らせはまだありません。</div>`);
 }
 
+function renderArticleAdmin(articles = []) {
+  $("#adminArticleCount").textContent = `${articles.length}件`;
+  const form = `
+    <article class="card">
+      <form class="admin-form" data-action="create-article">
+        <label>タイトル<input name="title" maxlength="90" required placeholder="記事タイトル"></label>
+        <label>カテゴリ
+          <select name="category">
+            <option value="使い方">使い方</option>
+            <option value="更新">更新</option>
+            <option value="コラム">コラム</option>
+            <option value="安全">安全</option>
+          </select>
+        </label>
+        <label>概要<input name="summary" maxlength="160" placeholder="一覧に出す短い説明"></label>
+        <textarea name="body" maxlength="4000" required placeholder="本文"></textarea>
+        <label class="inline-check"><input name="isPublished" type="checkbox" checked>公開する</label>
+        <button class="btn dark" type="submit">記事を追加</button>
+      </form>
+    </article>
+  `;
+  const list = articles.map(item => `
+    <article class="card" data-article-id="${escapeHtml(item.id)}">
+      <div class="card-head">
+        <div>
+          <div class="meta">
+            <span class="badge">${escapeHtml(item.category || "記事")}</span>
+            <span>${item.isPublished !== false ? "公開中" : "下書き"}</span>
+            <span>${timeAgo(item.publishedAt || item.createdAt)}</span>
+          </div>
+          <h2>${escapeHtml(item.title)}</h2>
+          ${item.summary ? `<p class="card-preview">${escapeHtml(item.summary)}</p>` : ""}
+        </div>
+      </div>
+      <div class="message">${escapeHtml(item.body)}</div>
+      <div class="actions">
+        <button class="action" data-action="toggle-article">${item.isPublished === false ? "公開する" : "下書きに戻す"}</button>
+        <button class="action delete" data-action="delete-article">削除</button>
+      </div>
+    </article>
+  `).join("");
+  $("#adminArticleFeed").innerHTML = form + (list || `<div class="empty">記事はまだありません。</div>`);
+}
+
 function renderOfficialBot(botData = {}) {
   const drafts = botData.drafts || [];
   const ready = drafts.filter(draft => !draft.alreadyPublished);
@@ -2629,6 +2738,7 @@ function renderAdminStats(stats) {
     ["未対応DM通報", stats.openMessageReports || 0],
     ["非表示DM", stats.hiddenMessages || 0],
     ["表示中お知らせ", stats.activeAnnouncements],
+    ["公開記事", stats.publishedArticles || 0],
     ["停止ユーザー", stats.suspendedUsers],
     ["いいね", stats.totalLikes],
     ["返信", stats.totalReplies],
@@ -3808,6 +3918,8 @@ async function loadAdminData() {
     $("#botDraftFeed").innerHTML = `<div class="empty">公式ボットは管理者のみ使えます。</div>`;
     $("#announcementCount").textContent = "管理者のみ";
     $("#announcementFeed").innerHTML = `<div class="empty">お知らせ管理は管理者のみ確認できます。</div>`;
+    $("#adminArticleCount").textContent = "管理者のみ";
+    $("#adminArticleFeed").innerHTML = `<div class="empty">記事管理は管理者のみ確認できます。</div>`;
     $("#banCount").textContent = "管理者のみ";
     $("#banFeed").innerHTML = `<div class="empty">停止ユーザー管理は管理者のみ確認できます。</div>`;
     $("#adSlotCount").textContent = "管理者のみ";
@@ -3825,7 +3937,7 @@ async function loadAdminData() {
     renderDeletedItems(deletedItems.deletedItems);
     return;
   }
-  const [stats, system, backupStatus, operatorDigest, incidentBrief, publicReport, publicLaunch, publicReleaseChecklist, deploymentHandoff, betaLaunch, betaReport, betaBacklog, reports, inquiries, botDrafts, announcements, adSlots, bans, moderationEvents, deletedItems, auditLogs] = await Promise.all([
+  const [stats, system, backupStatus, operatorDigest, incidentBrief, publicReport, publicLaunch, publicReleaseChecklist, deploymentHandoff, betaLaunch, betaReport, betaBacklog, reports, inquiries, botDrafts, announcements, articles, adSlots, bans, moderationEvents, deletedItems, auditLogs] = await Promise.all([
     api("/api/admin/stats"),
     api("/api/admin/system"),
     api("/api/admin/backup-status"),
@@ -3842,6 +3954,7 @@ async function loadAdminData() {
     api("/api/admin/inquiries"),
     api("/api/admin/bot/drafts"),
     api("/api/admin/announcements"),
+    api("/api/admin/articles"),
     api("/api/admin/ad-slots"),
     api("/api/admin/bans"),
     api("/api/admin/moderation-events"),
@@ -3864,6 +3977,7 @@ async function loadAdminData() {
   renderInquiries(inquiries.inquiries);
   renderOfficialBot(botDrafts);
   renderAnnouncementAdmin(announcements.announcements);
+  renderArticleAdmin(articles.articles);
   renderAdSlots(adSlots.adSlots);
   renderBans(bans.bannedAccounts);
   renderModerationEvents(moderationEvents.moderationEvents);
@@ -3878,6 +3992,7 @@ function activeViewId() {
 function renderView(viewId = activeViewId()) {
   if (viewId === "recruitmentView") renderRecruitments();
   if (viewId === "chatView") renderThreads();
+  if (viewId === "articleView") renderArticles();
   if (viewId === "reminderView") renderReminder();
   if (viewId === "myView") renderMyPage();
 }
@@ -3938,6 +4053,14 @@ async function handleCardClick(event) {
   if (button.dataset.action === "toggle-body") {
     const message = card.querySelector(".message.collapsible");
     const expanded = card.classList.toggle("body-expanded");
+    if (message) message.classList.toggle("expanded", expanded);
+    button.textContent = expanded ? "折りたたむ" : "全文を表示";
+    return;
+  }
+  if (button.dataset.action === "toggle-article-body") {
+    const article = event.target.closest(".article-card");
+    const message = article?.querySelector(".message.collapsible");
+    const expanded = article?.classList.toggle("body-expanded");
     if (message) message.classList.toggle("expanded", expanded);
     button.textContent = expanded ? "折りたたむ" : "全文を表示";
     return;
@@ -4210,7 +4333,8 @@ $("#postForm").addEventListener("submit", async event => {
     rank,
     style,
     capacity: $("#capacityInput").value,
-    body: $("#messageInput").value.trim()
+    body: $("#messageInput").value.trim(),
+    isAnonymous: $("#anonymousRecruitmentInput").checked
   };
   try {
     const created = await api("/api/recruitments", { method: "POST", body: JSON.stringify(payload) });
@@ -4244,7 +4368,8 @@ $("#chatForm").addEventListener("submit", async event => {
     title: $("#chatTitleInput").value.trim(),
     category: $("#chatCategoryInput").value,
     author: account.name,
-    body: $("#chatBodyInput").value.trim()
+    body: $("#chatBodyInput").value.trim(),
+    isAnonymous: $("#anonymousThreadInput").checked
   };
   try {
     const created = await api("/api/threads", { method: "POST", body: JSON.stringify(payload) });
@@ -4323,7 +4448,7 @@ $("#myDataFeed").addEventListener("click", async event => {
   $("#inquiryMessageInput").focus();
 });
 
-["#feed", "#chatFeed", "#reminderFeed", "#myFeed", "#messageFeed"].forEach(selector => {
+["#feed", "#chatFeed", "#articleFeed", "#reminderFeed", "#myFeed", "#messageFeed"].forEach(selector => {
   $(selector).addEventListener("click", handleCardClick);
   $(selector).addEventListener("submit", handleReplySubmit);
   $(selector).addEventListener("submit", handleMessageSubmit);
@@ -4907,6 +5032,45 @@ $("#announcementFeed").addEventListener("click", async event => {
   if (button.dataset.action === "delete-announcement") {
     if (!confirm("このお知らせを削除しますか？")) return;
     await api(`/api/admin/announcements/${card.dataset.announcementId}`, { method: "DELETE" });
+  }
+  await loadAdminData();
+  await loadState();
+});
+
+$("#adminArticleFeed").addEventListener("submit", async event => {
+  if (event.target.dataset.action !== "create-article") return;
+  event.preventDefault();
+  const form = new FormData(event.target);
+  await api("/api/admin/articles", {
+    method: "POST",
+    body: JSON.stringify({
+      title: form.get("title"),
+      category: form.get("category"),
+      summary: form.get("summary"),
+      body: form.get("body"),
+      isPublished: form.get("isPublished") === "on"
+    })
+  });
+  event.target.reset();
+  await loadAdminData();
+  await loadState();
+});
+
+$("#adminArticleFeed").addEventListener("click", async event => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  const card = event.target.closest("[data-article-id]");
+  if (!card) return;
+  if (button.dataset.action === "toggle-article") {
+    const nextPublished = button.textContent.includes("公開する");
+    await api(`/api/admin/articles/${card.dataset.articleId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ isPublished: nextPublished })
+    });
+  }
+  if (button.dataset.action === "delete-article") {
+    if (!confirm("この記事を削除しますか？")) return;
+    await api(`/api/admin/articles/${card.dataset.articleId}`, { method: "DELETE" });
   }
   await loadAdminData();
   await loadState();

@@ -375,6 +375,20 @@ const initialData = {
       createdAt: Date.now()
     }
   ],
+  articles: [
+    {
+      id: crypto.randomUUID(),
+      title: "Red Threadの使い方",
+      category: "使い方",
+      summary: "募集を探す、返信する、気軽に投稿するための最初の案内です。",
+      body: "Red Threadは、ゲーム仲間を軽く探すための掲示板です。\n\nまずは募集一覧を眺めて、気になる投稿があれば返信してみてください。遊びたい内容が決まっているときは、ゲーム・ランク・VC・雰囲気を選んで短く募集できます。\n\n外部IDは必要なときだけで大丈夫です。気になる投稿は通報できます。",
+      author: "Red Thread運営",
+      isPublished: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      publishedAt: Date.now()
+    }
+  ],
   bannedAccounts: [],
   moderationEvents: [],
   deletedItems: [],
@@ -424,6 +438,7 @@ async function readDb() {
   db.inquiries = Array.isArray(db.inquiries) ? db.inquiries : [];
   db.messages = Array.isArray(db.messages) ? db.messages : [];
   db.announcements = Array.isArray(db.announcements) ? db.announcements : [];
+  db.articles = Array.isArray(db.articles) ? db.articles : [];
   db.bannedAccounts = Array.isArray(db.bannedAccounts) ? db.bannedAccounts : [];
   db.moderationEvents = Array.isArray(db.moderationEvents) ? db.moderationEvents : [];
   db.deletedItems = Array.isArray(db.deletedItems) ? db.deletedItems : [];
@@ -448,12 +463,25 @@ async function readDb() {
     item.status = ["open", "closed"].includes(item.status) ? item.status : "open";
     item.capacity = Math.max(1, Math.min(99, Number(item.capacity || 4)));
     item.style = normalizePlayStyle(item.style);
+    item.isAnonymous = Boolean(item.isAnonymous);
   });
   db.threads.forEach(item => {
     item.likes = Array.isArray(item.likes) ? item.likes : [];
     item.replies = Array.isArray(item.replies) ? item.replies : [];
     item.ownerAccountId = item.ownerAccountId || "";
     item.category = normalizeTalkCategory(item.category);
+    item.isAnonymous = Boolean(item.isAnonymous);
+  });
+  db.articles.forEach(article => {
+    article.title = cleanText(article.title, 90);
+    article.category = cleanText(article.category, 40) || "使い方";
+    article.summary = cleanText(article.summary, 160);
+    article.body = cleanText(article.body, 4000);
+    article.author = cleanText(article.author, 40) || "Red Thread運営";
+    article.isPublished = article.isPublished !== false;
+    article.createdAt = Number(article.createdAt || Date.now());
+    article.updatedAt = Number(article.updatedAt || article.createdAt);
+    article.publishedAt = article.isPublished ? Number(article.publishedAt || article.createdAt) : null;
   });
   db.inquiries.forEach(inquiry => {
     inquiry.category = inquiryCategories.includes(inquiry.category) ? inquiry.category : "その他";
@@ -971,9 +999,15 @@ function publicItem(item, viewerId = "", viewerIsAdmin = false) {
   const canManage = viewerIsAdmin || !!item.ownerAccountId && item.ownerAccountId === viewerId;
   const isBotOwned = String(item.ownerAccountId || "").startsWith("bot:");
   const replies = Array.isArray(item.replies) ? item.replies : [];
+  const isAnonymous = Boolean(item.isAnonymous) && !canManage && !viewerIsAdmin;
+  const publicAuthor = isAnonymous ? "匿名" : item.author;
+  const publicAuthorProfile = isAnonymous ? null : item.authorProfile;
   const lastReplyAt = replies.reduce((latest, reply) => Math.max(latest, Number(reply.createdAt || 0)), 0);
   return {
     ...item,
+    author: publicAuthor,
+    authorProfile: publicAuthorProfile,
+    isAnonymous: Boolean(item.isAnonymous),
     likeCount: item.likes.length,
     lastActivityAt: Math.max(Number(item.createdAt || 0), lastReplyAt),
     lastReplyAt,
@@ -1129,6 +1163,7 @@ function publicDb(db, viewerId = "", viewerIsAdmin = false) {
     threads: db.threads.map(item => publicItem(item, viewerId, viewerIsAdmin)),
     messages: publicMessages(db, viewerId),
     announcements: (db.announcements || []).filter(item => item.isActive).slice(0, 3),
+    articles: (db.articles || []).filter(item => item.isPublished !== false).sort((a, b) => Number(b.publishedAt || b.createdAt || 0) - Number(a.publishedAt || a.createdAt || 0)),
     adSlots: db.adSlots.filter(slot => slot.isActive && !isPlaceholderAdSlot(slot)).map(publicAdSlot),
     publicStatus: publicServiceStatus()
   };
@@ -1452,6 +1487,7 @@ function adminStats(db) {
   const highPriorityBetaFeedback = betaFeedback.filter(inquiry => inquiry.betaFeedbackPriority === "高").length;
   const highPriorityOpenBetaFeedback = betaFeedback.filter(inquiry => inquiry.status === "open" && inquiry.betaFeedbackPriority === "高").length;
   const activeAnnouncements = (db.announcements || []).filter(item => item.isActive).length;
+  const publishedArticles = (db.articles || []).filter(item => item.isPublished !== false).length;
   const messages = Array.isArray(db.messages) ? db.messages : [];
   const visibleMessages = messages.filter(message => message.status !== "hidden");
   const messageConversationCount = new Set(visibleMessages.map(message => message.conversationId || messageConversationId(message.recruitmentId, message.fromAccountId, message.toAccountId))).size;
@@ -1470,6 +1506,7 @@ function adminStats(db) {
     highPriorityBetaFeedback,
     highPriorityOpenBetaFeedback,
     activeAnnouncements,
+    publishedArticles,
     messageConversations: messageConversationCount,
     directMessages: visibleMessages.length,
     hiddenMessages,
@@ -3014,6 +3051,7 @@ function systemReport(db) {
       reports: (db.reports || []).length,
       inquiries: (db.inquiries || []).length,
       announcements: (db.announcements || []).length,
+      articles: (db.articles || []).length,
       adSlots: (db.adSlots || []).length,
       auditLogs: (db.auditLogs || []).length,
       moderationEvents: (db.moderationEvents || []).length
@@ -3971,6 +4009,15 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/admin/articles") {
+    if (!adminOnly(req, res)) return;
+    const articles = (db.articles || [])
+      .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0))
+      .slice(0, retentionPolicy.adminListLimit);
+    sendJson(res, 200, { articles });
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/admin/bot/drafts") {
     if (!adminOnly(req, res)) return;
     const drafts = officialBotDrafts(db);
@@ -4242,6 +4289,39 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "POST" && url.pathname === "/api/admin/articles") {
+    if (!adminOnly(req, res)) return;
+    const body = await readBody(req);
+    const now = Date.now();
+    const isPublished = body.isPublished !== false;
+    const article = {
+      id: crypto.randomUUID(),
+      title: cleanText(body.title, 90),
+      category: cleanText(body.category, 40) || "使い方",
+      summary: cleanText(body.summary, 160),
+      body: cleanText(body.body, 4000),
+      author: authorName(req) || "Red Thread運営",
+      isPublished,
+      createdAt: now,
+      updatedAt: now,
+      publishedAt: isPublished ? now : null
+    };
+    if (!article.title || !article.body) {
+      sendJson(res, 400, { error: "title and body are required" });
+      return;
+    }
+    db.articles = Array.isArray(db.articles) ? db.articles : [];
+    db.articles.unshift(article);
+    addAuditLog(db, req, "create_article", {
+      articleId: article.id,
+      title: article.title,
+      isPublished: article.isPublished
+    });
+    await writeDb(db);
+    sendJson(res, 201, { article });
+    return;
+  }
+
   const banMatch = url.pathname.match(/^\/api\/admin\/bans\/(.+)$/);
   if (req.method === "DELETE" && banMatch) {
     if (!adminOnly(req, res)) return;
@@ -4314,6 +4394,51 @@ async function handleApi(req, res, url) {
     addAuditLog(db, req, "delete_announcement", {
       announcementId: announcement.id,
       title: announcement.title
+    });
+    await writeDb(db);
+    sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  const articleMatch = url.pathname.match(/^\/api\/admin\/articles\/([^/]+)$/);
+  if (req.method === "PATCH" && articleMatch) {
+    if (!adminOnly(req, res)) return;
+    const body = await readBody(req);
+    const article = (db.articles || []).find(entry => entry.id === articleMatch[1]);
+    if (!article) {
+      sendJson(res, 404, { error: "article not found" });
+      return;
+    }
+    if (typeof body.title === "string") article.title = cleanText(body.title, 90);
+    if (typeof body.category === "string") article.category = cleanText(body.category, 40) || "使い方";
+    if (typeof body.summary === "string") article.summary = cleanText(body.summary, 160);
+    if (typeof body.body === "string") article.body = cleanText(body.body, 4000);
+    if (typeof body.isPublished === "boolean") {
+      article.isPublished = body.isPublished;
+      article.publishedAt = body.isPublished ? article.publishedAt || Date.now() : null;
+    }
+    article.updatedAt = Date.now();
+    addAuditLog(db, req, "update_article", {
+      articleId: article.id,
+      title: article.title,
+      isPublished: article.isPublished
+    });
+    await writeDb(db);
+    sendJson(res, 200, { article });
+    return;
+  }
+
+  if (req.method === "DELETE" && articleMatch) {
+    if (!adminOnly(req, res)) return;
+    const index = (db.articles || []).findIndex(entry => entry.id === articleMatch[1]);
+    if (index < 0) {
+      sendJson(res, 404, { error: "article not found" });
+      return;
+    }
+    const [article] = db.articles.splice(index, 1);
+    addAuditLog(db, req, "delete_article", {
+      articleId: article.id,
+      title: article.title
     });
     await writeDb(db);
     sendJson(res, 200, { ok: true });
@@ -4460,12 +4585,14 @@ async function handleApi(req, res, url) {
     const rank = cleanText(body.rank, 40) || "ランク不問";
     const style = normalizePlayStyle(cleanText(body.style, 40));
     const author = cleanText(body.author, 40) || authorName(req);
+    const isAnonymous = Boolean(body.isAnonymous);
     const title = cleanText(body.title, 90) || [game, rank !== "ランク不問" ? rank : "", `${style}募集`].filter(Boolean).join(" ");
     const item = {
       id: crypto.randomUUID(),
       title,
       author,
       authorProfile: sanitizeAuthorProfile(body.authorProfile, author),
+      isAnonymous,
       game,
       ownerAccountId: accountId(req),
       platform: cleanText(body.platform, 30),
@@ -4590,6 +4717,7 @@ async function handleApi(req, res, url) {
       category,
       ownerAccountId: accountId(req),
       author: cleanText(body.author, 40) || authorName(req),
+      isAnonymous: Boolean(body.isAnonymous),
       body: cleanText(body.body, 1000),
       createdAt: Date.now(),
       likes: [],

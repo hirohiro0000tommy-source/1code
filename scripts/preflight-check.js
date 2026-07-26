@@ -174,7 +174,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 const schema = fileText("db/schema.sql");
-for (const table of ["profiles", "recruitments", "threads", "replies", "likes", "reports", "inquiries", "direct_messages", "announcements", "ad_slots", "moderation_events", "deleted_items", "audit_logs"]) {
+for (const table of ["profiles", "recruitments", "threads", "replies", "likes", "reports", "inquiries", "direct_messages", "announcements", "articles", "ad_slots", "moderation_events", "deleted_items", "audit_logs"]) {
   if (schema.includes(`create table if not exists ${table}`)) pass(`schema table: ${table}`);
   else fail(`schema table: ${table}`, "missing");
 }
@@ -192,7 +192,7 @@ if (schema.includes("ad_slots") && schema.includes("kind in ('affiliate', 'spons
 else fail("schema column: ad_slots.kind", "missing");
 
 const rls = fileText("db/rls.sql");
-for (const table of ["profiles", "recruitments", "threads", "replies", "likes", "reports", "inquiries", "direct_messages", "announcements", "ad_slots", "moderation_events", "deleted_items", "audit_logs"]) {
+for (const table of ["profiles", "recruitments", "threads", "replies", "likes", "reports", "inquiries", "direct_messages", "announcements", "articles", "ad_slots", "moderation_events", "deleted_items", "audit_logs"]) {
   if (rls.includes(`alter table ${table} enable row level security`)) pass(`rls enabled: ${table}`);
   else fail(`rls enabled: ${table}`, "missing");
 }
@@ -220,7 +220,7 @@ const server = fileText("server.js");
 const smoke = fileText("scripts/smoke-test.js");
 const statusCheck = fileText("scripts/status-check.js");
 const liveCheck = fileText("scripts/live-smoke-check.js");
-for (const route of ["/api/health", "/api/me", "/api/me/data", "/api/me/export", "/api/messages", "/api/inquiries", "/api/admin/inquiries", "/api/admin/announcements", "/api/admin/stats", "/api/admin/public-launch", "/api/admin/public-report", "/api/admin/public-release-checklist", "/api/admin/operator-digest", "/api/admin/incident-brief", "/api/admin/beta-launch", "/api/admin/beta-report", "/api/admin/beta-backlog", "/api/admin/system", "/api/admin/backup-status", "/api/admin/export", "/api/admin/audit-logs", "/api/admin/moderation-events", "/api/admin/deleted-items", "/auth/discord/start"]) {
+for (const route of ["/api/health", "/api/me", "/api/me/data", "/api/me/export", "/api/messages", "/api/inquiries", "/api/admin/inquiries", "/api/admin/announcements", "/api/admin/articles", "/api/admin/stats", "/api/admin/public-launch", "/api/admin/public-report", "/api/admin/public-release-checklist", "/api/admin/operator-digest", "/api/admin/incident-brief", "/api/admin/beta-launch", "/api/admin/beta-report", "/api/admin/beta-backlog", "/api/admin/system", "/api/admin/backup-status", "/api/admin/export", "/api/admin/audit-logs", "/api/admin/moderation-events", "/api/admin/deleted-items", "/auth/discord/start"]) {
   if (server.includes(route)) pass(`api route: ${route}`);
   else fail(`api route: ${route}`, "missing");
 }

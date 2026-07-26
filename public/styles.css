@@ -342,6 +342,22 @@ header .utility-link:hover {
   color: inherit;
   line-height: 1.5;
 }
+.article-lead {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+.article-lead strong {
+  font-size: 15px;
+}
+.article-lead span {
+  color: var(--muted);
+  font-size: 13px;
+}
 .service-status {
   display: flex;
   flex-wrap: wrap;
@@ -901,6 +917,10 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   width: 14px;
   height: 14px;
   accent-color: var(--ink);
+}
+.anonymous-option {
+  justify-content: flex-start;
+  width: fit-content;
 }
 .filters {
   display: grid;
@@ -1685,6 +1705,16 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   font-size: 13px;
   line-height: 1.5;
   white-space: pre-wrap;
+}
+.anonymous-profile {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+}
+.anonymous-profile p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
 }
 .replies {
   display: grid;

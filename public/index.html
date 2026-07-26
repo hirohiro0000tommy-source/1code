@@ -138,6 +138,7 @@
     <nav class="tabs" aria-label="ページ切り替え">
       <button class="tab active" type="button" data-view="recruitmentView">募集</button>
       <button class="tab" type="button" data-view="chatView">フリートーク</button>
+      <button class="tab" type="button" data-view="articleView">記事</button>
       <button class="tab" type="button" data-view="reminderView">リマインダー</button>
       <button class="tab" type="button" data-view="myView">マイページ<span class="nav-badge" id="navMessageBadge" hidden>0</span></button>
       <button class="tab create-tab" type="button" id="openRecruitFormButton">募集を投稿</button>
@@ -196,6 +197,7 @@
               </select>
             </label>
             <label>本文<textarea id="messageInput" maxlength="500" required placeholder="雰囲気、目的、連絡方法など"></textarea></label>
+            <label class="inline-check anonymous-option"><input id="anonymousRecruitmentInput" type="checkbox">匿名で表示</label>
             <p class="form-status" id="recruitmentFormStatus" aria-live="polite">本文 0/500</p>
             <p class="form-note">外部IDは、必要なときだけ書けば大丈夫です。</p>
             <button class="btn dark" type="submit">募集を投稿</button>
@@ -280,9 +282,10 @@
                 <option>雑談</option>
                 <option>大会観戦</option>
                 <option>攻略相談</option>
-              </select>
+            </select>
             </label>
             <label>本文<textarea id="chatBodyInput" maxlength="500" required placeholder="本文を書く"></textarea></label>
+            <label class="inline-check anonymous-option"><input id="anonymousThreadInput" type="checkbox">匿名で表示</label>
             <p class="form-status" id="chatFormStatus" aria-live="polite">タイトル 0/72 / 本文 0/500</p>
             <p class="form-note">ネタバレや強めの話題は、タイトルで少し伝えておくと親切です。</p>
             <button class="btn dark" type="submit">スレッドを投稿</button>
@@ -317,6 +320,17 @@
           <section class="feed" id="chatFeed" aria-live="polite"></section>
         </main>
       </div>
+    </section>
+
+    <section class="view page-shell" id="articleView" hidden>
+      <main>
+        <div class="summary"><strong>記事</strong><span id="articleCount">0件</span></div>
+        <section class="article-lead">
+          <strong>運営からのお知らせ・遊び方ガイド</strong>
+          <span>募集のコツ、更新内容、安心して使うための案内をまとめます。</span>
+        </section>
+        <section class="feed article-feed" id="articleFeed" aria-live="polite"></section>
+      </main>
     </section>
 
     <section class="view" id="reminderView" hidden>
@@ -481,6 +495,8 @@
       <section class="feed" id="botDraftFeed" aria-live="polite"></section>
       <div class="summary"><strong>お知らせ</strong><span id="announcementCount">0件</span></div>
       <section class="feed" id="announcementFeed" aria-live="polite"></section>
+      <div class="summary"><strong>記事</strong><span id="adminArticleCount">0件</span></div>
+      <section class="feed" id="adminArticleFeed" aria-live="polite"></section>
       <div class="summary"><strong>停止ユーザー</strong><span id="banCount">0件</span></div>
       <section class="feed" id="banFeed" aria-live="polite"></section>
       <div class="summary"><strong>広告枠</strong><span id="adSlotCount">0件</span></div>

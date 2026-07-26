@@ -29,6 +29,7 @@ create table if not exists recruitments (
   rank_label text,
   play_time text,
   play_style text,
+  is_anonymous boolean not null default false,
   capacity integer not null default 4 check (capacity between 1 and 99),
   participants jsonb not null default '[]'::jsonb,
   body text not null,
@@ -37,16 +38,21 @@ create table if not exists recruitments (
   updated_at timestamptz not null default now()
 );
 
+alter table recruitments add column if not exists is_anonymous boolean not null default false;
+
 create table if not exists threads (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid references profiles(id) on delete set null,
   title text not null,
   category text not null check (category in ('雑談', '大会観戦', '攻略相談')),
+  is_anonymous boolean not null default false,
   body text not null,
   status text not null default 'open' check (status in ('open', 'hidden')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table threads add column if not exists is_anonymous boolean not null default false;
 
 create table if not exists replies (
   id uuid primary key default gen_random_uuid(),
@@ -129,6 +135,19 @@ create table if not exists announcements (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists articles (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  category text not null default '使い方',
+  summary text,
+  body text not null,
+  author text not null default 'Red Thread運営',
+  is_published boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  published_at timestamptz
+);
+
 create table if not exists ad_slots (
   id uuid primary key default gen_random_uuid(),
   slot_key text not null unique,
@@ -188,6 +207,7 @@ create index if not exists direct_messages_conversation_idx on direct_messages(c
 create index if not exists direct_messages_from_idx on direct_messages(from_profile_id, created_at desc);
 create index if not exists direct_messages_to_idx on direct_messages(to_profile_id, created_at desc);
 create index if not exists announcements_active_idx on announcements(is_active, created_at desc);
+create index if not exists articles_published_idx on articles(is_published, published_at desc, created_at desc);
 create index if not exists ad_slots_placement_idx on ad_slots(placement, is_active);
 create index if not exists moderation_events_created_at_idx on moderation_events(created_at desc);
 create index if not exists moderation_events_account_idx on moderation_events(account_id, created_at desc);

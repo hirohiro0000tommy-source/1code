@@ -61,6 +61,21 @@ function createPostgresStore() {
 
   async function ensureDb() {
     await pool.query("select 1");
+    await pool.query("alter table recruitments add column if not exists is_anonymous boolean not null default false");
+    await pool.query("alter table threads add column if not exists is_anonymous boolean not null default false");
+    await pool.query(`create table if not exists articles (
+      id uuid primary key default gen_random_uuid(),
+      title text not null,
+      category text not null default '使い方',
+      summary text,
+      body text not null,
+      author text not null default 'Red Thread運営',
+      is_published boolean not null default true,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now(),
+      published_at timestamptz
+    )`);
+    await pool.query("create index if not exists articles_published_idx on articles(is_published, published_at desc, created_at desc)");
     await pool.query("alter table ad_slots add column if not exists kind text not null default 'affiliate'");
     await pool.query("alter table ad_slots drop constraint if exists ad_slots_kind_check");
     await pool.query("alter table ad_slots add constraint ad_slots_kind_check check (kind in ('affiliate', 'sponsor', 'community'))");
@@ -105,7 +120,7 @@ function createPostgresStore() {
   async function read() {
     const client = await pool.connect();
     try {
-      const [recruitments, threads, replies, likes, reports, inquiries, directMessages, announcements, adSlots, bannedProfiles, moderationEvents, deletedItems, auditLogs] = await Promise.all([
+      const [recruitments, threads, replies, likes, reports, inquiries, directMessages, announcements, articles, adSlots, bannedProfiles, moderationEvents, deletedItems, auditLogs] = await Promise.all([
         client.query(
           `select r.*, p.provider_user_id as owner_account_id, p.display_name as author_name
            from recruitments r
@@ -152,6 +167,7 @@ function createPostgresStore() {
            order by dm.created_at asc`
         ),
         client.query("select * from announcements order by created_at desc"),
+        client.query("select * from articles order by coalesce(published_at, created_at) desc"),
         client.query("select * from ad_slots order by placement, slot_key"),
         client.query("select provider_user_id, display_name, ban_reason, ban_note, banned_until, updated_at from profiles where status = 'banned'"),
         client.query("select * from moderation_events order by created_at desc limit 500"),
@@ -198,6 +214,7 @@ function createPostgresStore() {
             rank: row.rank_label || "",
             time: row.play_time || "",
             style: normalizePlayStyle(row.play_style),
+            isAnonymous: !!row.is_anonymous,
             capacity: row.capacity || 4,
             participants: Array.isArray(row.participants) ? row.participants : [],
             body: row.body,
@@ -215,6 +232,7 @@ function createPostgresStore() {
             title: row.title,
             category: normalizeTalkCategory(row.category),
             author: row.author_name || "Anonymous",
+            isAnonymous: !!row.is_anonymous,
             body: row.body,
             createdAt: toMillis(row.created_at),
             ownerAccountId: row.owner_account_id || "",
@@ -286,6 +304,18 @@ function createPostgresStore() {
           createdAt: toMillis(row.created_at),
           updatedAt: toMillis(row.updated_at)
         })),
+        articles: articles.rows.map(row => ({
+          id: row.id,
+          title: row.title,
+          category: row.category || "使い方",
+          summary: row.summary || "",
+          body: row.body,
+          author: row.author || "Red Thread運営",
+          isPublished: row.is_published !== false,
+          createdAt: toMillis(row.created_at),
+          updatedAt: toMillis(row.updated_at),
+          publishedAt: row.published_at ? toMillis(row.published_at) : null
+        })),
         auditLogs: auditLogs.rows.map(row => ({
           id: row.id,
           actorAccountId: row.actor_account_id || "",
@@ -337,6 +367,7 @@ function createPostgresStore() {
       await client.query("delete from inquiries");
       await client.query("delete from direct_messages");
       await client.query("delete from announcements");
+      await client.query("delete from articles");
       await client.query("delete from moderation_events");
       await client.query("delete from deleted_items");
       await client.query("delete from audit_logs");
@@ -350,9 +381,9 @@ function createPostgresStore() {
         const ownerId = await profileId(client, item.ownerAccountId, item.author);
         await client.query(
           `insert into recruitments
-            (id, owner_id, title, game, platform, voice, rank_label, play_time, play_style, capacity, participants, body, status, created_at, updated_at)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13, $14, now())`,
-          [item.id, ownerId, item.title, item.game, item.platform, item.voice, item.rank || "", item.time || "", normalizePlayStyle(item.style), item.capacity || 4, JSON.stringify(item.participants || []), item.body, item.status || "open", toDate(item.createdAt)]
+            (id, owner_id, title, game, platform, voice, rank_label, play_time, play_style, is_anonymous, capacity, participants, body, status, created_at, updated_at)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13, $14, $15, now())`,
+          [item.id, ownerId, item.title, item.game, item.platform, item.voice, item.rank || "", item.time || "", normalizePlayStyle(item.style), !!item.isAnonymous, item.capacity || 4, JSON.stringify(item.participants || []), item.body, item.status || "open", toDate(item.createdAt)]
         );
         for (const accountId of item.likes || []) {
           const likerId = await profileId(client, accountId, accountId);
@@ -374,9 +405,9 @@ function createPostgresStore() {
         const ownerId = await profileId(client, item.ownerAccountId, item.author);
         await client.query(
           `insert into threads
-            (id, owner_id, title, category, body, created_at, updated_at)
-           values ($1, $2, $3, $4, $5, $6, now())`,
-          [item.id, ownerId, item.title, normalizeTalkCategory(item.category), item.body, toDate(item.createdAt)]
+            (id, owner_id, title, category, is_anonymous, body, created_at, updated_at)
+           values ($1, $2, $3, $4, $5, $6, $7, now())`,
+          [item.id, ownerId, item.title, normalizeTalkCategory(item.category), !!item.isAnonymous, item.body, toDate(item.createdAt)]
         );
         for (const accountId of item.likes || []) {
           const likerId = await profileId(client, accountId, accountId);
@@ -475,6 +506,26 @@ function createPostgresStore() {
             announcement.isActive !== false,
             toDate(announcement.createdAt),
             toDate(announcement.updatedAt || announcement.createdAt)
+          ]
+        );
+      }
+
+      for (const article of db.articles || []) {
+        await client.query(
+          `insert into articles
+            (id, title, category, summary, body, author, is_published, created_at, updated_at, published_at)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [
+            article.id,
+            article.title,
+            article.category || "使い方",
+            article.summary || null,
+            article.body,
+            article.author || "Red Thread運営",
+            article.isPublished !== false,
+            toDate(article.createdAt),
+            toDate(article.updatedAt || article.createdAt),
+            article.publishedAt ? toDate(article.publishedAt) : null
           ]
         );
       }

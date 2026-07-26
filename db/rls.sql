@@ -10,6 +10,7 @@ alter table reports enable row level security;
 alter table inquiries enable row level security;
 alter table direct_messages enable row level security;
 alter table announcements enable row level security;
+alter table articles enable row level security;
 alter table ad_slots enable row level security;
 alter table moderation_events enable row level security;
 alter table deleted_items enable row level security;
@@ -142,6 +143,15 @@ using (is_active = true or public.app_role() in ('moderator', 'admin'));
 
 create policy "admins manage announcements"
 on announcements for all
+using (public.app_role() = 'admin')
+with check (public.app_role() = 'admin');
+
+create policy "published articles are readable"
+on articles for select
+using (is_published = true or public.app_role() in ('moderator', 'admin'));
+
+create policy "admins manage articles"
+on articles for all
 using (public.app_role() = 'admin')
 with check (public.app_role() = 'admin');
 

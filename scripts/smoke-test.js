@@ -707,6 +707,7 @@ async function run() {
     assert(Array.isArray(firstState.recruitments), "recruitments missing");
     assert(Array.isArray(firstState.threads), "threads missing");
     assert(Array.isArray(firstState.announcements), "announcements missing");
+    assert(Array.isArray(firstState.articles), "articles missing");
     assert(Array.isArray(firstState.adSlots), "public ad slots missing");
     assert(firstState.publicStatus?.mode === "open", "public status missing");
     assert(firstState.adSlots.every(slot => slot.targetUrl || slot.html), "public placeholder ads should be hidden");
@@ -1444,6 +1445,31 @@ async function run() {
     await request(`/api/admin/announcements/${announcement.announcement.id}`, { method: "DELETE", adminPin: "admin" });
     const announcements = await request("/api/admin/announcements", { adminPin: "admin" });
     assert(!announcements.announcements.some(entry => entry.id === announcement.announcement.id), "announcement delete failed");
+
+    const article = await request("/api/admin/articles", {
+      method: "POST",
+      adminPin: "admin",
+      body: { title: "Smoke article", category: "使い方", summary: "Smoke guide", body: "Smoke article body", isPublished: true }
+    });
+    assert(article.article.title === "Smoke article", "article create failed");
+
+    const stateWithArticle = await request("/api/state");
+    assert(Array.isArray(stateWithArticle.articles), "public articles missing");
+    assert(stateWithArticle.articles.some(entry => entry.title === "Smoke article"), "published article missing");
+
+    const hiddenArticle = await request(`/api/admin/articles/${article.article.id}`, {
+      method: "PATCH",
+      adminPin: "admin",
+      body: { isPublished: false }
+    });
+    assert(hiddenArticle.article.isPublished === false, "article unpublish failed");
+
+    const stateWithoutArticle = await request("/api/state");
+    assert(!stateWithoutArticle.articles.some(entry => entry.title === "Smoke article"), "unpublished article still public");
+
+    await request(`/api/admin/articles/${article.article.id}`, { method: "DELETE", adminPin: "admin" });
+    const articles = await request("/api/admin/articles", { adminPin: "admin" });
+    assert(!articles.articles.some(entry => entry.id === article.article.id), "article delete failed");
 
     const adSlots = await request("/api/admin/ad-slots", { adminPin: "admin" });
     assert(adSlots.adSlots.length >= 1, "ad slots missing");
