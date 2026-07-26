@@ -686,13 +686,41 @@ button[aria-busy="true"] {
 .layout:not(.form-open) aside {
   display: none;
 }
+.layout.form-open aside {
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(225, 15, 33, .08), rgba(255, 255, 255, 0) 82px),
+    var(--paper);
+  padding: 8px;
+  box-shadow: 0 12px 30px rgba(17, 17, 17, .08);
+}
+.layout.form-open .panel {
+  border: 0;
+  background: transparent;
+}
 .panel { padding: 14px; }
 .panel-title {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 10px;
+  align-items: center;
+  margin: -2px -2px 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 0 2px 10px;
   font-weight: 800;
+}
+.panel-title span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-title span::before {
+  content: "";
+  width: 8px;
+  height: 22px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #e10f21, #111);
 }
 .template-row {
   display: flex;
