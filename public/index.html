@@ -286,6 +286,7 @@
             </select>
             </label>
             <label>本文<textarea id="chatBodyInput" maxlength="500" required placeholder="本文を書く"></textarea></label>
+            <label>画像URL<input id="chatImageInput" type="url" maxlength="400" placeholder="https://..."></label>
             <label class="inline-check anonymous-option"><input id="anonymousThreadInput" type="checkbox">匿名で表示</label>
             <p class="form-status" id="chatFormStatus" aria-live="polite">タイトル 0/72 / 本文 0/500</p>
             <p class="form-note">ネタバレや強めの話題は、タイトルで少し伝えておくと親切です。</p>
@@ -403,6 +404,7 @@
             <span>よく遊ぶゲーム</span>
             <div class="check-list profile-game-list" id="profileGamesInput" aria-label="よく遊ぶゲーム"></div>
           </div>
+          <label class="inline-check anonymous-option"><input id="profileAnonymousInput" type="checkbox">投稿は基本的に匿名で表示</label>
           <label>ひとこと<textarea id="profileBioInput" maxlength="160" placeholder="好きな遊び方や、募集で伝えたい雰囲気を書けます。"></textarea></label>
           <div class="actions profile-actions">
             <button class="btn dark" type="submit">プロフィールを保存</button>

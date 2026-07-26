@@ -63,11 +63,13 @@ function createPostgresStore() {
     await pool.query("select 1");
     await pool.query("alter table recruitments add column if not exists is_anonymous boolean not null default false");
     await pool.query("alter table threads add column if not exists is_anonymous boolean not null default false");
+    await pool.query("alter table threads add column if not exists image_url text");
     await pool.query(`create table if not exists articles (
       id uuid primary key default gen_random_uuid(),
       title text not null,
       category text not null default '使い方',
       summary text,
+      image_url text,
       body text not null,
       author text not null default 'Red Thread運営',
       is_published boolean not null default true,
@@ -75,6 +77,7 @@ function createPostgresStore() {
       updated_at timestamptz not null default now(),
       published_at timestamptz
     )`);
+    await pool.query("alter table articles add column if not exists image_url text");
     await pool.query("create index if not exists articles_published_idx on articles(is_published, published_at desc, created_at desc)");
     await pool.query("alter table ad_slots add column if not exists kind text not null default 'affiliate'");
     await pool.query("alter table ad_slots drop constraint if exists ad_slots_kind_check");
@@ -234,6 +237,7 @@ function createPostgresStore() {
             author: row.author_name || "Anonymous",
             isAnonymous: !!row.is_anonymous,
             body: row.body,
+            imageUrl: row.image_url || "",
             createdAt: toMillis(row.created_at),
             ownerAccountId: row.owner_account_id || "",
             likes: likeMap.get(key) || [],
@@ -309,6 +313,7 @@ function createPostgresStore() {
           title: row.title,
           category: row.category || "使い方",
           summary: row.summary || "",
+          imageUrl: row.image_url || "",
           body: row.body,
           author: row.author || "Red Thread運営",
           isPublished: row.is_published !== false,
@@ -405,9 +410,9 @@ function createPostgresStore() {
         const ownerId = await profileId(client, item.ownerAccountId, item.author);
         await client.query(
           `insert into threads
-            (id, owner_id, title, category, is_anonymous, body, created_at, updated_at)
-           values ($1, $2, $3, $4, $5, $6, $7, now())`,
-          [item.id, ownerId, item.title, normalizeTalkCategory(item.category), !!item.isAnonymous, item.body, toDate(item.createdAt)]
+            (id, owner_id, title, category, is_anonymous, body, image_url, created_at, updated_at)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, now())`,
+          [item.id, ownerId, item.title, normalizeTalkCategory(item.category), !!item.isAnonymous, item.body, item.imageUrl || null, toDate(item.createdAt)]
         );
         for (const accountId of item.likes || []) {
           const likerId = await profileId(client, accountId, accountId);
@@ -513,13 +518,14 @@ function createPostgresStore() {
       for (const article of db.articles || []) {
         await client.query(
           `insert into articles
-            (id, title, category, summary, body, author, is_published, created_at, updated_at, published_at)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+            (id, title, category, summary, image_url, body, author, is_published, created_at, updated_at, published_at)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
           [
             article.id,
             article.title,
             article.category || "使い方",
             article.summary || null,
+            article.imageUrl || null,
             article.body,
             article.author || "Red Thread運営",
             article.isPublished !== false,

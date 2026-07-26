@@ -90,7 +90,7 @@ const recruitmentDraftFields = [
   "#messageInput",
   "#anonymousRecruitmentInput"
 ];
-const threadDraftFields = ["#chatTitleInput", "#chatCategoryInput", "#chatBodyInput", "#anonymousThreadInput"];
+const threadDraftFields = ["#chatTitleInput", "#chatCategoryInput", "#chatBodyInput", "#chatImageInput", "#anonymousThreadInput"];
 const rankOptionsByGame = {
   "Shadowverse/Worlds Beyond": ["Beginner", "Bronze", "Silver", "Gold", "Master", "Grand Master"],
   "Pokemon Champions": ["初心者", "ビギナー", "モンスターボール級", "スーパーボール級", "ハイパーボール級", "マスターボール級"],
@@ -436,6 +436,7 @@ function defaultProfile() {
     playTime: "",
     voice: "未設定",
     style: "未設定",
+    anonymousMode: false,
     bio: ""
   };
 }
@@ -843,6 +844,12 @@ function publicProfile(profile = profileValues()) {
   };
 }
 
+function applyAnonymousModeToForms() {
+  const enabled = !!profileValues().anonymousMode;
+  if ($("#anonymousRecruitmentInput")) $("#anonymousRecruitmentInput").checked = enabled;
+  if ($("#anonymousThreadInput")) $("#anonymousThreadInput").checked = enabled;
+}
+
 function renderProfileGameOptions(selectedGames = []) {
   const container = $("#profileGamesInput");
   if (!container) return;
@@ -867,6 +874,7 @@ function renderProfile() {
     profile.age && profile.age !== "未設定" ? `年齢: ${profile.age}` : "",
     profile.gender && profile.gender !== "未設定" ? `性別: ${profile.gender}` : "",
     profile.voice && profile.voice !== "未設定" ? `VC: ${profile.voice}` : "",
+    profile.anonymousMode ? "匿名モード" : "",
     ...games
   ].filter(Boolean);
   $("#profileGameTags").innerHTML = profileTags.length
@@ -879,7 +887,9 @@ function renderProfile() {
   $("#profileVoiceInput").value = profile.voice || "未設定";
   renderProfileGameOptions(games);
   $("#profileStyleInput").value = profile.style || "未設定";
+  $("#profileAnonymousInput").checked = !!profile.anonymousMode;
   $("#profileBioInput").value = profile.bio;
+  applyAnonymousModeToForms();
 }
 
 function renderBetaAccess() {
@@ -1828,6 +1838,16 @@ function postBodyMarkup(post) {
   `;
 }
 
+function imageMarkup(imageUrl, alt = "投稿画像") {
+  const url = String(imageUrl || "").trim();
+  if (!url) return "";
+  return `
+    <figure class="post-image">
+      <img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" loading="lazy" referrerpolicy="no-referrer">
+    </figure>
+  `;
+}
+
 function recruitmentCard(post) {
   return `
     <article class="card ${post.status === "closed" ? "closed" : ""} ${post.isOfficial ? "official-card" : ""}" data-type="recruitments" data-id="${post.id}" data-status="${post.status || "open"}">
@@ -1890,6 +1910,7 @@ function threadCard(post) {
         ${reactionCount(post)}
       </div>
       ${postBodyMarkup(post)}
+      ${imageMarkup(post.imageUrl, post.title || "フリートーク画像")}
       ${officialGuideMarkup(post, "threads")}
       <div class="replies">${post.replies.map(replyMarkup).join("")}</div>
       ${engagementSummary(post, "threads")}
@@ -1977,6 +1998,7 @@ function articleCard(article) {
           ${article.summary ? `<p class="card-preview">${escapeHtml(article.summary)}</p>` : ""}
         </div>
       </div>
+      ${imageMarkup(article.imageUrl, article.title || "記事画像")}
       <div class="message ${shouldCollapse ? "collapsible" : ""}">${escapeHtml(body)}</div>
       ${shouldCollapse ? `<button class="link-action body-toggle" type="button" data-action="toggle-article-body">全文を表示</button>` : ""}
     </article>
@@ -2422,6 +2444,7 @@ function renderArticleAdmin(articles = []) {
           </select>
         </label>
         <label>概要<input name="summary" maxlength="160" placeholder="一覧に出す短い説明"></label>
+        <label>画像URL<input name="imageUrl" type="url" maxlength="400" placeholder="https://..."></label>
         <label>本文<textarea name="body" maxlength="4000" required placeholder="本文を書く"></textarea></label>
         <div class="article-editor-actions">
           <label class="inline-check"><input name="isPublished" type="checkbox" checked>公開する</label>
@@ -2443,6 +2466,7 @@ function renderArticleAdmin(articles = []) {
           ${item.summary ? `<p class="card-preview">${escapeHtml(item.summary)}</p>` : ""}
         </div>
       </div>
+      ${imageMarkup(item.imageUrl, item.title || "記事画像")}
       <div class="message">${escapeHtml(item.body)}</div>
       <div class="actions">
         <button class="action" data-action="toggle-article">${item.isPublished === false ? "公開する" : "下書きに戻す"}</button>
@@ -4349,6 +4373,7 @@ $("#postForm").addEventListener("submit", async event => {
     const created = await api("/api/recruitments", { method: "POST", body: JSON.stringify(payload) });
     $("#postForm").reset();
     renderRecruitmentFormOptions();
+    applyAnonymousModeToForms();
     removeStoredValue(localStorage, recruitmentDraftKey);
     $("#recruitmentLayout").classList.remove("form-open");
     updateCreateButton("recruitmentView");
@@ -4378,11 +4403,13 @@ $("#chatForm").addEventListener("submit", async event => {
     category: $("#chatCategoryInput").value,
     author: account.name,
     body: $("#chatBodyInput").value.trim(),
+    imageUrl: $("#chatImageInput").value.trim(),
     isAnonymous: $("#anonymousThreadInput").checked
   };
   try {
     const created = await api("/api/threads", { method: "POST", body: JSON.stringify(payload) });
     $("#chatForm").reset();
+    applyAnonymousModeToForms();
     removeStoredValue(localStorage, threadDraftKey);
     $("#chatLayout").classList.remove("form-open");
     updateCreateButton("chatView");
@@ -5062,6 +5089,7 @@ $("#adminArticleFeed").addEventListener("submit", async event => {
       title: form.get("title"),
       category: form.get("category"),
       summary: form.get("summary"),
+      imageUrl: form.get("imageUrl"),
       body: form.get("body"),
       isPublished: form.get("isPublished") === "on"
     })
@@ -5257,11 +5285,13 @@ $("#profileForm").addEventListener("submit", event => {
     playTime: "",
     voice: $("#profileVoiceInput").value,
     style: $("#profileStyleInput").value,
+    anonymousMode: $("#profileAnonymousInput").checked,
     bio: $("#profileBioInput").value.trim()
   };
   saveAccount({ ...account, profile });
   renderAccount();
   renderMyPage();
+  renderProfile();
   restore();
   showToast("プロフィールを保存しました", "マイページに反映しました。");
 });

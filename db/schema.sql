@@ -47,12 +47,14 @@ create table if not exists threads (
   category text not null check (category in ('雑談', '大会観戦', '攻略相談')),
   is_anonymous boolean not null default false,
   body text not null,
+  image_url text,
   status text not null default 'open' check (status in ('open', 'hidden')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 alter table threads add column if not exists is_anonymous boolean not null default false;
+alter table threads add column if not exists image_url text;
 
 create table if not exists replies (
   id uuid primary key default gen_random_uuid(),
@@ -140,6 +142,7 @@ create table if not exists articles (
   title text not null,
   category text not null default '使い方',
   summary text,
+  image_url text,
   body text not null,
   author text not null default 'Red Thread運営',
   is_published boolean not null default true,
@@ -147,6 +150,8 @@ create table if not exists articles (
   updated_at timestamptz not null default now(),
   published_at timestamptz
 );
+
+alter table articles add column if not exists image_url text;
 
 create table if not exists ad_slots (
   id uuid primary key default gen_random_uuid(),

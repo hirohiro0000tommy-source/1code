@@ -471,11 +471,13 @@ async function readDb() {
     item.ownerAccountId = item.ownerAccountId || "";
     item.category = normalizeTalkCategory(item.category);
     item.isAnonymous = Boolean(item.isAnonymous);
+    item.imageUrl = safeImageUrl(item.imageUrl);
   });
   db.articles.forEach(article => {
     article.title = cleanText(article.title, 90);
     article.category = cleanText(article.category, 40) || "使い方";
     article.summary = cleanText(article.summary, 160);
+    article.imageUrl = safeImageUrl(article.imageUrl);
     article.body = cleanText(article.body, 4000);
     article.author = cleanText(article.author, 40) || "Red Thread運営";
     article.isPublished = article.isPublished !== false;
@@ -839,6 +841,18 @@ function safeExternalUrl(value) {
   try {
     const parsed = new URL(text);
     return ["http:", "https:"].includes(parsed.protocol) ? parsed.toString() : "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function safeImageUrl(value) {
+  const url = safeExternalUrl(value);
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(parsed.hostname);
+    return isLocal ? "" : parsed.toString();
   } catch (error) {
     return "";
   }
@@ -3172,7 +3186,7 @@ function shareHtml(item, type) {
   const description = shareDescription(item, type);
   const canonical = absoluteUrl(`/share/${type}/${encodeURIComponent(item.id)}`);
   const appUrl = absoluteUrl(`/#${type}:${encodeURIComponent(item.id)}`);
-  const imageUrl = absoluteUrl("/og-image.svg");
+  const imageUrl = safeImageUrl(item.imageUrl) || absoluteUrl("/og-image.svg");
   const badge = isThread ? item.category : item.game;
   const structuredData = {
     "@context": "https://schema.org",
@@ -3228,6 +3242,7 @@ function shareHtml(item, type) {
           <h1>${escapeHtml(item.title || label)}</h1>
         </div>
       </div>
+      ${item.imageUrl ? `<figure class="post-image"><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.title || label)}" loading="lazy" referrerpolicy="no-referrer"></figure>` : ""}
       <div class="message">${escapeHtml(item.body || "")}</div>
       <div class="actions">
         <a class="btn dark" href="${escapeHtml(appUrl)}">Red Threadで開く</a>
@@ -4299,6 +4314,7 @@ async function handleApi(req, res, url) {
       title: cleanText(body.title, 90),
       category: cleanText(body.category, 40) || "使い方",
       summary: cleanText(body.summary, 160),
+      imageUrl: safeImageUrl(body.imageUrl),
       body: cleanText(body.body, 4000),
       author: authorName(req) || "Red Thread運営",
       isPublished,
@@ -4412,6 +4428,7 @@ async function handleApi(req, res, url) {
     if (typeof body.title === "string") article.title = cleanText(body.title, 90);
     if (typeof body.category === "string") article.category = cleanText(body.category, 40) || "使い方";
     if (typeof body.summary === "string") article.summary = cleanText(body.summary, 160);
+    if (typeof body.imageUrl === "string") article.imageUrl = safeImageUrl(body.imageUrl);
     if (typeof body.body === "string") article.body = cleanText(body.body, 4000);
     if (typeof body.isPublished === "boolean") {
       article.isPublished = body.isPublished;
@@ -4719,6 +4736,7 @@ async function handleApi(req, res, url) {
       author: cleanText(body.author, 40) || authorName(req),
       isAnonymous: Boolean(body.isAnonymous),
       body: cleanText(body.body, 1000),
+      imageUrl: safeImageUrl(body.imageUrl),
       createdAt: Date.now(),
       likes: [],
       replies: []
