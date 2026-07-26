@@ -951,7 +951,21 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   justify-content: flex-end;
 }
 .topbar.admin-tools {
-  grid-template-columns: minmax(180px, 1fr) auto auto;
+  grid-template-columns: minmax(180px, 1fr) auto auto auto;
+  align-items: center;
+}
+.admin-jump-button {
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+.admin-jump-button:hover {
+  background: var(--accent);
+  color: #fff;
+}
+.admin-priority-summary {
+  border-color: var(--line-strong);
+  border-left: 4px solid var(--accent);
+  margin-top: 14px;
 }
 .topbar.narrow {
   grid-template-columns: minmax(180px, 260px) auto;

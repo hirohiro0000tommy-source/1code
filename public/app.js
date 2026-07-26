@@ -4490,6 +4490,12 @@ document.body.addEventListener("click", async event => {
     if (scope === "chat") removeChatFilter(key, value);
     return;
   }
+  const adminJump = event.target.closest("[data-admin-jump]");
+  if (adminJump) {
+    const target = document.getElementById(adminJump.dataset.adminJump);
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   const guideButton = event.target.closest("[data-guide-jump]");
   if (guideButton) {
     const target = guideButton.dataset.guideJump;
