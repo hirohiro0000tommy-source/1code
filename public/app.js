@@ -90,7 +90,7 @@ const recruitmentDraftFields = [
   "#messageInput",
   "#anonymousRecruitmentInput"
 ];
-const threadDraftFields = ["#chatTitleInput", "#chatCategoryInput", "#chatBodyInput", "#chatImageInput", "#anonymousThreadInput"];
+const threadDraftFields = ["#chatTitleInput", "#chatCategoryInput", "#chatBodyInput", "#anonymousThreadInput"];
 const rankOptionsByGame = {
   "Shadowverse/Worlds Beyond": ["Beginner", "Bronze", "Silver", "Gold", "Master", "Grand Master"],
   "Pokemon Champions": ["初心者", "ビギナー", "モンスターボール級", "スーパーボール級", "ハイパーボール級", "マスターボール級"],
@@ -270,6 +270,23 @@ function isEditingInput() {
 function cleanPreview(value, max = 80) {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   return text.length > max ? `${text.slice(0, max)}...` : text;
+}
+
+function imageFileToDataUrl(file) {
+  if (!file) return Promise.resolve("");
+  const allowedTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+  if (!allowedTypes.has(file.type)) {
+    return Promise.reject(new Error("画像はPNG、JPEG、WebP、GIFを選んでください。"));
+  }
+  if (file.size > 350 * 1024) {
+    return Promise.reject(new Error("画像は350KB以下にしてください。"));
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("画像を読み込めませんでした。"));
+    reader.readAsDataURL(file);
+  });
 }
 
 async function toggleBrowserNotifications() {
@@ -2452,7 +2469,7 @@ function renderArticleAdmin(articles = []) {
           </select>
         </label>
         <label>概要<input name="summary" maxlength="160" placeholder="一覧に出す短い説明"></label>
-        <label>画像URL<input name="imageUrl" type="url" maxlength="400" placeholder="https://..."></label>
+        <label>画像ファイル<input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
         <label>本文<textarea name="body" maxlength="4000" required placeholder="本文を書く"></textarea></label>
         <div class="article-editor-actions">
           <label class="inline-check"><input name="isPublished" type="checkbox" checked>公開する</label>
@@ -4406,12 +4423,21 @@ $("#chatForm").addEventListener("submit", async event => {
   const restore = setSubmitState(form, true, "投稿中...");
   let submitted = false;
   setStatusText("#chatFormStatus", "投稿中... 一覧へ反映しています", "busy");
+  let imageUrl = "";
+  try {
+    imageUrl = await imageFileToDataUrl($("#chatImageInput").files?.[0]);
+  } catch (error) {
+    restore();
+    setStatusText("#chatFormStatus", error.message, "warn");
+    showErrorToast(error);
+    return;
+  }
   const payload = {
     title: $("#chatTitleInput").value.trim(),
     category: $("#chatCategoryInput").value,
     author: account.name,
     body: $("#chatBodyInput").value.trim(),
-    imageUrl: $("#chatImageInput").value.trim(),
+    imageUrl,
     isAnonymous: $("#anonymousThreadInput").checked
   };
   try {
@@ -5096,13 +5122,20 @@ $("#adminArticleFeed").addEventListener("submit", async event => {
   if (event.target.dataset.action !== "create-article") return;
   event.preventDefault();
   const form = new FormData(event.target);
+  let imageUrl = "";
+  try {
+    imageUrl = await imageFileToDataUrl(form.get("imageFile"));
+  } catch (error) {
+    showErrorToast(error);
+    return;
+  }
   await api("/api/admin/articles", {
     method: "POST",
     body: JSON.stringify({
       title: form.get("title"),
       category: form.get("category"),
       summary: form.get("summary"),
-      imageUrl: form.get("imageUrl"),
+      imageUrl,
       body: form.get("body"),
       isPublished: form.get("isPublished") === "on"
     })

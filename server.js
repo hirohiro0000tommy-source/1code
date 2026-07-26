@@ -847,7 +847,12 @@ function safeExternalUrl(value) {
 }
 
 function safeImageUrl(value) {
-  const url = safeExternalUrl(value);
+  const text = cleanText(value, 600_000);
+  if (!text) return "";
+  if (/^data:image\/(?:png|jpeg|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(text) && text.length <= 520_000) {
+    return text.replace(/\s+/g, "");
+  }
+  const url = safeExternalUrl(text);
   if (!url) return "";
   try {
     const parsed = new URL(url);
