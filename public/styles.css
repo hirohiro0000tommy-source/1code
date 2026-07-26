@@ -358,6 +358,32 @@ header .utility-link:hover {
   color: var(--muted);
   font-size: 13px;
 }
+.article-editor-shell {
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(225, 15, 33, .08), rgba(255, 255, 255, 0) 82px),
+    var(--paper);
+  padding: 8px;
+  box-shadow: 0 12px 30px rgba(17, 17, 17, .08);
+}
+.article-editor-panel {
+  border: 0;
+  background: transparent;
+}
+.article-editor-panel label {
+  margin-top: 8px;
+}
+.article-editor-panel textarea {
+  min-height: 150px;
+}
+.article-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
 .service-status {
   display: flex;
   flex-wrap: wrap;

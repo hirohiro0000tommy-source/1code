@@ -2403,8 +2403,15 @@ function renderAnnouncementAdmin(announcements = []) {
 function renderArticleAdmin(articles = []) {
   $("#adminArticleCount").textContent = `${articles.length}件`;
   const form = `
-    <article class="card">
-      <form class="admin-form" data-action="create-article">
+    <article class="article-editor-shell">
+      <form class="panel article-editor-panel" data-action="create-article">
+        <div class="panel-title"><span>記事を投稿</span><small>運営から掲載</small></div>
+        <div class="template-row" aria-label="記事カテゴリ">
+          <button class="template-button" type="button" data-article-category="使い方">使い方</button>
+          <button class="template-button" type="button" data-article-category="更新">更新</button>
+          <button class="template-button" type="button" data-article-category="コラム">コラム</button>
+          <button class="template-button" type="button" data-article-category="安全">安全</button>
+        </div>
         <label>タイトル<input name="title" maxlength="90" required placeholder="記事タイトル"></label>
         <label>カテゴリ
           <select name="category">
@@ -2415,9 +2422,11 @@ function renderArticleAdmin(articles = []) {
           </select>
         </label>
         <label>概要<input name="summary" maxlength="160" placeholder="一覧に出す短い説明"></label>
-        <textarea name="body" maxlength="4000" required placeholder="本文"></textarea>
-        <label class="inline-check"><input name="isPublished" type="checkbox" checked>公開する</label>
-        <button class="btn dark" type="submit">記事を追加</button>
+        <label>本文<textarea name="body" maxlength="4000" required placeholder="本文を書く"></textarea></label>
+        <div class="article-editor-actions">
+          <label class="inline-check"><input name="isPublished" type="checkbox" checked>公開する</label>
+          <button class="btn dark" type="submit">記事を投稿</button>
+        </div>
       </form>
     </article>
   `;
@@ -5057,6 +5066,14 @@ $("#adminArticleFeed").addEventListener("submit", async event => {
 });
 
 $("#adminArticleFeed").addEventListener("click", async event => {
+  const categoryButton = event.target.closest("[data-article-category]");
+  if (categoryButton) {
+    const form = categoryButton.closest("form");
+    const select = form?.querySelector("select[name='category']");
+    if (select) select.value = categoryButton.dataset.articleCategory;
+    form?.querySelector("input[name='title']")?.focus();
+    return;
+  }
   const button = event.target.closest("button");
   if (!button) return;
   const card = event.target.closest("[data-article-id]");
