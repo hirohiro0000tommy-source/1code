@@ -474,6 +474,9 @@ async function readDb() {
     item.imageUrl = safeImageUrl(item.imageUrl);
   });
   db.articles.forEach(article => {
+    article.likes = Array.isArray(article.likes) ? article.likes : [];
+    article.replies = Array.isArray(article.replies) ? article.replies : [];
+    article.ownerAccountId = article.ownerAccountId || "";
     article.title = cleanText(article.title, 90);
     article.category = cleanText(article.category, 40) || "使い方";
     article.summary = cleanText(article.summary, 160);
@@ -812,8 +815,8 @@ function isUserContributionWrite(req, url) {
     /^\/api\/recruitments$/,
     /^\/api\/threads$/,
     /^\/api\/messages$/,
-    /^\/api\/(recruitments|threads)\/[^/]+\/reply$/,
-    /^\/api\/(recruitments|threads)\/[^/]+\/like$/,
+    /^\/api\/(recruitments|threads|articles)\/[^/]+\/reply$/,
+    /^\/api\/(recruitments|threads|articles)\/[^/]+\/like$/,
     /^\/api\/(recruitments|threads)\/[^/]+\/join$/,
     /^\/api\/(recruitments|threads)\/[^/]+\/status$/,
     /^\/api\/(recruitments|threads)\/[^/]+$/,
@@ -950,7 +953,7 @@ function sitemapXml(db) {
       entries.push({
         loc: absoluteUrl(`/share/${item.type}/${encodeURIComponent(item.id)}`),
         lastmod: new Date(lastActivityAt).toISOString(),
-        priority: item.type === "recruitments" ? "0.8" : "0.7",
+        priority: item.type === "recruitments" ? "0.8" : item.type === "articles" ? "0.75" : "0.7",
         changefreq: "weekly"
       });
     }
@@ -969,8 +972,8 @@ function feedXml(db) {
   const items = betaAccessCode ? [] : publicIndexItems(db)
     .map(item => ({
       ...item,
-      label: item.type === "recruitments" ? "募集" : "フリートーク",
-      tag: item.type === "recruitments" ? item.game || "ゲーム募集" : item.category || "フリートーク"
+      label: item.type === "recruitments" ? "募集" : item.type === "articles" ? "記事" : "フリートーク",
+      tag: item.type === "recruitments" ? item.game || "ゲーム募集" : item.type === "articles" ? item.category || "記事" : item.category || "フリートーク"
     }))
     .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
     .slice(0, 30);
@@ -1182,7 +1185,10 @@ function publicDb(db, viewerId = "", viewerIsAdmin = false) {
     threads: db.threads.map(item => publicItem(item, viewerId, viewerIsAdmin)),
     messages: publicMessages(db, viewerId),
     announcements: (db.announcements || []).filter(item => item.isActive).slice(0, 3),
-    articles: (db.articles || []).filter(item => item.isPublished !== false).sort((a, b) => Number(b.publishedAt || b.createdAt || 0) - Number(a.publishedAt || a.createdAt || 0)),
+    articles: (db.articles || [])
+      .filter(item => item.isPublished !== false)
+      .sort((a, b) => Number(b.publishedAt || b.createdAt || 0) - Number(a.publishedAt || a.createdAt || 0))
+      .map(item => publicItem(item, viewerId, viewerIsAdmin)),
     adSlots: db.adSlots.filter(slot => slot.isActive && !isPlaceholderAdSlot(slot)).map(publicAdSlot),
     publicStatus: publicServiceStatus()
   };
@@ -1191,11 +1197,13 @@ function publicDb(db, viewerId = "", viewerIsAdmin = false) {
 function userDataSummary(db, viewerId = "") {
   const recruitments = db.recruitments || [];
   const threads = db.threads || [];
+  const articles = db.articles || [];
   const messages = db.messages || [];
   const reports = db.reports || [];
   const inquiries = db.inquiries || [];
   const recruitmentReplies = recruitments.flatMap(item => item.replies || []).filter(reply => reply.accountId === viewerId);
   const threadReplies = threads.flatMap(item => item.replies || []).filter(reply => reply.accountId === viewerId);
+  const articleReplies = articles.flatMap(item => item.replies || []).filter(reply => reply.accountId === viewerId);
   const visibleMessages = messages.filter(message => message.status !== "hidden" && (message.fromAccountId === viewerId || message.toAccountId === viewerId));
   const hiddenMessages = messages.filter(message => message.status === "hidden" && (message.fromAccountId === viewerId || message.toAccountId === viewerId));
   return {
@@ -1204,9 +1212,10 @@ function userDataSummary(db, viewerId = "") {
     counts: {
       recruitments: recruitments.filter(item => item.ownerAccountId === viewerId).length,
       threads: threads.filter(item => item.ownerAccountId === viewerId).length,
-      replies: recruitmentReplies.length + threadReplies.length,
+      replies: recruitmentReplies.length + threadReplies.length + articleReplies.length,
       likedRecruitments: recruitments.filter(item => (item.likes || []).includes(viewerId)).length,
       likedThreads: threads.filter(item => (item.likes || []).includes(viewerId)).length,
+      likedArticles: articles.filter(item => (item.likes || []).includes(viewerId)).length,
       joinedRecruitments: recruitments.filter(item => (item.participants || []).some(participant => participant.accountId === viewerId)).length,
       visibleMessages: visibleMessages.length,
       hiddenMessages: hiddenMessages.length,
@@ -1227,7 +1236,7 @@ function userDataSummary(db, viewerId = "") {
       }))
     ].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5),
     dataHandling: {
-      exportIncludes: "募集、フリートーク、返信、いいね、参加希望、表示中DM、送信した通報、お問い合わせ",
+      exportIncludes: "募集、フリートーク、記事への返信、いいね、参加希望、表示中DM、送信した通報、お問い合わせ",
       deletionRequestTargets: "自分の募集、フリートーク、返信、いいね、参加希望、表示中DM、通報や問い合わせ内の直接的なアカウント紐づけ",
       retainedForSafety: "削除処理後も、復元できない処理概要、対応メモ、監査ログ、バックアップ履歴は安全対策と運用確認のため残る場合があります。",
       hiddenMessagesNote: hiddenMessages.length
@@ -1240,6 +1249,7 @@ function userDataSummary(db, viewerId = "") {
 function userDataExport(db, viewerId = "") {
   const recruitments = db.recruitments || [];
   const threads = db.threads || [];
+  const articles = db.articles || [];
   const messages = db.messages || [];
   const ownedRecruitments = recruitments.filter(item => item.ownerAccountId === viewerId);
   const ownedThreads = threads.filter(item => item.ownerAccountId === viewerId);
@@ -1249,6 +1259,9 @@ function userDataExport(db, viewerId = "") {
   const threadReplies = threads.flatMap(item => (item.replies || [])
     .filter(reply => reply.accountId === viewerId)
     .map(reply => ({ ...reply, parentType: "thread", parentId: item.id, parentTitle: item.title })));
+  const articleReplies = articles.flatMap(item => (item.replies || [])
+    .filter(reply => reply.accountId === viewerId)
+    .map(reply => ({ ...reply, parentType: "article", parentId: item.id, parentTitle: item.title })));
   return {
     format: "red-thread-user-data-v1",
     exportedAt: Date.now(),
@@ -1256,10 +1269,11 @@ function userDataExport(db, viewerId = "") {
     summary: userDataSummary(db, viewerId),
     recruitments: ownedRecruitments,
     threads: ownedThreads,
-    replies: [...recruitmentReplies, ...threadReplies],
+    replies: [...recruitmentReplies, ...threadReplies, ...articleReplies],
     likedItems: [
       ...recruitments.filter(item => (item.likes || []).includes(viewerId)).map(item => ({ type: "recruitment", id: item.id, title: item.title })),
-      ...threads.filter(item => (item.likes || []).includes(viewerId)).map(item => ({ type: "thread", id: item.id, title: item.title }))
+      ...threads.filter(item => (item.likes || []).includes(viewerId)).map(item => ({ type: "thread", id: item.id, title: item.title })),
+      ...articles.filter(item => (item.likes || []).includes(viewerId)).map(item => ({ type: "article", id: item.id, title: item.title }))
     ],
     joinedRecruitments: recruitments
       .filter(item => (item.participants || []).some(participant => participant.accountId === viewerId))
@@ -1308,6 +1322,18 @@ function eraseAccountData(db, req, targetAccountId, reason = "account_data_erasu
     item.replies = replies.filter(reply => {
       if (reply.accountId !== targetAccountId) return true;
       removedReplies.push({ parentType: "threads", parentId: item.id, replyId: reply.id });
+      return false;
+    });
+  }
+
+  for (const item of db.articles || []) {
+    const likeCount = (item.likes || []).length;
+    item.likes = (item.likes || []).filter(account => account !== targetAccountId);
+    removedLikes += likeCount - item.likes.length;
+    const replies = item.replies || [];
+    item.replies = replies.filter(reply => {
+      if (reply.accountId !== targetAccountId) return true;
+      removedReplies.push({ parentType: "articles", parentId: item.id, replyId: reply.id });
       return false;
     });
   }
@@ -3139,6 +3165,7 @@ function backupStatus(db) {
 function shareTarget(db, type, id) {
   if (type === "recruitments") return db.recruitments.find(item => item.id === id);
   if (type === "threads") return db.threads.find(item => item.id === id);
+  if (type === "articles") return (db.articles || []).find(item => item.id === id && item.isPublished !== false);
   return null;
 }
 
@@ -3149,7 +3176,10 @@ function publicIndexItems(db) {
       .map(item => ({ ...item, type: "recruitments" })),
     ...(db.threads || [])
       .filter(item => item.id)
-      .map(item => ({ ...item, type: "threads" }))
+      .map(item => ({ ...item, type: "threads" })),
+    ...(db.articles || [])
+      .filter(item => item.id && item.isPublished !== false)
+      .map(item => ({ ...item, type: "articles" }))
   ];
 }
 
@@ -3168,9 +3198,15 @@ function homeHtml(html) {
 
 function shareDescription(item, type) {
   const isThread = type === "threads";
+  const isArticle = type === "articles";
   const replies = Array.isArray(item.replies) ? item.replies.length : 0;
   const body = truncate(stripTags(item.body || ""), 120);
-  const details = isThread
+  const details = isArticle
+    ? [
+      item.category ? `カテゴリ:${item.category}` : "",
+      replies ? `返信:${replies}件` : "返信受付中"
+    ]
+    : isThread
     ? [
       item.category ? `カテゴリ:${item.category}` : "",
       replies ? `返信:${replies}件` : "返信募集中"
@@ -3186,13 +3222,14 @@ function shareDescription(item, type) {
 
 function shareHtml(item, type) {
   const isThread = type === "threads";
-  const label = isThread ? "フリートーク" : "募集";
+  const isArticle = type === "articles";
+  const label = isArticle ? "記事" : isThread ? "フリートーク" : "募集";
   const title = `${item.title || label} | Red Thread`;
   const description = shareDescription(item, type);
   const canonical = absoluteUrl(`/share/${type}/${encodeURIComponent(item.id)}`);
   const appUrl = absoluteUrl(`/#${type}:${encodeURIComponent(item.id)}`);
   const imageUrl = safeImageUrl(item.imageUrl) || absoluteUrl("/og-image.svg");
-  const badge = isThread ? item.category : item.game;
+  const badge = isArticle ? item.category : isThread ? item.category : item.game;
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "DiscussionForumPosting",
@@ -3701,6 +3738,7 @@ function duplicateMessage(db, body, fromAccountId, toAccountId) {
 function findCollection(db, type) {
   if (type === "recruitments") return db.recruitments;
   if (type === "threads") return db.threads;
+  if (type === "articles") return db.articles;
   return null;
 }
 
@@ -3854,7 +3892,7 @@ function rateLimitRule(req, url) {
   if (req.method === "POST" && url.pathname === "/api/recruitments") return { windowMs: 10 * 60 * 1000, max: 6 };
   if (req.method === "POST" && url.pathname === "/api/threads") return { windowMs: 10 * 60 * 1000, max: 8 };
   if (req.method === "POST" && url.pathname === "/api/messages") return { windowMs: 10 * 60 * 1000, max: 20 };
-  if (req.method === "POST" && /^\/api\/(recruitments|threads)\/[^/]+\/reply$/.test(url.pathname)) return { windowMs: 10 * 60 * 1000, max: 20 };
+  if (req.method === "POST" && /^\/api\/(recruitments|threads|articles)\/[^/]+\/reply$/.test(url.pathname)) return { windowMs: 10 * 60 * 1000, max: 20 };
   if (req.method === "POST" && url.pathname === "/api/inquiries") return { windowMs: 10 * 60 * 1000, max: 5 };
   if (req.method === "POST" && url.pathname === "/api/reports") return { windowMs: 10 * 60 * 1000, max: 8 };
   return { windowMs: rateWindowMs, max: 60 };
@@ -4323,6 +4361,9 @@ async function handleApi(req, res, url) {
       body: cleanText(body.body, 4000),
       author: authorName(req) || "Red Thread運営",
       isPublished,
+      ownerAccountId: accountId(req),
+      likes: [],
+      replies: [],
       createdAt: now,
       updatedAt: now,
       publishedAt: isPublished ? now : null
@@ -4769,7 +4810,7 @@ async function handleApi(req, res, url) {
     return;
   }
 
-  const actionMatch = url.pathname.match(/^\/api\/(recruitments|threads)\/([^/]+)\/(like|reply)$/);
+  const actionMatch = url.pathname.match(/^\/api\/(recruitments|threads|articles)\/([^/]+)\/(like|reply)$/);
   if (req.method === "POST" && actionMatch) {
     if (rejectBanned(db, req, res)) return;
     const [, type, id, action] = actionMatch;
@@ -4921,7 +4962,7 @@ async function handleApi(req, res, url) {
     return;
   }
 
-  const replyDeleteMatch = url.pathname.match(/^\/api\/(recruitments|threads)\/([^/]+)\/replies\/([^/]+)$/);
+  const replyDeleteMatch = url.pathname.match(/^\/api\/(recruitments|threads|articles)\/([^/]+)\/replies\/([^/]+)$/);
   if (req.method === "DELETE" && replyDeleteMatch) {
     const [, type, itemId, replyId] = replyDeleteMatch;
     const body = await readBody(req);
@@ -5258,7 +5299,7 @@ const server = http.createServer(async (req, res) => {
       sendHtml(res, 200, statusHtml(db));
       return;
     }
-    const shareMatch = url.pathname.match(/^\/share\/(recruitments|threads)\/([^/]+)$/);
+    const shareMatch = url.pathname.match(/^\/share\/(recruitments|threads|articles)\/([^/]+)$/);
     if (req.method === "GET" && shareMatch) {
       await serveSharePage(req, res, shareMatch[1], shareMatch[2]);
       return;

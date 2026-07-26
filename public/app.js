@@ -231,7 +231,7 @@ function replyNotificationEvents(previousItems = [], nextItems = [], type = "rec
     return (item.replies || [])
       .filter(reply => !reply.viewerOwned && !previousReplyIds.has(itemNotificationKey(type, item.id, reply.id)))
       .map(reply => ({
-        title: type === "threads" ? "フリートークに返信がありました" : "募集に返信がありました",
+        title: type === "articles" ? "記事に返信がありました" : type === "threads" ? "フリートークに返信がありました" : "募集に返信がありました",
         body: `${reply.author || "Player"}: ${cleanPreview(reply.body || "返信が届きました。")}`,
         tag: itemNotificationKey(type, item.id, reply.id)
       }));
@@ -257,6 +257,7 @@ function notifyStateChanges(previousState, nextState) {
   const events = [
     ...replyNotificationEvents(previousState.recruitments || [], nextState.recruitments || [], "recruitments"),
     ...replyNotificationEvents(previousState.threads || [], nextState.threads || [], "threads"),
+    ...replyNotificationEvents(previousState.articles || [], nextState.articles || [], "articles"),
     ...messageNotificationEvents(previousState.messages || [], nextState.messages || [])
   ].slice(0, 3);
   events.forEach(event => notifyBrowser(event.title, event.body, event.tag));
@@ -642,6 +643,10 @@ function normalizeViewerFlags() {
   state.threads.forEach(item => {
     item.viewerLiked = Array.isArray(item.likedBy) ? item.likedBy.includes(account.id) : !!item.viewerLiked;
   });
+  (state.articles || []).forEach(item => {
+    item.viewerLiked = Array.isArray(item.likedBy) ? item.likedBy.includes(account.id) : !!item.viewerLiked;
+    item.replies = Array.isArray(item.replies) ? item.replies : [];
+  });
 }
 
 function adSlot(placement) {
@@ -737,7 +742,7 @@ function renderServiceStatus() {
 
 async function loadState() {
   const data = await api("/api/state");
-  const previousState = cloneStateItem(state) || { recruitments: [], threads: [], messages: [] };
+  const previousState = cloneStateItem(state) || { recruitments: [], threads: [], articles: [], messages: [] };
   notifyStateChanges(previousState, data);
   state = data;
   notificationReady = true;
@@ -747,7 +752,9 @@ async function loadState() {
 }
 
 function collectionForType(type) {
-  return type === "threads" ? state.threads : state.recruitments;
+  if (type === "threads") return state.threads;
+  if (type === "articles") return state.articles;
+  return state.recruitments;
 }
 
 function renderItemLists(type) {
@@ -758,6 +765,8 @@ function renderItemLists(type) {
   const activeView = activeViewId();
   if (type === "threads") {
     if (activeView === "chatView") renderThreads();
+  } else if (type === "articles") {
+    if (activeView === "articleView") renderArticles();
   } else if (activeView === "recruitmentView") {
     renderRecruitments();
   }
@@ -1568,9 +1577,19 @@ function sharePreview(text, max = 70) {
 
 function xShareText(type, item) {
   const isThread = type === "threads";
+  const isArticle = type === "articles";
   const title = item.title || (isThread ? "フリートーク" : "ゲーム仲間募集");
   const preview = sharePreview(item.body);
-  const lines = isThread
+  const lines = isArticle
+    ? [
+        "Red Threadの記事を公開しました",
+        `「${title}」`,
+        item.category ? `カテゴリ: ${item.category}` : "",
+        preview ? `内容: ${preview}` : "",
+        referralShareUrl(type, item.id, "x"),
+        "#RedThread #ゲーム仲間募集"
+      ]
+    : isThread
     ? [
         "Red Threadで話題を出しました",
         `「${title}」`,
@@ -2017,15 +2036,24 @@ function articleCard(article) {
             <span class="badge">記事</span>
             ${article.category ? `<span class="badge light">${escapeHtml(article.category)}</span>` : ""}
             <span>${escapeHtml(article.author || "Red Thread運営")}</span>
+            ${activityBadge(article)}
             <span>${timeAgo(article.publishedAt || article.createdAt)}</span>
           </div>
           <h2>${escapeHtml(article.title)}</h2>
           ${article.summary ? `<p class="card-preview">${escapeHtml(article.summary)}</p>` : ""}
         </div>
+        ${reactionCount(article)}
       </div>
       ${imageMarkup(article.imageUrl, article.title || "記事画像")}
       <div class="message ${shouldCollapse ? "collapsible" : ""}">${escapeHtml(body)}</div>
       ${shouldCollapse ? `<button class="link-action body-toggle" type="button" data-action="toggle-article-body">全文を表示</button>` : ""}
+      <div class="replies">${(article.replies || []).map(replyMarkup).join("")}</div>
+      ${engagementSummary(article, "articles")}
+      <div class="actions">${actionButtons(article)}</div>
+      <form class="reply-form">
+        <input maxlength="160" placeholder="返信を書く">
+        <button class="btn dark" type="submit">送信</button>
+      </form>
     </article>
   `;
 }
@@ -2048,13 +2076,14 @@ function renderArticles() {
 function renderReminder() {
   const recruitmentItems = state.recruitments.filter(item => item.viewerLiked || item.replies.some(replyMatches));
   const threadItems = state.threads.filter(item => item.viewerLiked || item.replies.some(replyMatches));
-  const total = recruitmentItems.length + threadItems.length;
+  const articleItems = (state.articles || []).filter(item => item.viewerLiked || (item.replies || []).some(replyMatches));
+  const total = recruitmentItems.length + threadItems.length + articleItems.length;
   $("#reminderCount").textContent = `${total}件`;
   if (!total) {
     $("#reminderFeed").innerHTML = `
       <div class="empty">
         <strong>リマインダーはまだありません</strong>
-        <span>いいねや返信をした募集・フリートークがここにまとまります。</span>
+        <span>いいねや返信をした募集・フリートーク・記事がここにまとまります。</span>
         <div class="empty-actions">
           <button class="btn dark empty-action" type="button" data-empty-action="open-recruitment-list">募集を見る</button>
           <button class="btn empty-action" type="button" data-empty-action="open-thread-list">フリートークを見る</button>
@@ -2066,6 +2095,7 @@ function renderReminder() {
   $("#reminderFeed").innerHTML = `
     ${recruitmentItems.length ? `<div class="summary"><strong>募集</strong><span>${recruitmentItems.length}件</span></div>${recruitmentItems.map(recruitmentCard).join("")}` : ""}
     ${threadItems.length ? `<div class="summary"><strong>フリートーク</strong><span>${threadItems.length}件</span></div>${threadItems.map(threadCard).join("")}` : ""}
+    ${articleItems.length ? `<div class="summary"><strong>記事</strong><span>${articleItems.length}件</span></div>${articleItems.map(articleCard).join("")}` : ""}
   `;
 }
 
@@ -2114,7 +2144,7 @@ function renderMyDataSummary(summary = myDataSummaryCache) {
         <div class="detail"><span>募集</span><strong>${escapeHtml(counts.recruitments || 0)}</strong></div>
         <div class="detail"><span>フリートーク</span><strong>${escapeHtml(counts.threads || 0)}</strong></div>
         <div class="detail"><span>返信</span><strong>${escapeHtml(counts.replies || 0)}</strong></div>
-        <div class="detail"><span>いいね</span><strong>${escapeHtml((counts.likedRecruitments || 0) + (counts.likedThreads || 0))}</strong></div>
+        <div class="detail"><span>いいね</span><strong>${escapeHtml((counts.likedRecruitments || 0) + (counts.likedThreads || 0) + (counts.likedArticles || 0))}</strong></div>
         <div class="detail"><span>参加希望</span><strong>${escapeHtml(counts.joinedRecruitments || 0)}</strong></div>
         <div class="detail"><span>表示中DM</span><strong>${escapeHtml(counts.visibleMessages || 0)}</strong></div>
         <div class="detail"><span>非表示DM</span><strong>${escapeHtml(counts.hiddenMessages || 0)}</strong></div>
@@ -2126,7 +2156,7 @@ function renderMyDataSummary(summary = myDataSummaryCache) {
           <div class="system-heading">最近の自分の投稿</div>
           ${summary.recentOwnedItems.map(item => `
             <div class="system-check ok">
-              <strong>${escapeHtml(item.type === "thread" ? "話題" : "募集")}</strong>
+              <strong>${escapeHtml(item.type === "thread" ? "話題" : item.type === "article" ? "記事" : "募集")}</strong>
               <span>${escapeHtml(item.title || "Untitled")} / ${timeAgo(item.createdAt)}</span>
             </div>
           `).join("")}
@@ -2208,7 +2238,7 @@ function renderReports(reports = []) {
       <div class="card-head">
         <div>
           <div class="meta">
-            <span class="badge">${escapeHtml(report.type === "replies" ? "返信" : report.type === "messages" ? "DM" : report.type === "threads" ? "フリートーク" : "募集")}</span>
+            <span class="badge">${escapeHtml(report.type === "replies" ? "返信" : report.type === "messages" ? "DM" : report.type === "threads" ? "フリートーク" : report.type === "articles" ? "記事" : "募集")}</span>
             <span>${escapeHtml(report.reporterName)}</span>
             <span>${timeAgo(report.createdAt)}</span>
             <span>${escapeHtml(report.status)}</span>

@@ -1457,6 +1457,18 @@ async function run() {
     assert(Array.isArray(stateWithArticle.articles), "public articles missing");
     assert(stateWithArticle.articles.some(entry => entry.title === "Smoke article"), "published article missing");
 
+    const likedArticle = await request(`/api/articles/${article.article.id}/like`, { method: "POST" });
+    assert(likedArticle.viewerLiked === true && likedArticle.likeCount === 1, "article like failed");
+
+    const repliedArticle = await request(`/api/articles/${article.article.id}/reply`, {
+      method: "POST",
+      body: { body: "Smoke article reply" }
+    });
+    assert(repliedArticle.replies.some(reply => reply.body === "Smoke article reply"), "article reply failed");
+
+    const sharedArticle = await requestRaw(`/share/articles/${article.article.id}`);
+    assert(sharedArticle.statusCode === 200 && sharedArticle.body.includes("Smoke article"), "article share page failed");
+
     const hiddenArticle = await request(`/api/admin/articles/${article.article.id}`, {
       method: "PATCH",
       adminPin: "admin",

@@ -59,28 +59,34 @@ alter table threads add column if not exists image_url text;
 create table if not exists replies (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid references profiles(id) on delete set null,
-  target_type text not null check (target_type in ('recruitment', 'thread')),
+  target_type text not null check (target_type in ('recruitment', 'thread', 'article')),
   target_id uuid not null,
   body text not null,
   status text not null default 'visible' check (status in ('visible', 'hidden')),
   created_at timestamptz not null default now()
 );
 
+alter table replies drop constraint if exists replies_target_type_check;
+alter table replies add constraint replies_target_type_check check (target_type in ('recruitment', 'thread', 'article'));
+
 create table if not exists likes (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references profiles(id) on delete cascade,
-  target_type text not null check (target_type in ('recruitment', 'thread')),
+  target_type text not null check (target_type in ('recruitment', 'thread', 'article')),
   target_id uuid not null,
   created_at timestamptz not null default now(),
   unique (owner_id, target_type, target_id)
 );
 
+alter table likes drop constraint if exists likes_target_type_check;
+alter table likes add constraint likes_target_type_check check (target_type in ('recruitment', 'thread', 'article'));
+
 create table if not exists reports (
   id uuid primary key default gen_random_uuid(),
   reporter_id uuid references profiles(id) on delete set null,
-  target_type text not null check (target_type in ('recruitment', 'thread', 'reply', 'message')),
+  target_type text not null check (target_type in ('recruitment', 'thread', 'article', 'reply', 'message')),
   target_id uuid not null,
-  parent_type text check (parent_type in ('recruitment', 'thread')),
+  parent_type text check (parent_type in ('recruitment', 'thread', 'article')),
   parent_id uuid,
   reply_id uuid,
   reason text not null,
@@ -89,6 +95,11 @@ create table if not exists reports (
   created_at timestamptz not null default now(),
   resolved_at timestamptz
 );
+
+alter table reports drop constraint if exists reports_target_type_check;
+alter table reports add constraint reports_target_type_check check (target_type in ('recruitment', 'thread', 'article', 'reply', 'message'));
+alter table reports drop constraint if exists reports_parent_type_check;
+alter table reports add constraint reports_parent_type_check check (parent_type in ('recruitment', 'thread', 'article'));
 
 create table if not exists inquiries (
   id uuid primary key default gen_random_uuid(),

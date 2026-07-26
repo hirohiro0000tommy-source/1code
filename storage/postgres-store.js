@@ -20,6 +20,7 @@ function toDate(value) {
 function normalizeTargetType(value) {
   if (value === "recruitment") return "recruitments";
   if (value === "thread") return "threads";
+  if (value === "article") return "articles";
   if (value === "message") return "messages";
   return value;
 }
@@ -27,6 +28,7 @@ function normalizeTargetType(value) {
 function dbTargetType(value) {
   if (value === "recruitments") return "recruitment";
   if (value === "threads") return "thread";
+  if (value === "articles") return "article";
   if (value === "messages") return "message";
   return value;
 }
@@ -64,6 +66,14 @@ function createPostgresStore() {
     await pool.query("alter table recruitments add column if not exists is_anonymous boolean not null default false");
     await pool.query("alter table threads add column if not exists is_anonymous boolean not null default false");
     await pool.query("alter table threads add column if not exists image_url text");
+    await pool.query("alter table replies drop constraint if exists replies_target_type_check");
+    await pool.query("alter table replies add constraint replies_target_type_check check (target_type in ('recruitment', 'thread', 'article'))");
+    await pool.query("alter table likes drop constraint if exists likes_target_type_check");
+    await pool.query("alter table likes add constraint likes_target_type_check check (target_type in ('recruitment', 'thread', 'article'))");
+    await pool.query("alter table reports drop constraint if exists reports_target_type_check");
+    await pool.query("alter table reports add constraint reports_target_type_check check (target_type in ('recruitment', 'thread', 'article', 'reply', 'message'))");
+    await pool.query("alter table reports drop constraint if exists reports_parent_type_check");
+    await pool.query("alter table reports add constraint reports_parent_type_check check (parent_type in ('recruitment', 'thread', 'article'))");
     await pool.query(`create table if not exists articles (
       id uuid primary key default gen_random_uuid(),
       title text not null,
@@ -309,6 +319,13 @@ function createPostgresStore() {
           updatedAt: toMillis(row.updated_at)
         })),
         articles: articles.rows.map(row => ({
+          ...(() => {
+            const key = `articles:${row.id}`;
+            return {
+              likes: likeMap.get(key) || [],
+              replies: replyMap.get(key) || []
+            };
+          })(),
           id: row.id,
           title: row.title,
           category: row.category || "使い方",
@@ -534,6 +551,20 @@ function createPostgresStore() {
             article.publishedAt ? toDate(article.publishedAt) : null
           ]
         );
+        for (const accountId of article.likes || []) {
+          const likerId = await profileId(client, accountId, accountId);
+          await client.query(
+            "insert into likes (owner_id, target_type, target_id, created_at) values ($1, 'article', $2, now()) on conflict do nothing",
+            [likerId, article.id]
+          );
+        }
+        for (const reply of article.replies || []) {
+          const replyOwnerId = await profileId(client, reply.accountId, reply.author);
+          await client.query(
+            "insert into replies (id, owner_id, target_type, target_id, body, created_at) values ($1, $2, 'article', $3, $4, $5)",
+            [reply.id, replyOwnerId, article.id, reply.body, toDate(reply.createdAt)]
+          );
+        }
       }
 
       for (const slot of db.adSlots || []) {
