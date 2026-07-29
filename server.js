@@ -297,6 +297,36 @@ function validateRuntimeConfig() {
   }
 }
 
+function firstUseGuideArticle(now = Date.now()) {
+  return {
+    id: "official-first-use-guide-v1",
+    title: "最初に何を押せばいいか",
+    category: "使い方",
+    summary: "Red Threadを開いたあと、募集を見る、絞り込む、返信する、投稿するまでの短い案内です。",
+    body: [
+      "Red Threadを開いたら、まずは「募集」を見てください。",
+      "",
+      "遊びたいゲームが決まっている場合は「ゲームカテゴリ」を開いて、ゲーム名を選びます。もっと細かく探したい時だけ「詳細情報」を開いて、機種、VC、ランク、スタイルを選びます。",
+      "",
+      "気になる募集があれば、投稿内の返信から短く声をかけられます。プロフィールはあとからでも大丈夫です。",
+      "",
+      "自分から募集したい時は、右側の「募集を投稿」を押します。ゲーム、ランク帯、機種、VC、人数、スタイルを選んで、本文には遊びたい内容をそのまま書けば投稿できます。",
+      "",
+      "募集ほど決まっていない話は「フリートーク」に書けます。雑談、大会観戦、攻略相談など、軽い話題を置く場所です。",
+      "",
+      "いいね、返信、投票した記事は「リマインダー」にまとまります。あとで見返したい投稿がある時に使ってください。"
+    ].join("\n"),
+    author: "Red Thread運営",
+    isPublished: true,
+    ownerAccountId: "system:official",
+    likes: [],
+    replies: [],
+    createdAt: now,
+    updatedAt: now,
+    publishedAt: now
+  };
+}
+
 const initialData = {
   recruitments: [
     {
@@ -376,6 +406,7 @@ const initialData = {
     }
   ],
   articles: [
+    firstUseGuideArticle(Date.now() - 1000),
     {
       id: crypto.randomUUID(),
       title: "Red Threadの使い方",
@@ -568,6 +599,17 @@ async function writeDb(db) {
   await store.write(db);
   runtimeMetrics.writeCount += 1;
   runtimeMetrics.lastWriteAt = Date.now();
+}
+
+async function ensureOfficialArticles() {
+  const db = await readDb();
+  db.articles = Array.isArray(db.articles) ? db.articles : [];
+  const guide = firstUseGuideArticle();
+  const exists = db.articles.some(article => article.id === guide.id || article.title === guide.title);
+  if (exists) return false;
+  db.articles.unshift(guide);
+  await writeDb(db);
+  return true;
 }
 
 function bumpMetric(map, key) {
@@ -5421,6 +5463,7 @@ validateRuntimeConfig();
 
 server.listen(port, async () => {
   await store.ensureDb();
+  await ensureOfficialArticles();
   if (hotTopicBotEnabled) {
     runHotTopicBot("startup").catch(error => {
       runtimeMetrics.lastErrorAt = Date.now();

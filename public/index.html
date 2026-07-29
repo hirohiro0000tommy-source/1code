@@ -210,8 +210,10 @@
         <main>
           <div class="filters recruitment-filters">
             <div class="filter-group">
-              <div class="filter-label">ゲームカテゴリ</div>
-              <div class="check-list" id="gameFilter" aria-label="ゲーム絞り込み"></div>
+              <button class="detail-toggle" type="button" id="gameCategoryToggle" aria-expanded="false">ゲームカテゴリ</button>
+              <div class="game-category-body" id="gameCategoryBody" hidden>
+                <div class="check-list" id="gameFilter" aria-label="ゲーム絞り込み"></div>
+              </div>
             </div>
             <div class="filter-group detail-filter">
               <button class="detail-toggle" type="button" id="detailFilterToggle" aria-expanded="false">詳細情報</button>
@@ -270,38 +272,6 @@
               <div class="solo-actions">
                 <button class="action" type="button" data-solo-action="random-prompt">別のお題</button>
                 <button class="action primary" type="button" data-solo-action="use-prompt-thread">フリートークに使う</button>
-              </div>
-            </article>
-            <article class="solo-card maker-card">
-              <div class="solo-card-head">
-                <span class="badge light">募集文メーカー</span>
-                <strong>条件を選んで募集文を作る</strong>
-                <p>投稿しなくても、募集の雰囲気だけ先に作れます。</p>
-              </div>
-              <div class="maker-grid">
-                <select id="soloMakerGame" aria-label="ゲーム"></select>
-                <select id="soloMakerPurpose" aria-label="目的">
-                  <option value="casual">軽く遊びたい</option>
-                  <option value="beginner">初心者歓迎</option>
-                  <option value="ranked">ランク・練習</option>
-                  <option value="talk">雑談しながら</option>
-                </select>
-                <select id="soloMakerVoice" aria-label="VC">
-                  <option value="どちらでも">VCどちらでも</option>
-                  <option value="なし">VCなし</option>
-                  <option value="あり">VCあり</option>
-                </select>
-                <select id="soloMakerStyle" aria-label="スタイル">
-                  <option value="まったり">まったり</option>
-                  <option value="初心者">初心者</option>
-                  <option value="エンジョイ">エンジョイ</option>
-                  <option value="ガチ">ガチ</option>
-                </select>
-              </div>
-              <textarea id="soloMakerOutput" readonly placeholder="募集文を作るとここに表示されます。"></textarea>
-              <div class="solo-actions">
-                <button class="action" type="button" data-solo-action="generate-recruitment">募集文を作る</button>
-                <button class="action primary" type="button" data-solo-action="apply-recruitment">募集フォームに入れる</button>
               </div>
             </article>
           </section>

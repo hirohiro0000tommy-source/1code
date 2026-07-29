@@ -5578,6 +5578,12 @@ $("#detailFilterToggle").addEventListener("click", () => {
   body.hidden = !open;
   $("#detailFilterToggle").setAttribute("aria-expanded", String(open));
 });
+$("#gameCategoryToggle").addEventListener("click", () => {
+  const body = $("#gameCategoryBody");
+  const open = body.hidden;
+  body.hidden = !open;
+  $("#gameCategoryToggle").setAttribute("aria-expanded", String(open));
+});
 $("#gameInput").addEventListener("change", () => {
   renderRecruitmentFormOptions();
   saveFormDraft(recruitmentDraftKey, recruitmentDraftFields);

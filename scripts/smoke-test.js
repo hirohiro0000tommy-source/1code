@@ -181,7 +181,7 @@ async function run() {
     assert(homePage.body.includes(`<meta property="og:image" content="http://localhost:${port}/og-image.svg">`), "home og image absolute url missing");
     assert(homePage.body.includes(`"url": "http://localhost:${port}/"`), "home structured data absolute url missing");
     assert(homePage.body.includes("mode-switcher") && !homePage.body.includes('href="/admin"'), "public page should not link to admin");
-    assert(homePage.body.includes("一人用お題箱") && homePage.body.includes("募集文メーカー"), "solo tools missing");
+    assert(homePage.body.includes("一人用お題箱") && homePage.body.includes("gameCategoryToggle"), "entry tools missing");
     const adminPage = await requestRaw("/admin");
     assert(adminPage.statusCode === 200 && adminPage.body.includes("adminView"), "admin page failed");
     assert((adminPage.headers["x-robots-tag"] || "").includes("noindex"), "admin page should be noindex");
@@ -201,12 +201,12 @@ async function run() {
     assert((appJs.headers["cache-control"] || "").includes("no-cache"), "app js should revalidate cache");
     assert(appJs.body.includes("公式Bot投稿") && appJs.body.includes("official-bot-notice"), "official bot notice missing");
     assert(appJs.body.includes("partyfinder.admin.pin.v1") && appJs.body.includes('switchView("adminView")'), "admin one-button setup missing");
-    assert(appJs.body.includes("soloPrompts") && appJs.body.includes("buildRecruitmentMakerText"), "solo tool scripts missing");
+    assert(appJs.body.includes("soloPrompts") && appJs.body.includes("gameCategoryToggle"), "entry tool scripts missing");
     const stylesCss = await requestRaw("/styles.css");
     assert((stylesCss.headers["cache-control"] || "").includes("no-cache"), "styles css should revalidate cache");
     assert(stylesCss.body.includes("[data-operator-only]") && stylesCss.body.includes("body.operator-mode .mode-switcher"), "operator links should be mode-gated");
     assert(stylesCss.body.includes(".badge.official-bot") && stylesCss.body.includes(".official-bot-notice"), "official bot styles missing");
-    assert(stylesCss.body.includes(".solo-tools") && stylesCss.body.includes(".maker-grid"), "solo tool styles missing");
+    assert(stylesCss.body.includes(".solo-tools") && stylesCss.body.includes(".game-category-body"), "entry tool styles missing");
     const guidelinesPage = await requestRaw("/guidelines.html");
     assert(guidelinesPage.statusCode === 200 && guidelinesPage.body.includes("コミュニティガイドライン") && guidelinesPage.body.includes("返信とDM"), "guidelines page failed");
     const iconSvg = await requestRaw("/icon.svg");

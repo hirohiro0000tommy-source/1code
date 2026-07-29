@@ -1206,7 +1206,13 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   display: grid;
   gap: 8px;
 }
+.game-category-body {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
 .detail-filter-body[hidden],
+.game-category-body[hidden],
 .filter-panel[hidden] {
   display: none;
 }
