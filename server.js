@@ -855,6 +855,56 @@ function contentViolation(...values) {
   return "";
 }
 
+function draftSafetyResult(values = []) {
+  const text = values.map(value => String(value || "")).join("\n");
+  const violation = contentViolation(text);
+  const checks = [];
+  const add = (level, label, message) => checks.push({ level, label, message });
+  if (violation === "too_many_links") add("block", "リンク", "リンクが多すぎます。外部誘導に見えやすいので、必要なものだけに絞ってください。");
+  if (violation === "repeated_characters") add("block", "連続文字", "同じ文字が長く続いています。読みやすい文章に直してください。");
+  if (linkCount(text) > 0 && linkCount(text) < 3) add("warn", "外部リンク", "リンク先が分かるように、何のURLか一言添えると安心です。");
+  if (/(discord\.gg|line\.me|openchat|招待|個チャ|個人情報)/iu.test(text)) add("warn", "連絡先", "外部連絡先や招待リンクは、必要な相手にだけ共有する運用が安全です。");
+  if (/(死ね|殺す|消えろ|カス|バカ|暴言)/iu.test(text)) add("warn", "言葉づかい", "強い言葉が含まれている可能性があります。募集や返信では少し柔らかくすると参加しやすくなります。");
+  if (text.trim().length > 0 && text.trim().length < 12) add("warn", "本文", "もう少しだけ目的や雰囲気を書くと返信されやすくなります。");
+  if (!checks.length) add("ok", "確認", "投稿しても問題なさそうです。");
+  return {
+    ok: !checks.some(check => check.level === "block"),
+    level: checks.some(check => check.level === "block") ? "block" : checks.some(check => check.level === "warn") ? "warn" : "ok",
+    checks
+  };
+}
+
+function replyAssistSuggestions(body = "", title = "") {
+  const source = `${title}\n${body}`;
+  const gameMatch = source.match(/(Apex|VALORANT|Monster Hunter|Shadowverse\/Worlds Beyond|STREET FIGHTER 6|Overwatch|Splatoon|Pokemon Champions)/u);
+  const game = gameMatch ? gameMatch[1] : "";
+  const casual = /初心者|まったり|エンジョイ|VCなし|気軽/u.test(source);
+  return [
+    `${game ? `${game}、` : ""}まだ空いていたら参加したいです。`,
+    casual ? "初心者寄りでも大丈夫なら参加したいです。" : "条件が合いそうなら参加したいです。",
+    "時間や細かい条件が合えば一緒に遊びたいです。"
+  ];
+}
+
+function articleDraftAssist(body = {}) {
+  const category = cleanText(body.category, 40) || "使い方";
+  const topic = cleanText(body.topic || body.title || "", 80) || category;
+  const title = body.title ? cleanText(body.title, 90) : `${topic}について`;
+  const summary = `${topic}を短く整理する記事です。`;
+  const text = [
+    `${topic}について、最初に知っておくと使いやすい点をまとめます。`,
+    "",
+    "まずは結論を短く書きます。",
+    "",
+    "次に、迷いやすいところを順番に整理します。",
+    "",
+    "最後に、読んだ人がすぐ試せる行動を一つだけ置きます。"
+  ].join("\n");
+  const pollQuestion = category === "使い方" ? "次に知りたい内容はどれですか？" : "この記事は役に立ちましたか？";
+  const pollOptions = category === "使い方" ? ["募集の書き方", "返信の仕方", "プロフィール"] : ["役に立った", "もう少し詳しく知りたい"];
+  return { title, category, summary, body: text, pollQuestion, pollOptions };
+}
+
 function absoluteUrl(pathname = "/") {
   return `${publicBaseUrl.replace(/\/$/, "")}${pathname.startsWith("/") ? pathname : `/${pathname}`}`;
 }
@@ -4115,6 +4165,29 @@ async function handleApi(req, res, url) {
 
   if (req.method === "GET" && url.pathname === "/api/me/export") {
     sendJson(res, 200, { data: userDataExport(db, accountId(req)) });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/assist") {
+    const body = await readBody(req);
+    const mode = cleanText(body.mode, 40);
+    if (mode === "safety") {
+      sendJson(res, 200, draftSafetyResult([body.title, body.body, body.game, body.category]));
+      return;
+    }
+    if (mode === "reply") {
+      sendJson(res, 200, {
+        safety: draftSafetyResult([body.title, body.body]),
+        suggestions: replyAssistSuggestions(cleanText(body.body, 1000), cleanText(body.title, 120))
+      });
+      return;
+    }
+    if (mode === "article") {
+      if (!adminOnly(req, res)) return;
+      sendJson(res, 200, { draft: articleDraftAssist(body) });
+      return;
+    }
+    sendJson(res, 400, { error: "unknown assist mode" });
     return;
   }
 

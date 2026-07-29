@@ -233,6 +233,22 @@ async function run() {
     assert(me.role === "user", "guest role should be user");
     const emptyUserData = await request("/api/me/data");
     assert(emptyUserData.data.counts.recruitments === 0, "empty user data summary failed");
+    const safetyAssist = await request("/api/assist", {
+      method: "POST",
+      body: { mode: "safety", body: "軽く遊べる人を探しています。" }
+    });
+    assert(safetyAssist.ok === true && Array.isArray(safetyAssist.checks), "safety assist failed");
+    const replyAssist = await request("/api/assist", {
+      method: "POST",
+      body: { mode: "reply", title: "Apex募集", body: "まったり遊びたいです。" }
+    });
+    assert(Array.isArray(replyAssist.suggestions) && replyAssist.suggestions.length >= 2, "reply assist failed");
+    const articleAssist = await request("/api/assist", {
+      method: "POST",
+      adminPin: "admin",
+      body: { mode: "article", category: "使い方", topic: "最初の返信" }
+    });
+    assert(articleAssist.draft?.title && articleAssist.draft?.pollOptions?.length >= 2, "article assist failed");
 
     for (let i = 0; i < 5; i += 1) {
       const rateInquiry = await request("/api/inquiries", {

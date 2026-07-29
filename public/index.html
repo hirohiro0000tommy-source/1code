@@ -201,6 +201,10 @@
               </select>
             </label>
             <label>本文<textarea id="messageInput" maxlength="500" required placeholder="雰囲気、目的、連絡方法など"></textarea></label>
+            <div class="assist-tools" data-assist-scope="recruitment">
+              <button class="assist-button" type="button" data-assist-action="safety" data-assist-target="recruitment">投稿前確認</button>
+              <div class="assist-result" id="recruitmentAssistResult" aria-live="polite"></div>
+            </div>
             <label class="anonymous-toggle"><input id="anonymousRecruitmentInput" type="checkbox"><span><strong>匿名で投稿</strong><small>名前とプロフィールを表示しません</small></span></label>
             <p class="form-status" id="recruitmentFormStatus" aria-live="polite">本文 0/500</p>
             <p class="form-note">外部IDは、必要なときだけ書けば大丈夫です。</p>
@@ -336,6 +340,10 @@
             </select>
             </label>
             <label>本文<textarea id="chatBodyInput" maxlength="500" required placeholder="本文を書く"></textarea></label>
+            <div class="assist-tools" data-assist-scope="thread">
+              <button class="assist-button" type="button" data-assist-action="safety" data-assist-target="thread">投稿前確認</button>
+              <div class="assist-result" id="threadAssistResult" aria-live="polite"></div>
+            </div>
             <label>画像ファイル<input id="chatImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
             <label class="anonymous-toggle"><input id="anonymousThreadInput" type="checkbox"><span><strong>匿名で投稿</strong><small>名前を表示せずにスレッドを出します</small></span></label>
             <p class="form-status" id="chatFormStatus" aria-live="polite">タイトル 0/72 / 本文 0/500</p>

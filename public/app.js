@@ -675,6 +675,70 @@ async function api(path, options = {}) {
   }
 }
 
+function assistResultMarkup(result = {}) {
+  const checks = Array.isArray(result.checks) ? result.checks : [];
+  if (!checks.length) return "";
+  return `
+    <div class="assist-result-inner ${escapeHtml(result.level || "ok")}">
+      ${checks.map(check => `<span class="${escapeHtml(check.level || "ok")}"><strong>${escapeHtml(check.label || "確認")}</strong>${escapeHtml(check.message || "")}</span>`).join("")}
+    </div>
+  `;
+}
+
+async function runPostSafetyAssist(target) {
+  const payload = target === "thread"
+    ? {
+        mode: "safety",
+        title: $("#chatTitleInput")?.value || "",
+        category: $("#chatCategoryInput")?.value || "",
+        body: $("#chatBodyInput")?.value || ""
+      }
+    : {
+        mode: "safety",
+        title: "",
+        game: $("#gameInput")?.value || "",
+        body: $("#messageInput")?.value || ""
+      };
+  const resultSelector = target === "thread" ? "#threadAssistResult" : "#recruitmentAssistResult";
+  const result = $(resultSelector);
+  if (!String(payload.body || "").trim()) {
+    result.innerHTML = assistResultMarkup({ level: "warn", checks: [{ level: "warn", label: "本文", message: "先に本文を書いてください。" }] });
+    return;
+  }
+  result.innerHTML = `<div class="assist-result-inner busy"><span>確認中...</span></div>`;
+  try {
+    const data = await api("/api/assist", { method: "POST", body: JSON.stringify(payload), timeoutMs: 8000 });
+    result.innerHTML = assistResultMarkup(data);
+  } catch (error) {
+    result.innerHTML = assistResultMarkup({ level: "warn", checks: [{ level: "warn", label: "確認", message: "確認できませんでした。通常の投稿はできます。" }] });
+  }
+}
+
+async function runReplyAssist(card, button) {
+  const item = stateItem(card.dataset.type, card.dataset.id);
+  const form = card.querySelector(".reply-form");
+  const result = form?.querySelector(".assist-result");
+  if (!item || !form || !result) return;
+  const restore = setButtonState(button, true, "作成中...");
+  result.innerHTML = `<div class="assist-result-inner busy"><span>候補を作成中...</span></div>`;
+  try {
+    const data = await api("/api/assist", {
+      method: "POST",
+      body: JSON.stringify({ mode: "reply", title: item.title || item.game || item.category || "", body: item.body || "" }),
+      timeoutMs: 8000
+    });
+    result.innerHTML = `
+      <div class="assist-suggestions">
+        ${(data.suggestions || []).map(text => `<button class="assist-suggestion" type="button" data-action="use-reply-suggestion">${escapeHtml(text)}</button>`).join("")}
+      </div>
+    `;
+  } catch (error) {
+    result.innerHTML = assistResultMarkup({ level: "warn", checks: [{ level: "warn", label: "返信案", message: "候補を作れませんでした。" }] });
+  } finally {
+    restore();
+  }
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -2123,6 +2187,10 @@ function recruitmentCard(post) {
       ${engagementSummary(post, "recruitments")}
       <div class="actions">${actionButtons(post)}</div>
       <form class="reply-form">
+        <div class="assist-tools compact">
+          <button class="assist-button" type="button" data-action="reply-assist">返信案</button>
+          <div class="assist-result" aria-live="polite"></div>
+        </div>
         <input maxlength="160" placeholder="返信を書く">
         <button class="btn dark" type="submit">送信</button>
       </form>
@@ -2154,6 +2222,10 @@ function threadCard(post) {
       ${engagementSummary(post, "threads")}
       <div class="actions">${actionButtons(post)}</div>
       <form class="reply-form">
+        <div class="assist-tools compact">
+          <button class="assist-button" type="button" data-action="reply-assist">返信案</button>
+          <div class="assist-result" aria-live="polite"></div>
+        </div>
         <input maxlength="160" placeholder="返信を書く">
         <button class="btn dark" type="submit">送信</button>
       </form>
@@ -2247,6 +2319,10 @@ function articleCard(article) {
       ${engagementSummary(article, "articles")}
       <div class="actions">${actionButtons(article)}</div>
       <form class="reply-form">
+        <div class="assist-tools compact">
+          <button class="assist-button" type="button" data-action="reply-assist">返信案</button>
+          <div class="assist-result" aria-live="polite"></div>
+        </div>
         <input maxlength="160" placeholder="返信を書く">
         <button class="btn dark" type="submit">送信</button>
       </form>
@@ -2718,6 +2794,11 @@ function renderArticleAdmin(articles = []) {
             <option value="その他">その他</option>
           </select>
         </label>
+        <div class="assist-tools">
+          <input name="assistTopic" maxlength="80" placeholder="記事のテーマ">
+          <button class="assist-button" type="button" data-action="article-assist">下書き補助</button>
+          <div class="assist-result" aria-live="polite"></div>
+        </div>
         <label>概要<input name="summary" maxlength="160" placeholder="一覧に出す短い説明"></label>
         <label>画像ファイル<input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
         <label>アンケート質問<input name="pollQuestion" maxlength="120" placeholder="例: どの時間帯なら参加しやすいですか？"></label>
@@ -4358,6 +4439,20 @@ async function handleCardClick(event) {
   if (!card) return;
   const { type, id } = card.dataset;
   const reply = event.target.closest("[data-reply-id]");
+  if (button.dataset.action === "reply-assist") {
+    toggleCardForm(card, ".reply-form", "input");
+    await runReplyAssist(card, button);
+    return;
+  }
+  if (button.dataset.action === "use-reply-suggestion") {
+    const form = button.closest(".reply-form");
+    const input = form?.querySelector("input");
+    if (input) {
+      input.value = button.textContent.trim();
+      input.focus();
+    }
+    return;
+  }
   if (button.dataset.pollOption && type === "articles") {
     const optionId = button.dataset.pollOption;
     const endPending = beginPendingAction(`${type}:${id}:poll`);
@@ -4827,6 +4922,16 @@ document.body.addEventListener("click", async event => {
   if (adminJump) {
     const target = document.getElementById(adminJump.dataset.adminJump);
     if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  const assistAction = event.target.closest("[data-assist-action]");
+  if (assistAction) {
+    const restore = setButtonState(assistAction, true, "確認中...");
+    try {
+      await runPostSafetyAssist(assistAction.dataset.assistTarget || "recruitment");
+    } finally {
+      restore();
+    }
     return;
   }
   const soloAction = event.target.closest("[data-solo-action]");
@@ -5442,6 +5547,39 @@ $("#adminArticleFeed").addEventListener("click", async event => {
     const select = form?.querySelector("select[name='category']");
     if (select) select.value = categoryButton.dataset.articleCategory;
     form?.querySelector("input[name='title']")?.focus();
+    return;
+  }
+  const assistButton = event.target.closest("[data-action='article-assist']");
+  if (assistButton) {
+    const form = assistButton.closest("form");
+    const result = form?.querySelector(".assist-result");
+    const restore = setButtonState(assistButton, true, "作成中...");
+    if (result) result.innerHTML = `<div class="assist-result-inner busy"><span>下書きを作成中...</span></div>`;
+    try {
+      const data = await api("/api/assist", {
+        method: "POST",
+        body: JSON.stringify({
+          mode: "article",
+          title: form?.querySelector("input[name='title']")?.value || "",
+          category: form?.querySelector("select[name='category']")?.value || "使い方",
+          topic: form?.querySelector("input[name='assistTopic']")?.value || ""
+        }),
+        timeoutMs: 8000
+      });
+      const draft = data.draft || {};
+      if (draft.title) form.querySelector("input[name='title']").value = draft.title;
+      if (draft.category) form.querySelector("select[name='category']").value = draft.category;
+      if (draft.summary) form.querySelector("input[name='summary']").value = draft.summary;
+      if (draft.body) form.querySelector("textarea[name='body']").value = draft.body;
+      if (draft.pollQuestion) form.querySelector("input[name='pollQuestion']").value = draft.pollQuestion;
+      if (Array.isArray(draft.pollOptions)) form.querySelector("textarea[name='pollOptions']").value = draft.pollOptions.join("\n");
+      if (result) result.innerHTML = assistResultMarkup({ level: "ok", checks: [{ level: "ok", label: "下書き", message: "フォームに入れました。必要に応じて直してください。" }] });
+    } catch (error) {
+      if (result) result.innerHTML = assistResultMarkup({ level: "warn", checks: [{ level: "warn", label: "下書き", message: "作成できませんでした。" }] });
+      showErrorToast(error);
+    } finally {
+      restore();
+    }
     return;
   }
   const button = event.target.closest("button");
