@@ -154,6 +154,7 @@ create table if not exists articles (
   category text not null default '使い方',
   summary text,
   image_url text,
+  poll jsonb,
   body text not null,
   author text not null default 'Red Thread運営',
   is_published boolean not null default true,
@@ -163,6 +164,7 @@ create table if not exists articles (
 );
 
 alter table articles add column if not exists image_url text;
+alter table articles add column if not exists poll jsonb;
 
 create table if not exists ad_slots (
   id uuid primary key default gen_random_uuid(),

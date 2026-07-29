@@ -2211,6 +2211,7 @@ function articleCard(article) {
       ${imageMarkup(article.imageUrl, article.title || "記事画像")}
       <div class="message ${shouldCollapse ? "collapsible" : ""}">${escapeHtml(body)}</div>
       ${shouldCollapse ? `<button class="link-action body-toggle" type="button" data-action="toggle-article-body">全文を表示</button>` : ""}
+      ${articlePollMarkup(article)}
       <div class="replies">${(article.replies || []).map(replyMarkup).join("")}</div>
       ${engagementSummary(article, "articles")}
       <div class="actions">${actionButtons(article)}</div>
@@ -2219,6 +2220,27 @@ function articleCard(article) {
         <button class="btn dark" type="submit">送信</button>
       </form>
     </article>
+  `;
+}
+
+function articlePollMarkup(article) {
+  const poll = article.poll;
+  if (!poll || !Array.isArray(poll.options) || poll.options.length < 2) return "";
+  return `
+    <section class="article-poll" aria-label="記事アンケート">
+      <div class="article-poll-head">
+        <strong>${escapeHtml(poll.question)}</strong>
+        <span>${escapeHtml(poll.total || 0)}票${poll.viewerVote ? " / 投票済み" : ""}</span>
+      </div>
+      <div class="article-poll-options">
+        ${poll.options.map(option => `
+          <button class="poll-option ${poll.viewerVote === option.id ? "selected" : ""}" type="button" data-poll-option="${escapeHtml(option.id)}" aria-pressed="${poll.viewerVote === option.id ? "true" : "false"}">
+            <span><strong>${escapeHtml(option.text)}</strong><em>${escapeHtml(option.count || 0)}票 / ${escapeHtml(option.percent || 0)}%</em></span>
+            <i style="width:${Math.max(0, Math.min(100, Number(option.percent || 0)))}%"></i>
+          </button>
+        `).join("")}
+      </div>
+    </section>
   `;
 }
 
@@ -2664,6 +2686,8 @@ function renderArticleAdmin(articles = []) {
         </label>
         <label>概要<input name="summary" maxlength="160" placeholder="一覧に出す短い説明"></label>
         <label>画像ファイル<input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+        <label>アンケート質問<input name="pollQuestion" maxlength="120" placeholder="例: どの時間帯なら参加しやすいですか？"></label>
+        <label>アンケート選択肢<textarea name="pollOptions" maxlength="500" placeholder="1行に1つずつ。2つ以上でアンケートを表示します。"></textarea></label>
         <label>本文<textarea name="body" maxlength="4000" required placeholder="本文を書く"></textarea></label>
         <div class="article-editor-actions">
           <label class="inline-check"><input name="isPublished" type="checkbox" checked>公開する</label>
@@ -2686,6 +2710,7 @@ function renderArticleAdmin(articles = []) {
         </div>
       </div>
       ${imageMarkup(item.imageUrl, item.title || "記事画像")}
+      ${item.poll ? `<div class="message">アンケート: ${escapeHtml(item.poll.question || "")} / ${(item.poll.options || []).length}択</div>` : ""}
       <div class="message">${escapeHtml(item.body)}</div>
       <div class="actions">
         <button class="action" data-action="toggle-article">${item.isPublished === false ? "公開する" : "下書きに戻す"}</button>
@@ -4299,6 +4324,24 @@ async function handleCardClick(event) {
   if (!card) return;
   const { type, id } = card.dataset;
   const reply = event.target.closest("[data-reply-id]");
+  if (button.dataset.pollOption && type === "articles") {
+    const optionId = button.dataset.pollOption;
+    const endPending = beginPendingAction(`${type}:${id}:poll`);
+    if (!endPending) return;
+    try {
+      const updated = await api(`/api/articles/${id}/poll`, {
+        method: "POST",
+        body: JSON.stringify({ optionId })
+      });
+      upsertStateItem(type, updated);
+      showToast("投票しました", "アンケート結果に反映しました。");
+    } catch (error) {
+      showErrorToast(error);
+    } finally {
+      endPending();
+    }
+    return;
+  }
   if (button.dataset.action === "use-sample") {
     useSamplePost(type, id);
     return;
@@ -5347,6 +5390,8 @@ $("#adminArticleFeed").addEventListener("submit", async event => {
       category: form.get("category"),
       summary: form.get("summary"),
       imageUrl,
+      pollQuestion: form.get("pollQuestion"),
+      pollOptions: form.get("pollOptions"),
       body: form.get("body"),
       isPublished: form.get("isPublished") === "on"
     })

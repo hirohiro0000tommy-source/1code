@@ -367,7 +367,7 @@ async function run() {
       },
       stdio: "ignore"
     });
-    shortAdminPinBlocked = await waitForProcessExit(shortAdminPinChild);
+    shortAdminPinBlocked = await waitForProcessExit(shortAdminPinChild, 3000);
     shortAdminPinChild.kill();
     assert(shortAdminPinBlocked, "short production admin pin was not blocked");
 
@@ -1460,9 +1460,10 @@ async function run() {
     const article = await request("/api/admin/articles", {
       method: "POST",
       adminPin: "admin",
-      body: { title: "Smoke article", category: "使い方", summary: "Smoke guide", body: "Smoke article body", isPublished: true }
+      body: { title: "Smoke article", category: "使い方", summary: "Smoke guide", body: "Smoke article body", pollQuestion: "Smoke poll?", pollOptions: "Yes\nNo", isPublished: true }
     });
     assert(article.article.title === "Smoke article", "article create failed");
+    assert(article.article.poll?.options?.length === 2, "article poll create failed");
 
     const stateWithArticle = await request("/api/state");
     assert(Array.isArray(stateWithArticle.articles), "public articles missing");
@@ -1470,6 +1471,12 @@ async function run() {
 
     const likedArticle = await request(`/api/articles/${article.article.id}/like`, { method: "POST" });
     assert(likedArticle.viewerLiked === true && likedArticle.likeCount === 1, "article like failed");
+
+    const votedArticle = await request(`/api/articles/${article.article.id}/poll`, {
+      method: "POST",
+      body: { optionId: "option-1" }
+    });
+    assert(votedArticle.poll.viewerVote === "option-1" && votedArticle.poll.options[0].count === 1, "article poll vote failed");
 
     const repliedArticle = await request(`/api/articles/${article.article.id}/reply`, {
       method: "POST",

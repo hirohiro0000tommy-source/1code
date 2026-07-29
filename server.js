@@ -428,6 +428,66 @@ function normalizeAdKind(value) {
   return adKinds.has(kind) ? kind : "affiliate";
 }
 
+function normalizeArticlePoll(value = {}) {
+  value = value && typeof value === "object" ? value : {};
+  const question = cleanText(value.question, 120);
+  const rawOptions = Array.isArray(value.options) ? value.options : [];
+  const options = rawOptions
+    .map((option, index) => ({
+      id: cleanText(option.id, 40) || `option-${index + 1}`,
+      text: cleanText(option.text || option, 80)
+    }))
+    .filter(option => option.text)
+    .slice(0, 6);
+  if (!question || options.length < 2) return null;
+  const optionIds = new Set(options.map(option => option.id));
+  const votes = {};
+  Object.entries(value.votes || {}).forEach(([account, optionId]) => {
+    const accountId = cleanText(account, 120);
+    const safeOptionId = cleanText(optionId, 40);
+    if (accountId && optionIds.has(safeOptionId)) votes[accountId] = safeOptionId;
+  });
+  return { question, options, votes };
+}
+
+function articlePollFromBody(body = {}) {
+  const question = cleanText(body.pollQuestion, 120);
+  const options = Array.isArray(body.pollOptions)
+    ? body.pollOptions
+    : String(body.pollOptions || "").split(/\r?\n/);
+  return normalizeArticlePoll({
+    question,
+    options: options.map((text, index) => ({
+      id: `option-${index + 1}`,
+      text
+    })),
+    votes: {}
+  });
+}
+
+function publicArticlePoll(poll, viewerId = "") {
+  const normalized = normalizeArticlePoll(poll);
+  if (!normalized) return null;
+  const counts = {};
+  normalized.options.forEach(option => {
+    counts[option.id] = 0;
+  });
+  Object.values(normalized.votes || {}).forEach(optionId => {
+    if (counts[optionId] !== undefined) counts[optionId] += 1;
+  });
+  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  return {
+    question: normalized.question,
+    options: normalized.options.map(option => ({
+      ...option,
+      count: counts[option.id] || 0,
+      percent: total ? Math.round((counts[option.id] || 0) / total * 100) : 0
+    })),
+    total,
+    viewerVote: normalized.votes?.[viewerId] || ""
+  };
+}
+
 async function readDb() {
   const db = await store.read();
   runtimeMetrics.readCount += 1;
@@ -481,6 +541,7 @@ async function readDb() {
     article.category = cleanText(article.category, 40) || "使い方";
     article.summary = cleanText(article.summary, 160);
     article.imageUrl = safeImageUrl(article.imageUrl);
+    article.poll = normalizeArticlePoll(article.poll);
     article.body = cleanText(article.body, 4000);
     article.author = cleanText(article.author, 40) || "Red Thread運営";
     article.isPublished = article.isPublished !== false;
@@ -817,6 +878,7 @@ function isUserContributionWrite(req, url) {
     /^\/api\/messages$/,
     /^\/api\/(recruitments|threads|articles)\/[^/]+\/reply$/,
     /^\/api\/(recruitments|threads|articles)\/[^/]+\/like$/,
+    /^\/api\/articles\/[^/]+\/poll$/,
     /^\/api\/(recruitments|threads)\/[^/]+\/join$/,
     /^\/api\/(recruitments|threads)\/[^/]+\/status$/,
     /^\/api\/(recruitments|threads)\/[^/]+$/,
@@ -1053,6 +1115,7 @@ function publicItem(item, viewerId = "", viewerIsAdmin = false) {
       canDelete: viewerIsAdmin || !!reply.accountId && reply.accountId === viewerId,
       accountId: reply.accountId
     })),
+    poll: item.poll ? publicArticlePoll(item.poll, viewerId) : null,
     canDelete: canManage,
     canManage,
     ownerAccountId: undefined,
@@ -3893,6 +3956,7 @@ function rateLimitRule(req, url) {
   if (req.method === "POST" && url.pathname === "/api/threads") return { windowMs: 10 * 60 * 1000, max: 8 };
   if (req.method === "POST" && url.pathname === "/api/messages") return { windowMs: 10 * 60 * 1000, max: 20 };
   if (req.method === "POST" && /^\/api\/(recruitments|threads|articles)\/[^/]+\/reply$/.test(url.pathname)) return { windowMs: 10 * 60 * 1000, max: 20 };
+  if (req.method === "POST" && /^\/api\/articles\/[^/]+\/poll$/.test(url.pathname)) return { windowMs: 10 * 60 * 1000, max: 40 };
   if (req.method === "POST" && url.pathname === "/api/inquiries") return { windowMs: 10 * 60 * 1000, max: 5 };
   if (req.method === "POST" && url.pathname === "/api/reports") return { windowMs: 10 * 60 * 1000, max: 8 };
   return { windowMs: rateWindowMs, max: 60 };
@@ -4358,6 +4422,7 @@ async function handleApi(req, res, url) {
       category: cleanText(body.category, 40) || "使い方",
       summary: cleanText(body.summary, 160),
       imageUrl: safeImageUrl(body.imageUrl),
+      poll: articlePollFromBody(body),
       body: cleanText(body.body, 4000),
       author: authorName(req) || "Red Thread運営",
       isPublished,
@@ -4475,6 +4540,8 @@ async function handleApi(req, res, url) {
     if (typeof body.category === "string") article.category = cleanText(body.category, 40) || "使い方";
     if (typeof body.summary === "string") article.summary = cleanText(body.summary, 160);
     if (typeof body.imageUrl === "string") article.imageUrl = safeImageUrl(body.imageUrl);
+    if ("pollQuestion" in body || "pollOptions" in body) article.poll = articlePollFromBody(body);
+    if (body.poll === null) article.poll = null;
     if (typeof body.body === "string") article.body = cleanText(body.body, 4000);
     if (typeof body.isPublished === "boolean") {
       article.isPublished = body.isPublished;
@@ -4807,6 +4874,29 @@ async function handleApi(req, res, url) {
     db.threads.unshift(item);
     await writeDb(db);
     sendJson(res, 201, publicItem(item, accountId(req)));
+    return;
+  }
+
+  const articlePollMatch = url.pathname.match(/^\/api\/articles\/([^/]+)\/poll$/);
+  if (req.method === "POST" && articlePollMatch) {
+    if (rejectBanned(db, req, res)) return;
+    const article = (db.articles || []).find(entry => entry.id === articlePollMatch[1] && entry.isPublished !== false);
+    if (!article || !article.poll) {
+      sendJson(res, 404, { error: "poll not found" });
+      return;
+    }
+    const poll = normalizeArticlePoll(article.poll);
+    const body = await readBody(req);
+    const optionId = cleanText(body.optionId, 40);
+    if (!poll || !poll.options.some(option => option.id === optionId)) {
+      sendJson(res, 400, { error: "valid option is required" });
+      return;
+    }
+    poll.votes[accountId(req)] = optionId;
+    article.poll = poll;
+    article.updatedAt = Date.now();
+    await writeDb(db);
+    sendJson(res, 200, publicItem(article, accountId(req)));
     return;
   }
 

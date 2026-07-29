@@ -80,6 +80,7 @@ function createPostgresStore() {
       category text not null default '使い方',
       summary text,
       image_url text,
+      poll jsonb,
       body text not null,
       author text not null default 'Red Thread運営',
       is_published boolean not null default true,
@@ -88,6 +89,7 @@ function createPostgresStore() {
       published_at timestamptz
     )`);
     await pool.query("alter table articles add column if not exists image_url text");
+    await pool.query("alter table articles add column if not exists poll jsonb");
     await pool.query("create index if not exists articles_published_idx on articles(is_published, published_at desc, created_at desc)");
     await pool.query("alter table ad_slots add column if not exists kind text not null default 'affiliate'");
     await pool.query("alter table ad_slots drop constraint if exists ad_slots_kind_check");
@@ -331,6 +333,7 @@ function createPostgresStore() {
           category: row.category || "使い方",
           summary: row.summary || "",
           imageUrl: row.image_url || "",
+          poll: row.poll || null,
           body: row.body,
           author: row.author || "Red Thread運営",
           isPublished: row.is_published !== false,
@@ -535,14 +538,15 @@ function createPostgresStore() {
       for (const article of db.articles || []) {
         await client.query(
           `insert into articles
-            (id, title, category, summary, image_url, body, author, is_published, created_at, updated_at, published_at)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+            (id, title, category, summary, image_url, poll, body, author, is_published, created_at, updated_at, published_at)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
           [
             article.id,
             article.title,
             article.category || "使い方",
             article.summary || null,
             article.imageUrl || null,
+            article.poll || null,
             article.body,
             article.author || "Red Thread運営",
             article.isPublished !== false,
