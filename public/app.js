@@ -3526,11 +3526,17 @@ function renderSystem(system) {
   const memoryMb = health.memory?.heapUsed ? Math.round(health.memory.heapUsed / 1024 / 1024) : 0;
   const lastRead = health.runtime?.lastReadAt ? timeAgo(health.runtime.lastReadAt) : "未記録";
   const lastWrite = health.runtime?.lastWriteAt ? timeAgo(health.runtime.lastWriteAt) : "未記録";
+  const eventLoopLag = Math.round(health.runtime?.eventLoopLagMs || 0);
+  const maxEventLoopLag = Math.round(health.runtime?.maxEventLoopLagMs || 0);
+  const readDuration = Math.round(health.runtime?.lastReadDurationMs || 0);
+  const writeDuration = Math.round(health.runtime?.lastWriteDurationMs || 0);
   const statusCounts = Object.entries(health.runtime?.statusCounts || {}).map(([status, count]) => `${status}:${count}`).join(" / ") || "-";
   const refCounts = Object.entries(health.runtime?.refCounts || {}).map(([ref, count]) => `${ref}:${count}`).join(" / ") || "-";
   const recentRequests = (health.runtime?.recentRequests || []).slice(0, 6);
   const recentErrors = (health.runtime?.recentErrors || []).slice(0, 5);
   const recentRateLimits = (health.runtime?.recentRateLimits || []).slice(0, 5);
+  const recentSlowRequests = (health.runtime?.recentSlowRequests || []).slice(0, 5);
+  const recentSlowStorage = (health.runtime?.recentSlowStorage || []).slice(0, 5);
   const betaReadiness = system.betaReadiness || [];
   const retention = system.retention || {};
   const retentionSummary = [
@@ -3561,8 +3567,14 @@ function renderSystem(system) {
         <div class="detail"><span>公開URL</span><strong>${escapeHtml(system.publicBaseUrl)}</strong></div>
         <div class="detail"><span>最終読込</span><strong>${escapeHtml(lastRead)}</strong></div>
         <div class="detail"><span>最終保存</span><strong>${escapeHtml(lastWrite)}</strong></div>
+        <div class="detail"><span>読込時間</span><strong>${escapeHtml(readDuration)}ms</strong></div>
+        <div class="detail"><span>保存時間</span><strong>${escapeHtml(writeDuration)}ms</strong></div>
+        <div class="detail"><span>遅延</span><strong>${escapeHtml(eventLoopLag)}ms</strong></div>
+        <div class="detail"><span>最大遅延</span><strong>${escapeHtml(maxEventLoopLag)}ms</strong></div>
         <div class="detail"><span>制限バケット</span><strong>${escapeHtml(system.rateLimitBuckets)}</strong></div>
         <div class="detail"><span>429制限</span><strong>${escapeHtml(health.runtime?.rateLimitBlockedCount || 0)}</strong></div>
+        <div class="detail"><span>低速HTTP</span><strong>${escapeHtml(health.runtime?.slowRequestCount || 0)}</strong></div>
+        <div class="detail"><span>低速保存</span><strong>${escapeHtml(health.runtime?.slowStorageCount || 0)}</strong></div>
         <div class="detail"><span>リクエスト</span><strong>${escapeHtml(health.runtime?.requestCount || 0)}</strong></div>
         <div class="detail"><span>5xxエラー</span><strong>${escapeHtml(health.runtime?.errorCount || 0)}</strong></div>
         <div class="detail"><span>ステータス</span><strong>${escapeHtml(statusCounts)}</strong></div>
@@ -3599,6 +3611,28 @@ function renderSystem(system) {
             <div class="system-check warn">
               <strong>${escapeHtml(entry.count || 0)}/${escapeHtml(entry.max || 0)}</strong>
               <span>${escapeHtml(entry.method)} ${escapeHtml(entry.path)} / acct:${escapeHtml(entry.accountId || "-")} / src:${escapeHtml(entry.ipHash || "-")} ${escapeHtml(entry.ipSource || "")} / ${timeAgo(entry.at)}</span>
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
+      ${recentSlowRequests.length ? `
+        <div class="system-checks">
+          <div class="system-heading">低速リクエスト</div>
+          ${recentSlowRequests.map(entry => `
+            <div class="system-check warn">
+              <strong>${escapeHtml(entry.durationMs || 0)}ms</strong>
+              <span>${escapeHtml(entry.method)} ${escapeHtml(entry.path)} / ${escapeHtml(entry.status)} / ${timeAgo(entry.at)}${entry.requestId ? ` / #${escapeHtml(entry.requestId.slice(0, 8))}` : ""}</span>
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
+      ${recentSlowStorage.length ? `
+        <div class="system-checks">
+          <div class="system-heading">低速DB処理</div>
+          ${recentSlowStorage.map(entry => `
+            <div class="system-check warn">
+              <strong>${escapeHtml(entry.durationMs || 0)}ms</strong>
+              <span>${escapeHtml(entry.operation)} / ${timeAgo(entry.at)}</span>
             </div>
           `).join("")}
         </div>

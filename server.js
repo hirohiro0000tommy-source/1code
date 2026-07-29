@@ -30,6 +30,9 @@ const maxRequestBodyBytes = Math.max(32_000, Math.min(2_000_000, Number(process.
 const serverRequestTimeoutMs = Math.max(10_000, Math.min(120_000, Number(process.env.SERVER_REQUEST_TIMEOUT_MS || 30_000)));
 const serverHeadersTimeoutMs = Math.max(5_000, Math.min(serverRequestTimeoutMs, Number(process.env.SERVER_HEADERS_TIMEOUT_MS || 10_000)));
 const serverKeepAliveTimeoutMs = Math.max(1_000, Math.min(30_000, Number(process.env.SERVER_KEEP_ALIVE_TIMEOUT_MS || 5_000)));
+const slowRequestThresholdMs = Math.max(500, Math.min(10_000, Number(process.env.SLOW_REQUEST_THRESHOLD_MS || 2_000)));
+const slowStorageThresholdMs = Math.max(100, Math.min(5_000, Number(process.env.SLOW_STORAGE_THRESHOLD_MS || 750)));
+const eventLoopMonitorIntervalMs = Math.max(1_000, Math.min(30_000, Number(process.env.EVENT_LOOP_MONITOR_INTERVAL_MS || 5_000)));
 const rateBuckets = new Map();
 const startedAt = Date.now();
 const runtimeMetrics = {
@@ -43,9 +46,20 @@ const runtimeMetrics = {
   recentRequests: [],
   recentErrors: [],
   recentRateLimits: [],
+  recentSlowRequests: [],
+  recentSlowStorage: [],
   rateLimitBlockedCount: 0,
   readCount: 0,
   writeCount: 0,
+  slowRequestCount: 0,
+  slowStorageCount: 0,
+  lastReadDurationMs: 0,
+  lastWriteDurationMs: 0,
+  maxReadDurationMs: 0,
+  maxWriteDurationMs: 0,
+  eventLoopLagMs: 0,
+  maxEventLoopLagMs: 0,
+  lastEventLoopCheckAt: null,
   lastReadAt: null,
   lastWriteAt: null,
   lastErrorAt: null,
@@ -520,9 +534,21 @@ function publicArticlePoll(poll, viewerId = "") {
 }
 
 async function readDb() {
+  const started = Date.now();
   const db = await store.read();
+  const durationMs = Date.now() - started;
   runtimeMetrics.readCount += 1;
   runtimeMetrics.lastReadAt = Date.now();
+  runtimeMetrics.lastReadDurationMs = durationMs;
+  runtimeMetrics.maxReadDurationMs = Math.max(runtimeMetrics.maxReadDurationMs || 0, durationMs);
+  if (durationMs >= slowStorageThresholdMs) {
+    runtimeMetrics.slowStorageCount += 1;
+    pushRecent(runtimeMetrics.recentSlowStorage, {
+      operation: "read",
+      durationMs,
+      at: Date.now()
+    }, retentionPolicy.recentErrors);
+  }
   db.recruitments = Array.isArray(db.recruitments) ? db.recruitments : [];
   db.threads = Array.isArray(db.threads) ? db.threads : [];
   db.reports = Array.isArray(db.reports) ? db.reports : [];
@@ -596,9 +622,21 @@ async function readDb() {
 }
 
 async function writeDb(db) {
+  const started = Date.now();
   await store.write(db);
+  const durationMs = Date.now() - started;
   runtimeMetrics.writeCount += 1;
   runtimeMetrics.lastWriteAt = Date.now();
+  runtimeMetrics.lastWriteDurationMs = durationMs;
+  runtimeMetrics.maxWriteDurationMs = Math.max(runtimeMetrics.maxWriteDurationMs || 0, durationMs);
+  if (durationMs >= slowStorageThresholdMs) {
+    runtimeMetrics.slowStorageCount += 1;
+    pushRecent(runtimeMetrics.recentSlowStorage, {
+      operation: "write",
+      durationMs,
+      at: Date.now()
+    }, retentionPolicy.recentErrors);
+  }
 }
 
 async function ensureOfficialArticles() {
@@ -638,17 +676,38 @@ function recordResponse(status, meta = {}) {
   bumpMetric(runtimeMetrics.statusCounts, String(status));
   if (status >= 500) runtimeMetrics.errorCount += 1;
   if (meta.pathname) {
+    const durationMs = meta.startedAt ? Date.now() - meta.startedAt : null;
     const entry = {
       requestId: meta.requestId || "",
       method: meta.method || "",
       path: meta.pathname,
       status,
-      durationMs: meta.startedAt ? Date.now() - meta.startedAt : null,
+      durationMs,
       at: Date.now()
     };
     pushRecent(runtimeMetrics.recentRequests, entry, retentionPolicy.recentRequests);
     if (status >= 500) pushRecent(runtimeMetrics.recentErrors, { ...entry, error: meta.error || runtimeMetrics.lastError || "" }, retentionPolicy.recentErrors);
+    if (durationMs !== null && durationMs >= slowRequestThresholdMs) {
+      runtimeMetrics.slowRequestCount += 1;
+      pushRecent(runtimeMetrics.recentSlowRequests, {
+        ...entry,
+        contentLength: meta.contentLength || 0,
+        userAgent: cleanText(meta.userAgent || "", 120)
+      }, retentionPolicy.recentErrors);
+    }
   }
+}
+
+function startEventLoopMonitor() {
+  let expected = Date.now() + eventLoopMonitorIntervalMs;
+  setInterval(() => {
+    const now = Date.now();
+    const lag = Math.max(0, now - expected);
+    runtimeMetrics.eventLoopLagMs = lag;
+    runtimeMetrics.maxEventLoopLagMs = Math.max(runtimeMetrics.maxEventLoopLagMs || 0, lag);
+    runtimeMetrics.lastEventLoopCheckAt = now;
+    expected = now + eventLoopMonitorIntervalMs;
+  }, eventLoopMonitorIntervalMs).unref?.();
 }
 
 function requestHeaders(res) {
@@ -3179,10 +3238,21 @@ function healthSnapshot(db) {
       refCounts: Object.fromEntries(Object.entries(runtimeMetrics.refCounts).sort((a, b) => b[1] - a[1]).slice(0, 12)),
       recentRequests: runtimeMetrics.recentRequests.slice(0, 10),
       recentErrors: runtimeMetrics.recentErrors.slice(0, 10),
+      recentSlowRequests: runtimeMetrics.recentSlowRequests.slice(0, 10),
+      recentSlowStorage: runtimeMetrics.recentSlowStorage.slice(0, 10),
       rateLimitBlockedCount: runtimeMetrics.rateLimitBlockedCount,
       recentRateLimits: runtimeMetrics.recentRateLimits.slice(0, 10),
       readCount: runtimeMetrics.readCount,
       writeCount: runtimeMetrics.writeCount,
+      slowRequestCount: runtimeMetrics.slowRequestCount,
+      slowStorageCount: runtimeMetrics.slowStorageCount,
+      lastReadDurationMs: runtimeMetrics.lastReadDurationMs,
+      lastWriteDurationMs: runtimeMetrics.lastWriteDurationMs,
+      maxReadDurationMs: runtimeMetrics.maxReadDurationMs,
+      maxWriteDurationMs: runtimeMetrics.maxWriteDurationMs,
+      eventLoopLagMs: runtimeMetrics.eventLoopLagMs,
+      maxEventLoopLagMs: runtimeMetrics.maxEventLoopLagMs,
+      lastEventLoopCheckAt: runtimeMetrics.lastEventLoopCheckAt,
       lastReadAt: runtimeMetrics.lastReadAt,
       lastWriteAt: runtimeMetrics.lastWriteAt,
       lastErrorAt: runtimeMetrics.lastErrorAt,
@@ -3200,6 +3270,9 @@ function healthSnapshot(db) {
       requestTimeoutMs: serverRequestTimeoutMs,
       headersTimeoutMs: serverHeadersTimeoutMs,
       keepAliveTimeoutMs: serverKeepAliveTimeoutMs,
+      slowRequestThresholdMs,
+      slowStorageThresholdMs,
+      eventLoopMonitorIntervalMs,
       duplicateWindowMs,
       rateWindowMs
     },
@@ -5469,7 +5542,14 @@ async function serveStatic(req, res, url) {
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
-  res.locals = { requestId: crypto.randomUUID(), method: req.method, pathname: url.pathname, startedAt: Date.now() };
+  res.locals = {
+    requestId: crypto.randomUUID(),
+    method: req.method,
+    pathname: url.pathname,
+    startedAt: Date.now(),
+    contentLength: Number(req.headers["content-length"] || 0),
+    userAgent: req.headers["user-agent"] || ""
+  };
   recordRequest(req, url);
   try {
     if (["GET", "HEAD"].includes(req.method) && url.pathname === "/healthz") {
@@ -5533,6 +5613,7 @@ server.headersTimeout = serverHeadersTimeoutMs;
 server.keepAliveTimeout = serverKeepAliveTimeoutMs;
 
 validateRuntimeConfig();
+startEventLoopMonitor();
 
 server.listen(port, async () => {
   await store.ensureDb();
