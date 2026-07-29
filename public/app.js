@@ -1865,7 +1865,17 @@ function showPostCreatedToast(type, item) {
 
 function officialSampleBadges(post, label) {
   if (!post.isOfficial) return "";
-  return `<span class="badge sample">見本</span><span class="badge official">公式</span><span class="badge light">${escapeHtml(label)}</span>`;
+  return `<span class="badge official-bot">公式Bot</span><span class="badge sample">見本</span><span class="badge light">${escapeHtml(label)}</span>`;
+}
+
+function officialBotNotice(post) {
+  if (!post.isOfficial) return "";
+  return `
+    <div class="official-bot-notice">
+      <strong>公式Bot投稿</strong>
+      <span>この投稿は、初めて来た人にも使い方が伝わるよう運営が用意した見本です。</span>
+    </div>
+  `;
 }
 
 function officialGuideMarkup(post, type) {
@@ -1926,6 +1936,7 @@ function recruitmentCard(post) {
         <div class="detail"><span>スタイル</span><strong>${escapeHtml(post.style)}</strong></div>
       </div>
       ${post.participants?.length ? `<div class="replies">${post.participants.map(participant => `<div class="reply">参加希望: ${escapeHtml(participant.name || "Player")}</div>`).join("")}</div>` : ""}
+      ${officialBotNotice(post)}
       ${postBodyMarkup(post)}
       ${safeTagMarkup(post)}
       ${officialGuideMarkup(post, "recruitments")}
@@ -1962,6 +1973,7 @@ function threadCard(post) {
         </div>
         ${reactionCount(post)}
       </div>
+      ${officialBotNotice(post)}
       ${postBodyMarkup(post)}
       ${imageMarkup(post.imageUrl, post.title || "フリートーク画像")}
       ${officialGuideMarkup(post, "threads")}
