@@ -14,6 +14,7 @@ const browserNotificationKey = "partyfinder.browser.notifications.v1";
 const stateCacheKeyPrefix = "partyfinder.state.cache.v1";
 const featuredGames = ["Shadowverse/Worlds Beyond", "Pokemon Champions", "Monster Hunter", "Apex", "VALORANT", "STREET FIGHTER 6", "Overwatch", "Splatoon", "その他"];
 const styleOptions = ["初心者", "まったり", "エンジョイ", "ガチ"];
+const articleCategoryOrder = ["お知らせ", "使い方", "ゲーム友達探しのコツ", "安全", "その他"];
 const recruitmentTemplates = {
   casual: {
     game: "その他",
@@ -1406,6 +1407,35 @@ function safeTagMarkup(item) {
   return `<div class="safe-tags">${tags.map(tag => `<button type="button" class="${safeTagFilters.has(tag) ? "active" : ""}" data-safe-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`).join("")}</div>`;
 }
 
+function articleCategoryLabel(category = "") {
+  if (category === "更新") return "お知らせ";
+  if (category === "コラム") return "ゲーム友達探しのコツ";
+  return category || "その他";
+}
+
+function articleCategories() {
+  const values = new Set((state.articles || []).map(article => articleCategoryLabel(article.category)).filter(Boolean));
+  articleCategoryOrder.forEach(category => values.add(category));
+  return [...values].sort((a, b) => {
+    const ai = articleCategoryOrder.indexOf(a);
+    const bi = articleCategoryOrder.indexOf(b);
+    if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    return a.localeCompare(b, "ja");
+  });
+}
+
+function visibleArticles() {
+  const categories = checkedValues("#articleCategoryFilter");
+  return (state.articles || [])
+    .filter(article => article.isPublished !== false)
+    .filter(article => !categories.length || categories.includes(articleCategoryLabel(article.category)))
+    .sort((a, b) => Number(b.publishedAt || b.createdAt || 0) - Number(a.publishedAt || a.createdAt || 0));
+}
+
+function refreshArticleFilter() {
+  renderCheckList("#articleCategoryFilter", articleCategories());
+}
+
 function hotRecruitments() {
   return [...state.recruitments]
     .filter(item => item.status !== "closed")
@@ -1485,22 +1515,28 @@ function buildRecruitmentMakerText() {
   const voice = $("#soloMakerVoice")?.value || "どちらでも";
   const style = $("#soloMakerStyle")?.value || "まったり";
   const purposeText = {
-    casual: "軽めに遊べる人を探しています。",
-    beginner: "初心者の方や復帰勢の方も歓迎です。",
-    ranked: "ランクや練習を一緒にできる人を探しています。",
-    talk: "雑談しながらゆるく遊べる人を探しています。"
-  }[purpose] || "一緒に遊べる人を探しています。";
+    casual: "軽く数戦だけでも大丈夫です。",
+    beginner: "初心者や復帰勢の方も気軽にどうぞ。",
+    ranked: "ランクや練習を一緒にできる方だとうれしいです。",
+    talk: "雑談しながらのんびり遊びたいです。"
+  }[purpose] || "一緒に遊べる方を探しています。";
   const voiceText = voice === "なし"
-    ? "VCなしで、チャット中心だと助かります。"
+    ? "VCなし、チャット中心でお願いします。"
     : voice === "あり"
-      ? "VCありで話しながら遊べるとうれしいです。"
+      ? "VCありで話しながら遊べると助かります。"
       : "VCはありなしどちらでも大丈夫です。";
+  const styleText = {
+    初心者: "失敗しても気にしない雰囲気で遊びたいです。",
+    まったり: "勝ち負けより雰囲気重視です。",
+    エンジョイ: "楽しく遊びつつ、できれば勝ちたいくらいの温度感です。",
+    ガチ: "勝ちを目指しつつ、落ち着いて連携できる方だとうれしいです。"
+  }[style] || "気楽な雰囲気で遊びたいです。";
   return [
-    `${game}で一緒に遊べる人を募集しています。`,
+    `${game}を一緒に遊べる方を募集します。`,
     purposeText,
-    `${style}寄りの雰囲気で、短時間でも大丈夫です。`,
+    styleText,
     voiceText,
-    "気になったら返信で声をかけてください。"
+    "合いそうなら返信ください。"
   ].join("\n");
 }
 
@@ -2192,13 +2228,14 @@ function renderThreads() {
 function articleCard(article) {
   const body = String(article.body || "");
   const shouldCollapse = body.length > 360 || body.split("\n").length > 8;
+  const category = articleCategoryLabel(article.category);
   return `
     <article class="card article-card" data-type="articles" data-id="${escapeHtml(article.id)}">
       <div class="card-head">
         <div>
           <div class="meta">
-            <span class="badge">記事</span>
-            ${article.category ? `<span class="badge light">${escapeHtml(article.category)}</span>` : ""}
+            <span class="badge official">運営記事</span>
+            ${category ? `<span class="badge light">${escapeHtml(category)}</span>` : ""}
             <span>${escapeHtml(article.author || "Red Thread運営")}</span>
             ${activityBadge(article)}
             <span>${timeAgo(article.publishedAt || article.createdAt)}</span>
@@ -2245,13 +2282,15 @@ function articlePollMarkup(article) {
 }
 
 function renderArticles() {
-  const articles = (state.articles || []).filter(article => article.isPublished !== false);
-  $("#articleCount").textContent = `${articles.length}件`;
+  refreshArticleFilter();
+  const total = (state.articles || []).filter(article => article.isPublished !== false).length;
+  const articles = visibleArticles();
+  const filtered = checkedValues("#articleCategoryFilter");
+  $("#articleCount").textContent = filtered.length ? `${articles.length}/${total}件` : `${articles.length}件`;
   if (!articles.length) {
     $("#articleFeed").innerHTML = `
       <div class="empty">
-        <strong>記事はまだありません</strong>
-        <span>運営からの案内や募集のコツをここに掲載します。</span>
+        <strong>${filtered.length ? "条件に合う記事はまだありません" : "記事はまだありません"}</strong>
       </div>
     `;
     return;
@@ -2262,7 +2301,7 @@ function renderArticles() {
 function renderReminder() {
   const recruitmentItems = state.recruitments.filter(item => item.viewerLiked || item.replies.some(replyMatches));
   const threadItems = state.threads.filter(item => item.viewerLiked || item.replies.some(replyMatches));
-  const articleItems = (state.articles || []).filter(item => item.viewerLiked || (item.replies || []).some(replyMatches));
+  const articleItems = (state.articles || []).filter(item => item.viewerLiked || item.poll?.viewerVote || (item.replies || []).some(replyMatches));
   const total = recruitmentItems.length + threadItems.length + articleItems.length;
   $("#reminderCount").textContent = `${total}件`;
   if (!total) {
@@ -2670,18 +2709,19 @@ function renderArticleAdmin(articles = []) {
       <form class="panel article-editor-panel" data-action="create-article">
         <div class="panel-title"><span>記事を投稿</span><small>運営から掲載</small></div>
         <div class="template-row" aria-label="記事カテゴリ">
+          <button class="template-button" type="button" data-article-category="お知らせ">お知らせ</button>
           <button class="template-button" type="button" data-article-category="使い方">使い方</button>
-          <button class="template-button" type="button" data-article-category="更新">更新</button>
-          <button class="template-button" type="button" data-article-category="コラム">コラム</button>
+          <button class="template-button" type="button" data-article-category="ゲーム友達探しのコツ">ゲーム友達探しのコツ</button>
           <button class="template-button" type="button" data-article-category="安全">安全</button>
         </div>
         <label>タイトル<input name="title" maxlength="90" required placeholder="記事タイトル"></label>
         <label>カテゴリ
           <select name="category">
+            <option value="お知らせ">お知らせ</option>
             <option value="使い方">使い方</option>
-            <option value="更新">更新</option>
-            <option value="コラム">コラム</option>
+            <option value="ゲーム友達探しのコツ">ゲーム友達探しのコツ</option>
             <option value="安全">安全</option>
+            <option value="その他">その他</option>
           </select>
         </label>
         <label>概要<input name="summary" maxlength="160" placeholder="一覧に出す短い説明"></label>
@@ -2701,7 +2741,7 @@ function renderArticleAdmin(articles = []) {
       <div class="card-head">
         <div>
           <div class="meta">
-            <span class="badge">${escapeHtml(item.category || "記事")}</span>
+            <span class="badge">${escapeHtml(articleCategoryLabel(item.category))}</span>
             <span>${item.isPublished !== false ? "公開中" : "下書き"}</span>
             <span>${timeAgo(item.publishedAt || item.createdAt)}</span>
           </div>
@@ -5655,6 +5695,14 @@ $("#logoutButton").addEventListener("click", async () => {
   $(selector).addEventListener("change", () => {
     resetFeedLimit("threads");
     debounceRender("threads", renderThreads, 20);
+  });
+});
+["#articleCategoryFilter"].forEach(selector => {
+  $(selector).addEventListener("input", () => {
+    debounceRender("articles", renderArticles);
+  });
+  $(selector).addEventListener("change", () => {
+    debounceRender("articles", renderArticles, 20);
   });
 });
 ["#messageInput", "#chatTitleInput", "#chatBodyInput"].forEach(selector => {
