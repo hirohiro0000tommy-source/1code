@@ -36,6 +36,7 @@ const requiredFiles = [
   "scripts/final-release-check.js",
   "scripts/live-smoke-check.js",
   "scripts/status-check.js",
+  "scripts/ops-watch.js",
   "scripts/postgres-readiness-check.js",
   "storage/index.js",
   "storage/json-store.js",
@@ -468,6 +469,10 @@ else fail("live deployed smoke check", "missing");
 
 if (packageJson.scripts?.["status:check"] && statusCheck.includes("/healthz") && statusCheck.includes("/status") && statusCheck.includes("/status.json") && statusCheck.includes("Red Thread status") && statusCheck.includes("request") && statusCheck.includes("trace: status") && statusCheck.includes("release")) pass("light status check");
 else fail("light status check", "missing");
+
+const opsWatch = fileText("scripts/ops-watch.js");
+if (packageJson.scripts?.["ops:watch"] && opsWatch.includes("/healthz") && opsWatch.includes("/api/health") && opsWatch.includes("summary samples")) pass("ops watch command");
+else fail("ops watch command", "missing");
 
 if (server.includes("function betaDailyReport") && server.includes("function betaPostSummary") && server.includes("trendingPosts") && server.includes("summaryText") && server.includes("testerCallouts") && server.includes("operatorQueue") && server.includes("priority") && server.includes("safetyWatch") && server.includes("responseRate") && server.includes("staleQueue") && server.includes("backupAgeHours") && server.includes("openMessageReports") && app.includes("β日次レポート") && app.includes("日次メモをコピー") && app.includes("優先対応キュー") && app.includes("優先対応をコピー") && app.includes("copy-beta-queue") && app.includes("data-beta-report=\"queue\"") && app.includes("テスターへの声かけ") && app.includes("伸びている投稿") && app.includes("反応率") && app.includes("反応なし投稿") && app.includes("対応待ち24h+") && app.includes("バックアップ") && app.includes("注意アカウント") && app.includes("未対応DM通報") && app.includes("renderBetaReport")) pass("admin beta daily report");
 else fail("admin beta daily report", "missing");
