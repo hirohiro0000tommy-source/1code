@@ -61,6 +61,44 @@ const recruitmentTemplates = {
     body: "対戦練習できる方を募集しています。\nキャラ対策や立ち回り確認をしながら遊びたいです。\n使用キャラとランクを書いてもらえると助かります。"
   }
 };
+const soloPrompts = [
+  {
+    title: "最近また遊びたくなったゲーム",
+    body: "昔やっていたゲーム、復帰したいゲーム、誰かと話したいタイトルを書いてみるお題です。",
+    category: "雑談",
+    threadTitle: "最近また遊びたくなったゲーム",
+    threadBody: "昔やっていたゲームや、久しぶりに復帰したいタイトルがあれば話したいです。\n同じゲームを遊んでいた人がいたらうれしいです。"
+  },
+  {
+    title: "VCなしでも遊びやすいゲーム",
+    body: "声を出さずに遊びたい日向け。VCなしで楽しかったゲームや遊び方を書けます。",
+    category: "雑談",
+    threadTitle: "VCなしでも遊びやすいゲーム",
+    threadBody: "VCなしでも遊びやすいゲームや、チャットだけで成立しやすい遊び方を知りたいです。\nおすすめがあれば教えてください。"
+  },
+  {
+    title: "初心者にすすめたい設定やキャラ",
+    body: "攻略相談ほど重くなく、初心者に優しい小ネタを置けるお題です。",
+    category: "攻略相談",
+    threadTitle: "初心者にすすめたい設定やキャラ",
+    threadBody: "初心者にすすめやすい設定、キャラ、武器、デッキなどがあれば知りたいです。\n理由も一言あるとうれしいです。"
+  },
+  {
+    title: "大会や配信で気になった場面",
+    body: "観戦した感想や、あとで見たい大会の話を一人でも残せます。",
+    category: "大会観戦",
+    threadTitle: "大会や配信で気になった場面",
+    threadBody: "最近見た大会や配信で気になった場面、注目している選手やチームについて話したいです。"
+  },
+  {
+    title: "今日はどんな温度感で遊びたい？",
+    body: "まったり、練習、ランク、雑談など、その日の気分を言葉にするお題です。",
+    category: "雑談",
+    threadTitle: "今日はどんな温度感で遊びたい？",
+    threadBody: "今日はまったり遊びたい、練習したい、ランクを回したいなど、ゲームの温度感を書くだけの場所です。"
+  }
+];
+let activeSoloPromptIndex = 0;
 const threadTemplates = {
   chat: {
     title: "最近遊んでいるゲームを話したい",
@@ -1416,6 +1454,91 @@ function renderQuickSections() {
       <div class="quick-list">${games.map(([game, count]) => `<button type="button" data-game-entry="${escapeHtml(game)}"><strong>${escapeHtml(game)}</strong><span>${escapeHtml(count)}件の募集</span></button>`).join("")}</div>
     </div>
   `;
+}
+
+function renderSoloTools() {
+  const gameSelect = $("#soloMakerGame");
+  if (gameSelect && !gameSelect.options.length) {
+    gameSelect.innerHTML = featuredGames.map(game => `<option value="${escapeHtml(game)}">${escapeHtml(game)}</option>`).join("");
+  }
+  renderSoloPrompt(activeSoloPromptIndex);
+  if ($("#soloMakerOutput") && !$("#soloMakerOutput").value.trim()) {
+    $("#soloMakerOutput").value = buildRecruitmentMakerText();
+  }
+}
+
+function renderSoloPrompt(index = 0) {
+  const prompt = soloPrompts[index % soloPrompts.length] || soloPrompts[0];
+  $("#soloPromptTitle").textContent = prompt.title;
+  $("#soloPromptBody").textContent = prompt.body;
+}
+
+function randomSoloPrompt() {
+  const next = Math.floor(Math.random() * soloPrompts.length);
+  activeSoloPromptIndex = next === activeSoloPromptIndex ? (next + 1) % soloPrompts.length : next;
+  renderSoloPrompt(activeSoloPromptIndex);
+}
+
+function buildRecruitmentMakerText() {
+  const game = $("#soloMakerGame")?.value || "その他";
+  const purpose = $("#soloMakerPurpose")?.value || "casual";
+  const voice = $("#soloMakerVoice")?.value || "どちらでも";
+  const style = $("#soloMakerStyle")?.value || "まったり";
+  const purposeText = {
+    casual: "軽めに遊べる人を探しています。",
+    beginner: "初心者の方や復帰勢の方も歓迎です。",
+    ranked: "ランクや練習を一緒にできる人を探しています。",
+    talk: "雑談しながらゆるく遊べる人を探しています。"
+  }[purpose] || "一緒に遊べる人を探しています。";
+  const voiceText = voice === "なし"
+    ? "VCなしで、チャット中心だと助かります。"
+    : voice === "あり"
+      ? "VCありで話しながら遊べるとうれしいです。"
+      : "VCはありなしどちらでも大丈夫です。";
+  return [
+    `${game}で一緒に遊べる人を募集しています。`,
+    purposeText,
+    `${style}寄りの雰囲気で、短時間でも大丈夫です。`,
+    voiceText,
+    "気になったら返信で声をかけてください。"
+  ].join("\n");
+}
+
+function generateRecruitmentText() {
+  const output = $("#soloMakerOutput");
+  if (!output) return "";
+  output.value = buildRecruitmentMakerText();
+  return output.value;
+}
+
+function applyGeneratedRecruitmentText() {
+  const text = generateRecruitmentText();
+  switchView("recruitmentView");
+  $("#recruitmentLayout").classList.add("form-open");
+  updateCreateButton("recruitmentView");
+  $("#gameInput").value = $("#soloMakerGame")?.value || "その他";
+  renderRecruitmentFormOptions();
+  $("#voiceInput").value = $("#soloMakerVoice")?.value || "どちらでも";
+  $("#styleInput").value = $("#soloMakerStyle")?.value || "まったり";
+  $("#messageInput").value = text;
+  saveFormDraft(recruitmentDraftKey, recruitmentDraftFields);
+  updateFormStatus();
+  focusCreateForm("recruitmentView");
+  showToast("募集文を入れました", "必要なら少し直して、そのまま投稿できます。");
+}
+
+function useSoloPromptForThread() {
+  const prompt = soloPrompts[activeSoloPromptIndex] || soloPrompts[0];
+  switchView("chatView");
+  $("#chatLayout").classList.add("form-open");
+  updateCreateButton("chatView");
+  $("#chatTitleInput").value = prompt.threadTitle;
+  $("#chatCategoryInput").value = prompt.category;
+  $("#chatBodyInput").value = prompt.threadBody;
+  saveFormDraft(threadDraftKey, threadDraftFields);
+  updateFormStatus();
+  $("#chatBodyInput").focus();
+  showToast("お題を入れました", "少しだけ書き換えて投稿できます。");
 }
 
 function quickPostButton(item, type) {
@@ -4135,6 +4258,7 @@ function renderAll() {
   renderAnnouncements();
   renderServiceStatus();
   renderAds();
+  renderSoloTools();
   renderActivitySummaries();
   renderQuickSections();
   renderWeeklySummary();
@@ -4626,6 +4750,18 @@ document.body.addEventListener("click", async event => {
   if (adminJump) {
     const target = document.getElementById(adminJump.dataset.adminJump);
     if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  const soloAction = event.target.closest("[data-solo-action]");
+  if (soloAction) {
+    const action = soloAction.dataset.soloAction;
+    if (action === "random-prompt") randomSoloPrompt();
+    if (action === "use-prompt-thread") useSoloPromptForThread();
+    if (action === "generate-recruitment") {
+      generateRecruitmentText();
+      showToast("募集文を作りました", "投稿前の下書きとして使えます。");
+    }
+    if (action === "apply-recruitment") applyGeneratedRecruitmentText();
     return;
   }
   const guideButton = event.target.closest("[data-guide-jump]");
@@ -5478,6 +5614,9 @@ $("#logoutButton").addEventListener("click", async () => {
 });
 ["#messageInput", "#chatTitleInput", "#chatBodyInput"].forEach(selector => {
   $(selector).addEventListener("input", updateFormStatus);
+});
+["#soloMakerGame", "#soloMakerPurpose", "#soloMakerVoice", "#soloMakerStyle"].forEach(selector => {
+  $(selector)?.addEventListener("change", generateRecruitmentText);
 });
 
 async function init() {

@@ -155,7 +155,7 @@ header .utility-link {
 header .utility-link:hover {
   color: var(--paper);
 }
-.box, .tabs, .panel, .card, .filters, .summary, .starter-guide, .quick-card, .weekly-summary, .topic-card {
+.box, .tabs, .panel, .card, .filters, .summary, .starter-guide, .quick-card, .weekly-summary, .topic-card, .solo-card {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--paper);
@@ -860,6 +860,53 @@ button[aria-busy="true"] {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 10px;
+}
+.solo-tools {
+  display: grid;
+  grid-template-columns: minmax(240px, .9fr) minmax(320px, 1.1fr);
+  gap: 10px;
+  margin: 10px 0;
+}
+.solo-card {
+  display: grid;
+  gap: 10px;
+  padding: 11px;
+  align-content: start;
+}
+.solo-card-head {
+  display: grid;
+  gap: 5px;
+}
+.solo-card-head strong {
+  font-size: 16px;
+}
+.solo-card-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+.solo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.maker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+.maker-card textarea {
+  width: 100%;
+  min-height: 118px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+  padding: 10px;
+  color: var(--ink);
+  line-height: 1.55;
 }
 .quick-section .quick-card.guide {
   grid-column: 1 / -1;
@@ -2141,8 +2188,12 @@ textarea { min-height: 95px; resize: vertical; line-height: 1.55; }
   .starter-guide,
   .topic-card,
   .weekly-summary,
+  .solo-tools,
   .quick-section {
     grid-template-columns: 1fr;
+  }
+  .maker-grid {
+    grid-template-columns: 1fr 1fr;
   }
   .starter-actions button,
   .quick-list button {
