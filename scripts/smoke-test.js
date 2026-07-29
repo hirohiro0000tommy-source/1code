@@ -180,6 +180,7 @@ async function run() {
     assert(homePage.body.includes(`<link rel="canonical" href="http://localhost:${port}/">`), "home canonical absolute url missing");
     assert(homePage.body.includes(`<meta property="og:image" content="http://localhost:${port}/og-image.svg">`), "home og image absolute url missing");
     assert(homePage.body.includes(`"url": "http://localhost:${port}/"`), "home structured data absolute url missing");
+    assert(homePage.body.includes("mode-switcher") && homePage.body.includes('href="/admin"'), "mode switcher links missing");
     const adminPage = await requestRaw("/admin");
     assert(adminPage.statusCode === 200 && adminPage.body.includes("adminView"), "admin page failed");
     assert((adminPage.headers["x-robots-tag"] || "").includes("noindex"), "admin page should be noindex");

@@ -43,6 +43,37 @@ body.operator-mode header h1::after {
   font-weight: 700;
   color: var(--muted);
 }
+.mode-switcher {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 80;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 8px 20px rgba(17, 17, 17, .12);
+  backdrop-filter: blur(8px);
+}
+.mode-switcher a {
+  min-width: 58px;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  transition: background var(--motion-fast) var(--ease-smooth), color var(--motion-fast) var(--ease-smooth);
+}
+body.general-mode .mode-switcher a[href="/"],
+body.operator-mode .mode-switcher a[href="/admin"] {
+  background: #111;
+  color: #fff;
+}
 body::before,
 body::after { display: none; }
 button, input, textarea, select { font: inherit; }
