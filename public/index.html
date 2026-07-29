@@ -274,6 +274,38 @@
                 <button class="action primary" type="button" data-solo-action="use-prompt-thread">フリートークに使う</button>
               </div>
             </article>
+            <article class="solo-card maker-card">
+              <div class="solo-card-head">
+                <span class="badge light">募集文メモ</span>
+                <strong>自分の言葉で下書き</strong>
+                <p>文章は自動生成せず、必要な項目だけ整理できます。</p>
+              </div>
+              <div class="maker-grid">
+                <select id="soloMakerGame" aria-label="ゲーム"></select>
+                <select id="soloMakerPurpose" aria-label="目的">
+                  <option value="casual">軽く遊びたい</option>
+                  <option value="beginner">初心者歓迎</option>
+                  <option value="ranked">ランク・練習</option>
+                  <option value="talk">雑談しながら</option>
+                </select>
+                <select id="soloMakerVoice" aria-label="VC">
+                  <option value="どちらでも">VCどちらでも</option>
+                  <option value="なし">VCなし</option>
+                  <option value="あり">VCあり</option>
+                </select>
+                <select id="soloMakerStyle" aria-label="スタイル">
+                  <option value="まったり">まったり</option>
+                  <option value="初心者">初心者</option>
+                  <option value="エンジョイ">エンジョイ</option>
+                  <option value="ガチ">ガチ</option>
+                </select>
+              </div>
+              <textarea id="soloMakerOutput" placeholder="例: 今日は軽く2、3戦だけ。VCなしで、失敗しても気にしない感じで遊びたいです。"></textarea>
+              <div class="solo-actions">
+                <button class="action" type="button" data-solo-action="generate-recruitment">項目だけ入れる</button>
+                <button class="action primary" type="button" data-solo-action="apply-recruitment">募集フォームに入れる</button>
+              </div>
+            </article>
           </section>
           <section class="quick-section" id="recruitmentQuickSection" aria-label="募集のおすすめ入口"></section>
           <div class="summary"><strong>募集一覧</strong><span id="recruitmentCount">0件</span></div>

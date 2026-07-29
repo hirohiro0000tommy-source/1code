@@ -1492,9 +1492,6 @@ function renderSoloTools() {
     gameSelect.innerHTML = featuredGames.map(game => `<option value="${escapeHtml(game)}">${escapeHtml(game)}</option>`).join("");
   }
   renderSoloPrompt(activeSoloPromptIndex);
-  if ($("#soloMakerOutput") && !$("#soloMakerOutput").value.trim()) {
-    $("#soloMakerOutput").value = buildRecruitmentMakerText();
-  }
 }
 
 function renderSoloPrompt(index = 0) {
@@ -1514,29 +1511,20 @@ function buildRecruitmentMakerText() {
   const purpose = $("#soloMakerPurpose")?.value || "casual";
   const voice = $("#soloMakerVoice")?.value || "どちらでも";
   const style = $("#soloMakerStyle")?.value || "まったり";
-  const purposeText = {
-    casual: "軽く数戦だけでも大丈夫です。",
-    beginner: "初心者や復帰勢の方も気軽にどうぞ。",
-    ranked: "ランクや練習を一緒にできる方だとうれしいです。",
-    talk: "雑談しながらのんびり遊びたいです。"
-  }[purpose] || "一緒に遊べる方を探しています。";
-  const voiceText = voice === "なし"
-    ? "VCなし、チャット中心でお願いします。"
-    : voice === "あり"
-      ? "VCありで話しながら遊べると助かります。"
-      : "VCはありなしどちらでも大丈夫です。";
-  const styleText = {
-    初心者: "失敗しても気にしない雰囲気で遊びたいです。",
-    まったり: "勝ち負けより雰囲気重視です。",
-    エンジョイ: "楽しく遊びつつ、できれば勝ちたいくらいの温度感です。",
-    ガチ: "勝ちを目指しつつ、落ち着いて連携できる方だとうれしいです。"
-  }[style] || "気楽な雰囲気で遊びたいです。";
+  const purposeLabel = {
+    casual: "軽く遊びたい",
+    beginner: "初心者歓迎",
+    ranked: "ランク・練習",
+    talk: "雑談しながら"
+  }[purpose] || "一緒に遊びたい";
   return [
-    `${game}を一緒に遊べる方を募集します。`,
-    purposeText,
-    styleText,
-    voiceText,
-    "合いそうなら返信ください。"
+    `ゲーム: ${game}`,
+    `目的: ${purposeLabel}`,
+    `雰囲気: ${style}`,
+    `VC: ${voice}`,
+    "",
+    "本文:",
+    ""
   ].join("\n");
 }
 
@@ -1548,7 +1536,13 @@ function generateRecruitmentText() {
 }
 
 function applyGeneratedRecruitmentText() {
-  const text = generateRecruitmentText();
+  const output = $("#soloMakerOutput");
+  const text = output?.value.trim() || "";
+  if (!text) {
+    showToast("下書きが空です", "先に自分の言葉で本文を書いてください。", "", "error");
+    output?.focus();
+    return;
+  }
   switchView("recruitmentView");
   $("#recruitmentLayout").classList.add("form-open");
   updateCreateButton("recruitmentView");
@@ -5714,10 +5708,6 @@ $("#logoutButton").addEventListener("click", async () => {
 ["#messageInput", "#chatTitleInput", "#chatBodyInput"].forEach(selector => {
   $(selector).addEventListener("input", updateFormStatus);
 });
-["#soloMakerGame", "#soloMakerPurpose", "#soloMakerVoice", "#soloMakerStyle"].forEach(selector => {
-  $(selector)?.addEventListener("change", generateRecruitmentText);
-});
-
 async function init() {
   document.body.classList.toggle("operator-mode", operatorMode);
   document.body.classList.toggle("general-mode", !operatorMode);
