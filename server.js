@@ -299,7 +299,7 @@ function validateRuntimeConfig() {
 
 function firstUseGuideArticle(now = Date.now()) {
   return {
-    id: "official-first-use-guide-v1",
+    id: "00000000-0000-4000-8000-000000000101",
     title: "最初に何を押せばいいか",
     category: "使い方",
     summary: "Red Threadを開いたあと、募集を見る、絞り込む、返信する、投稿するまでの短い案内です。",
