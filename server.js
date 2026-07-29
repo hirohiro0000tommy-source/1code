@@ -53,6 +53,10 @@ const runtimeMetrics = {
   writeCount: 0,
   slowRequestCount: 0,
   slowStorageCount: 0,
+  activeRequests: 0,
+  maxConcurrentRequests: 0,
+  rateBucketCleanupCount: 0,
+  lastRateBucketCleanupAt: null,
   lastReadDurationMs: 0,
   lastWriteDurationMs: 0,
   maxReadDurationMs: 0,
@@ -708,6 +712,39 @@ function startEventLoopMonitor() {
     runtimeMetrics.lastEventLoopCheckAt = now;
     expected = now + eventLoopMonitorIntervalMs;
   }, eventLoopMonitorIntervalMs).unref?.();
+}
+
+function trackActiveRequest(res) {
+  runtimeMetrics.activeRequests += 1;
+  runtimeMetrics.maxConcurrentRequests = Math.max(runtimeMetrics.maxConcurrentRequests || 0, runtimeMetrics.activeRequests);
+  let finished = false;
+  const end = () => {
+    if (finished) return;
+    finished = true;
+    runtimeMetrics.activeRequests = Math.max(0, runtimeMetrics.activeRequests - 1);
+  };
+  res.on("finish", end);
+  res.on("close", end);
+}
+
+function cleanupRateBuckets() {
+  const now = Date.now();
+  let removed = 0;
+  for (const [bucketKey, value] of rateBuckets) {
+    if (value.resetAt <= now) {
+      rateBuckets.delete(bucketKey);
+      removed += 1;
+    }
+  }
+  if (removed) {
+    runtimeMetrics.rateBucketCleanupCount += 1;
+    runtimeMetrics.lastRateBucketCleanupAt = now;
+  }
+  return removed;
+}
+
+function startRateBucketCleanup() {
+  setInterval(cleanupRateBuckets, Math.max(rateWindowMs, 60_000)).unref?.();
 }
 
 function requestHeaders(res) {
@@ -3246,6 +3283,10 @@ function healthSnapshot(db) {
       writeCount: runtimeMetrics.writeCount,
       slowRequestCount: runtimeMetrics.slowRequestCount,
       slowStorageCount: runtimeMetrics.slowStorageCount,
+      activeRequests: runtimeMetrics.activeRequests,
+      maxConcurrentRequests: runtimeMetrics.maxConcurrentRequests,
+      rateBucketCleanupCount: runtimeMetrics.rateBucketCleanupCount,
+      lastRateBucketCleanupAt: runtimeMetrics.lastRateBucketCleanupAt,
       lastReadDurationMs: runtimeMetrics.lastReadDurationMs,
       lastWriteDurationMs: runtimeMetrics.lastWriteDurationMs,
       maxReadDurationMs: runtimeMetrics.maxReadDurationMs,
@@ -4181,9 +4222,7 @@ function rateLimit(req, res, url) {
     return false;
   }
   if (rateBuckets.size > 1000) {
-    for (const [bucketKey, value] of rateBuckets) {
-      if (value.resetAt <= now) rateBuckets.delete(bucketKey);
-    }
+    cleanupRateBuckets();
   }
   return true;
 }
@@ -5550,6 +5589,7 @@ const server = http.createServer(async (req, res) => {
     contentLength: Number(req.headers["content-length"] || 0),
     userAgent: req.headers["user-agent"] || ""
   };
+  trackActiveRequest(res);
   recordRequest(req, url);
   try {
     if (["GET", "HEAD"].includes(req.method) && url.pathname === "/healthz") {
@@ -5614,6 +5654,7 @@ server.keepAliveTimeout = serverKeepAliveTimeoutMs;
 
 validateRuntimeConfig();
 startEventLoopMonitor();
+startRateBucketCleanup();
 
 server.listen(port, async () => {
   await store.ensureDb();

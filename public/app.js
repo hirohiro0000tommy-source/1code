@@ -3530,6 +3530,9 @@ function renderSystem(system) {
   const maxEventLoopLag = Math.round(health.runtime?.maxEventLoopLagMs || 0);
   const readDuration = Math.round(health.runtime?.lastReadDurationMs || 0);
   const writeDuration = Math.round(health.runtime?.lastWriteDurationMs || 0);
+  const activeRequests = Number(health.runtime?.activeRequests || 0);
+  const maxConcurrentRequests = Number(health.runtime?.maxConcurrentRequests || 0);
+  const lastBucketCleanup = health.runtime?.lastRateBucketCleanupAt ? timeAgo(health.runtime.lastRateBucketCleanupAt) : "未実行";
   const statusCounts = Object.entries(health.runtime?.statusCounts || {}).map(([status, count]) => `${status}:${count}`).join(" / ") || "-";
   const refCounts = Object.entries(health.runtime?.refCounts || {}).map(([ref, count]) => `${ref}:${count}`).join(" / ") || "-";
   const recentRequests = (health.runtime?.recentRequests || []).slice(0, 6);
@@ -3572,6 +3575,9 @@ function renderSystem(system) {
         <div class="detail"><span>遅延</span><strong>${escapeHtml(eventLoopLag)}ms</strong></div>
         <div class="detail"><span>最大遅延</span><strong>${escapeHtml(maxEventLoopLag)}ms</strong></div>
         <div class="detail"><span>制限バケット</span><strong>${escapeHtml(system.rateLimitBuckets)}</strong></div>
+        <div class="detail"><span>バケット掃除</span><strong>${escapeHtml(lastBucketCleanup)}</strong></div>
+        <div class="detail"><span>処理中</span><strong>${escapeHtml(activeRequests)}</strong></div>
+        <div class="detail"><span>最大同時</span><strong>${escapeHtml(maxConcurrentRequests)}</strong></div>
         <div class="detail"><span>429制限</span><strong>${escapeHtml(health.runtime?.rateLimitBlockedCount || 0)}</strong></div>
         <div class="detail"><span>低速HTTP</span><strong>${escapeHtml(health.runtime?.slowRequestCount || 0)}</strong></div>
         <div class="detail"><span>低速保存</span><strong>${escapeHtml(health.runtime?.slowStorageCount || 0)}</strong></div>

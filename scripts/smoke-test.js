@@ -153,6 +153,9 @@ async function run() {
     assert(Array.isArray(health.runtime?.recentSlowStorage), "health slow storage history missing");
     assert(typeof health.runtime?.eventLoopLagMs === "number", "health event loop lag missing");
     assert(typeof health.runtime?.lastReadDurationMs === "number", "health read duration missing");
+    assert(typeof health.runtime?.activeRequests === "number", "health active request count missing");
+    assert(typeof health.runtime?.maxConcurrentRequests === "number", "health concurrent request max missing");
+    assert(typeof health.runtime?.rateBucketCleanupCount === "number", "health rate bucket cleanup count missing");
     assert(typeof health.memory?.heapUsed === "number", "health memory metrics missing");
     assert(health.limits?.maxRequestBodyBytes >= 32_000, "health request body limit missing");
     assert(health.limits?.requestTimeoutMs >= 10_000, "health request timeout limit missing");
