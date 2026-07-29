@@ -7,6 +7,7 @@ const operatorMode = (() => {
 })();
 const clientAccountKey = "partyfinder.client.account.v1";
 const clientProfileKey = "partyfinder.client.profile.v1";
+const adminPinKey = "partyfinder.admin.pin.v1";
 const betaAccessKey = "partyfinder.beta.access.v1";
 const betaFeedbackSentKey = "partyfinder.beta.feedback.sent.v1";
 const browserNotificationKey = "partyfinder.browser.notifications.v1";
@@ -523,9 +524,28 @@ function headers() {
     "content-type": "application/json",
     "x-account-id": account.id,
     "x-display-name": account.name,
-    "x-admin-pin": $("#adminPinInput")?.value || "",
+    "x-admin-pin": adminPinValue(),
     "x-beta-code": betaAccess.code || ""
   };
+}
+
+function adminPinValue() {
+  return ($("#adminPinInput")?.value || readStoredValue(localStorage, adminPinKey, "") || "").trim();
+}
+
+function restoreAdminPin() {
+  const input = $("#adminPinInput");
+  if (!input) return "";
+  const saved = readStoredValue(localStorage, adminPinKey, "");
+  if (saved && !input.value) input.value = saved;
+  return input.value.trim();
+}
+
+function saveAdminPin() {
+  const input = $("#adminPinInput");
+  if (!input) return;
+  const value = input.value.trim();
+  if (value) writeStoredValue(localStorage, adminPinKey, value);
 }
 
 function delay(ms) {
@@ -4771,8 +4791,11 @@ document.body.addEventListener("click", event => {
 });
 
 $("#loadReportsButton").addEventListener("click", async () => {
+  saveAdminPin();
   await loadAdminData();
 });
+$("#adminPinInput").addEventListener("change", saveAdminPin);
+$("#adminPinInput").addEventListener("blur", saveAdminPin);
 
 $("#exportBackupButton").addEventListener("click", async () => {
   const button = $("#exportBackupButton");
@@ -5172,6 +5195,7 @@ $("#announcementFeed").addEventListener("click", async event => {
 $("#adminArticleFeed").addEventListener("submit", async event => {
   if (event.target.dataset.action !== "create-article") return;
   event.preventDefault();
+  saveAdminPin();
   const form = new FormData(event.target);
   let imageUrl = "";
   try {
@@ -5469,11 +5493,13 @@ async function init() {
   }
   bindFormDraft(recruitmentDraftKey, recruitmentDraftFields);
   bindFormDraft(threadDraftKey, threadDraftFields);
+  const savedAdminPin = restoreAdminPin();
   updateFormStatus();
   loadCachedState();
   const accountSync = syncServerAccount().catch(() => null);
   const stateSync = loadState();
   await Promise.all([accountSync, stateSync]);
+  if (operatorMode) switchView("adminView");
   renderAccount();
   renderBetaAccess();
   renderBetaChecklist();
@@ -5481,6 +5507,9 @@ async function init() {
   updateFormStatus();
   syncCheckListLabels();
   focusSharedCard();
+  if (operatorMode && savedAdminPin) {
+    await loadAdminData().catch(showErrorToast);
+  }
 }
 
 window.addEventListener("hashchange", focusSharedCard);

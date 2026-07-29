@@ -199,6 +199,7 @@ async function run() {
     const appJs = await requestRaw("/app.js");
     assert((appJs.headers["cache-control"] || "").includes("no-cache"), "app js should revalidate cache");
     assert(appJs.body.includes("公式Bot投稿") && appJs.body.includes("official-bot-notice"), "official bot notice missing");
+    assert(appJs.body.includes("partyfinder.admin.pin.v1") && appJs.body.includes('switchView("adminView")'), "admin one-button setup missing");
     const stylesCss = await requestRaw("/styles.css");
     assert((stylesCss.headers["cache-control"] || "").includes("no-cache"), "styles css should revalidate cache");
     assert(stylesCss.body.includes("[data-operator-only]") && stylesCss.body.includes("body.operator-mode .mode-switcher"), "operator links should be mode-gated");
