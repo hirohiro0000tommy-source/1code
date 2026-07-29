@@ -5210,7 +5210,7 @@ async function serveStatic(req, res, url) {
   }
   let safePath;
   try {
-    safePath = url.pathname === "/" ? "/index.html" : decodeURIComponent(url.pathname);
+    safePath = ["/", "/admin", "/admin/"].includes(url.pathname) ? "/index.html" : decodeURIComponent(url.pathname);
   } catch (error) {
     sendText(res, 400, "Bad request");
     return;
@@ -5243,9 +5243,15 @@ async function serveStatic(req, res, url) {
         ? "public, max-age=300, must-revalidate"
         : "no-cache";
     recordResponse(200, res.locals || {});
-    res.writeHead(200, securityHeaders(type, {
+    const extraHeaders = {
       "cache-control": cacheControl,
       ...requestHeaders(res)
+    };
+    if (["/admin", "/admin/"].includes(url.pathname)) {
+      extraHeaders["x-robots-tag"] = "noindex, nofollow";
+    }
+    res.writeHead(200, securityHeaders(type, {
+      ...extraHeaders
     }));
     if (req.method === "HEAD") {
       res.end();

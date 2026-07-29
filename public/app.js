@@ -1,5 +1,10 @@
 const $ = selector => document.querySelector(selector);
 
+const operatorMode = (() => {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const params = new URLSearchParams(window.location.search);
+  return path === "/admin" || params.get("mode") === "admin";
+})();
 const clientAccountKey = "partyfinder.client.account.v1";
 const clientProfileKey = "partyfinder.client.profile.v1";
 const betaAccessKey = "partyfinder.beta.access.v1";
@@ -1038,6 +1043,10 @@ function updateFormStatus() {
 }
 
 function switchView(viewId) {
+  if (viewId === "adminView" && !operatorMode) {
+    window.location.assign("/admin");
+    return;
+  }
   document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.view === viewId));
   document.querySelectorAll(".view").forEach(view => {
     const active = view.id === viewId;
@@ -4106,8 +4115,8 @@ function focusSharedCard() {
   const hash = decodeURIComponent(window.location.hash.slice(1));
   if (!hash || !hash.includes(":")) return;
   const [type, id] = hash.split(":");
-  if (!["recruitments", "threads"].includes(type) || !id) return;
-  switchView(type === "threads" ? "chatView" : "recruitmentView");
+  if (!["recruitments", "threads", "articles"].includes(type) || !id) return;
+  switchView(type === "articles" ? "articleView" : type === "threads" ? "chatView" : "recruitmentView");
   requestAnimationFrame(() => {
     const escapedId = window.CSS?.escape ? CSS.escape(id) : id.replace(/["\\]/g, "\\$&");
     const card = document.querySelector(`[data-type="${type}"][data-id="${escapedId}"]`);
@@ -5436,6 +5445,16 @@ $("#logoutButton").addEventListener("click", async () => {
 });
 
 async function init() {
+  document.body.classList.toggle("operator-mode", operatorMode);
+  document.body.classList.toggle("general-mode", !operatorMode);
+  if (operatorMode) {
+    document.title = "Red Thread 管理";
+    document.querySelector('meta[name="robots"]')?.remove();
+    const robots = document.createElement("meta");
+    robots.name = "robots";
+    robots.content = "noindex,nofollow";
+    document.head.appendChild(robots);
+  }
   bindFormDraft(recruitmentDraftKey, recruitmentDraftFields);
   bindFormDraft(threadDraftKey, threadDraftFields);
   updateFormStatus();

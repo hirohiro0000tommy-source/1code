@@ -33,6 +33,16 @@ body {
   color: var(--ink);
   font-family: "Segoe UI", system-ui, sans-serif;
 }
+body.general-mode [data-operator-only],
+body.general-mode #adminView {
+  display: none !important;
+}
+body.operator-mode header h1::after {
+  content: " 管理";
+  font-size: .42em;
+  font-weight: 700;
+  color: var(--muted);
+}
 body::before,
 body::after { display: none; }
 button, input, textarea, select { font: inherit; }
